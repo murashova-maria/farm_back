@@ -1,0 +1,9 @@
+py2neo==2021.2.3
+selenium==4.8.0
+SQLAlchemy==1.4.45
+tweepy==4.13.0
+undetected-chromedriver==3.4.6
+pyvirtualdisplay==3.0
+flair==0.12.2
+transformers==4.27.4
+fastapi==0.89.1
