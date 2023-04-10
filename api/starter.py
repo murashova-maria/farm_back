@@ -15,7 +15,7 @@ class Starter:
         self.password = password
         self.phone_number = phone_number
         self.network = network
-        if proxy:
+        if proxy is not None and proxy != 'None':
             proxy = proxy.split(':')
             proxy = {'ip': proxy[0], 'port': proxy[1], 'username': proxy[2], 'password': proxy[3]}
         self.proxy = proxy

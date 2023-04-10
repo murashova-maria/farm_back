@@ -328,15 +328,23 @@ class Facebook(Base):
         self.accept_cookies()
         try:
             email_field = self.wait(3).until(ec.presence_of_element_located((By.ID, 'email')))
-            email_field.click()
-            email_field.send_keys(self.username)
+            self.move_and_click(email_field, self.username)
+            self.rs()
 
             pass_field = self.wait(3).until(ec.presence_of_element_located((By.ID, 'pass')))
-            pass_field.click()
-            pass_field.send_keys(self.password)
+            self.move_and_click(pass_field, self.password)
 
+            self.rs()
             login_btn = self.driver.find_element(By.NAME, 'login')
-            login_btn.click()
+            self.move_and_click(login_btn)
+            try:
+                divs = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'div')))
+                for div in divs:
+                    if 'access denied' in div.text.lower():
+                        input('>>> ')
+                        return False
+            except WebDriverException:
+                pass
             self._change_language()
             return True
         except WebDriverException as wde:
