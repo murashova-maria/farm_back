@@ -11,8 +11,8 @@ from time import sleep
 from pyvirtualdisplay import Display
 
 
-# display = Display(visible=False, size=(1920, 1080))
-# display.start()
+display = Display(visible=False, size=(1920, 1080))
+display.start()
 
 
 def make_post():
