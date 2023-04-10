@@ -341,7 +341,6 @@ class Facebook(Base):
                 divs = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'div')))
                 for div in divs:
                     if 'access denied' in div.text.lower():
-                        input('>>> ')
                         return False
             except WebDriverException:
                 pass
