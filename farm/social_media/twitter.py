@@ -3,6 +3,7 @@ try:
     from .base import *
     from ..analyse import return_data_flair
 except ImportError as ie:
+    print(ie)
     from base import *
     from farm.analyse import return_data_flair
 
@@ -217,19 +218,15 @@ class Twitter(Base):
             self.rs()
 
             username_field = self.wait(5).until(ec.presence_of_element_located((By.XPATH, self.xpaths['username'])))
-            username_field.click()
-            self.rs()
-            username_field.send_keys(self.username)
+            self.move_and_click(username_field, self.username)
 
             next_btn = self.driver.find_element(By.XPATH, self.xpaths['next_btn'])
-            next_btn.click()
-
+            self.move_and_click(next_btn)
             self._handle_login_errors()
 
             self.rs()
             password_field = self.wait(3).until(ec.presence_of_element_located((By.XPATH, self.xpaths['password'])))
-            password_field.click()
-            password_field.send_keys(self.password)
+            self.move_and_click(password_field, self.password)
             sleep(3)
 
             log_in_btn = self.driver.find_element(By.XPATH, self.xpaths['login_btn'])

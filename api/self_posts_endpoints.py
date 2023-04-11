@@ -17,9 +17,7 @@ async def get_self_posts(user_id: str):
 
 @app.post('/accounts/{user_id}/self_posts/')
 async def add_self_post(user_id: str, items: Dict[Any, Any]):
-    print('USER ID:', user_id)
     try:
-        print(user_id)
         social_media = items.get('social_media')
         text = items.get('text')
         filename = items.get('filename')

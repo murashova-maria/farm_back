@@ -36,7 +36,8 @@ class Starter:
         login_status = fb.login()
         sleep(2)
         if not login_status:
-            self._add_user('[ERROR]: Twitter Login is unsuccessful.')
+            self._add_user('[ERROR]: Twitter Login is unsuccessful -> Access denied.')
+            fb.driver.close()
             return
         self._add_user('[SUCCESS]: Twitter is Logged in')
         while True:
@@ -91,7 +92,8 @@ class Starter:
         login_status = tw.login()
         sleep(2)
         if not login_status:
-            self._add_user('[ERROR]: Twitter Login is unsuccessful.')
+            self._add_user('[ERROR]: Twitter Login is unsuccessful -> Access denied.')
+            tw.driver.close()
             return
         self._add_user('[SUCCESS]: Twitter is Logged in')
         while True:

@@ -7,7 +7,6 @@ async def get_feed(user_id: str):
     data = {}
     try:
         posts = FeedDB.filter_posts(user_id=user_id)
-        print(posts)
         for feed in posts:
             data.update({feed['post_id']: {}})
             for key, value in feed.items():
