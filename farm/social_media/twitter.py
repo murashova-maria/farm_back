@@ -50,7 +50,6 @@ class Twitter(Base):
         self.homepage = 'https://twitter.com/'
         super().__init__(self.homepage, proxy=proxy)
         self.home = self.homepage + 'home'
-        self.chain = ActionChains(self.driver)
         self.scroll_height = 0
         self.repetitions_counter = 0
         self.last_post = ''
@@ -68,6 +67,21 @@ class Twitter(Base):
                     suspended = QueuedTask(UserDB, 'update_user', data)
                     main_queue.put(suspended)
         except WebDriverException:
+            pass
+
+    def _is_account_fresh(self):
+        try:
+            for _ in range(3):
+                btns = self.wait(3).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="button"]')))
+                for btn in btns:
+                    if 'Skip for now' in btn.text or 'Next' in btn.text:
+                        self.move_and_click(btn)
+                        continue
+            lis = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'li')))
+            for li in lis:
+                if 'Music' in li.text or 'Entertainment' in li.text or 'Sports' in li.text:
+                    self.move_and_click(li)
+        except (WebDriverException, TimeoutException):
             pass
 
     def _save_new_post_to_db(self, author_name, text, img_path, posts_link, date, likes_amount, likes_accounts,
@@ -96,11 +110,13 @@ class Twitter(Base):
             'unusual_activity': '//span[contains(text(), "There was unusual login activity on your account. ' 
                                 'To help keep your account safe, '
                                 'please enter your phone number or username to verify it’s you.")]',
+            'keep_account_safe': '//span[contains(text(), "Help us keep your account safe.")]',
         }
         for key, value in xpaths.items():
             try:
                 error_msg = self.driver.find_element(By.XPATH, value)
-                if error_msg.text and key == 'unusual_activity' and self.phone_number:
+                if error_msg.text and key == 'unusual_activity' and self.phone_number or \
+                        error_msg.text and key == 'keep_account_safe':
                     # Enter phone number if it is necessary.
                     input_field = self.driver.find_element(By.TAG_NAME, 'input')
                     input_field.click()
@@ -137,6 +153,15 @@ class Twitter(Base):
         except WebDriverException:
             pass
         return False
+
+    def _fill_start_interests(self, interests: list):
+        try:
+            modal_header = self.wait(3).until(ec.presence_of_element_located((By.ID, 'modal-header')))
+            if 'what do you want to see on Twitter?' not in modal_header.text.lower():
+                return
+            lis = self.driver.find_elements(By.TAG_NAME, 'li')
+        except (WebDriverException, TimeoutException):
+            pass
 
     def _update_profiles_header(self, input_data: list, textarea_data: list):
         try:
@@ -232,6 +257,7 @@ class Twitter(Base):
             log_in_btn = self.driver.find_element(By.XPATH, self.xpaths['login_btn'])
             log_in_btn.click()
             sleep(5)
+            self._handle_login_errors()
             if self.driver.current_url == self.home:
                 return True
         except (WebDriverException, NoSuchWindowException) as wde:

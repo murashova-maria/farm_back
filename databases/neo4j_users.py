@@ -133,6 +133,43 @@ class FacebookProfile:
         return list(self.matcher.match('FacebookProfile'))
 
 
+class InstagramProfile:
+    def __init__(self, graph):
+        self.graph = graph
+        self.matcher = NodeMatcher(self.graph)
+
+    def create_profile(self, user_id, avatar='None', name='None',
+                       about_myself='None', gender='None'):
+        profile_node = Node("InstagramProfile", user_id=user_id,
+                            avatar=avatar, name=name, about_myself=about_myself,
+                            gender=gender)
+        self.graph.create(profile_node)
+        return profile_node
+
+    def update_profile(self, **kwargs):
+        profile_node = self.matcher.match("InstagramProfile", user_id=kwargs['user_id']).first()
+        if profile_node:
+            for key, value in kwargs.items():
+                profile_node[key] = value
+            self.graph.push(profile_node)
+            return profile_node
+        else:
+            return None
+
+    def filter_profiles(self, **kwargs):
+        query = "MATCH (p:InstagramProfile) WHERE "
+        params = {"params_" + key: value for key, value in kwargs.items()}
+        for key, value in kwargs.items():
+            query += f"p.{key} = $params_{key} AND "
+        query = query[:-5]
+        query += " RETURN p"
+        result = self.graph.run(query, **params)
+        return [record["p"] for record in result]
+
+    def get_all(self):
+        return list(self.matcher.match('InstagramProfile'))
+
+
 class Feed:
     def __init__(self, graph):
         self.graph = graph

@@ -8,6 +8,8 @@ def start(username, password, phone_number, network, proxy=None):
         net.start_facebook()
     elif net.network == 'twitter':
         net.start_twitter()
+    elif net.network == 'instagram':
+        net.start_instagram()
 
 
 @app.get('/accounts/all/info/')
@@ -31,7 +33,8 @@ async def get_all_users():
         'instagram': {}
     }
     social_media = [TwitterProfileDB.get_all(),
-                    FacebookProfileDB.get_all()]
+                    FacebookProfileDB.get_all(),
+                    InstagramProfileDB.get_all()]
     for index, media in enumerate(social_media):
         net = 'twitter' if index == 0 else 'facebook' if index == 1 else 'instagram'
         for profile in media:
@@ -51,6 +54,7 @@ async def read_account(user_id: str):
     usr = usr[0]
     twitter_profile = TwitterProfileDB.filter_profiles(user_id=user_id)
     facebook_profile = FacebookProfileDB.filter_profiles(user_id=user_id)
+    instagram_profile = InstagramProfileDB.filter_profiles(user_id=user_id)
     data = {
         'user_info': {key: value for key, value in usr.items()},
         'profile_info': {},
@@ -62,6 +66,10 @@ async def read_account(user_id: str):
     if facebook_profile:
         data['profile_info'].update({'facebook_profile': {
             key: value for key, value in facebook_profile[0].items()}
+        })
+    if instagram_profile:
+        data['profile_info'].update({'instagram_profile': {
+            key: value for key, value in instagram_profile[0].items()}
         })
     return data
 
@@ -101,8 +109,7 @@ async def update_profile(user_id: str, network: str, item: Dict[Any, Any]):
     elif network == 'facebook':
         profile_object = FacebookProfileDB
     else:
-        pass
-        # profile_object = InstagramProfile
+        profile_object = InstagramProfileDB
     if not profile_object:
         raise HTTPException(status_code=404, detail='Invalid user')
     main_queue.put(QueuedTask(profile_object, 'update_profile', item))

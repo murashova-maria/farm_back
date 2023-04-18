@@ -2,6 +2,7 @@
 from loader import *
 from farm.social_media.twitter import *
 from farm.social_media.facebook import *
+from farm.social_media.instagram import *
 
 try:
     from utils import ready_to_post
@@ -30,6 +31,48 @@ class Starter:
         st = QueuedTask(UserDB, 'create_user', [self.username, self.password, self.phone_number,
                                                 self.network, status])
         main_queue.put(st)
+
+    def start_instagram(self):
+        inst = Instagram(self.username, self.password, self.phone_number, proxy=self.proxy)
+        login_status = inst.login()
+        sleep(2)
+        if not login_status:
+            self._add_user('[ERROR]: Instagram Login is unsuccessful -> Access denied.')
+            inst.driver.close()
+            return
+        self._add_user('[SUCCESS]: Instagram is Logged in')
+        while True:
+            sleep(1)
+            try:
+                # Get user's DB object.
+                user_info = UserDB.filter_users(username=self.username, password=self.password,
+                                                phone_number=self.phone_number, social_media='instagram')
+                user_info = user_info[0]
+                inst.usr_id = user_info['user_id']
+                if user_info['activity'] == 'fill_profile':
+                    profile = InstagramProfileDB.filter_profiles(user_id=user_info['user_id'])[0]
+                    avatar = profile['avatar']
+                    name = profile['name']
+                    about_myself = profile['about_myself']
+                    gender = profile['gender']
+                    inst.fill_profile(IMG_DIR + 'instagram/' + avatar, name, about_myself, gender)
+                    task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
+                                                              'user_id': inst.usr_id})
+                    main_queue.put(task)
+                elif user_info['activity'] == 'check_feed':
+                    if user_info['search_tag']:
+                        inst.collect_posts(user_info['search_tag'])
+                    else:
+                        inst.collect_posts()
+                elif user_info['activity'] == 'make_post':
+                    posts = SelfPostsDB.filter_posts(user_id=user_info['user_id'], status='do_post')
+                    for post in posts:
+                        inst.make_post(post['text'], IMG_DIR + 'instagram/' + post['filename'])
+                        main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'done',
+                                                                               'post_id': post['post_id']}))
+                        sleep(3)
+            except Exception as ex:
+                print(ex)
 
     def start_facebook(self):
         fb = Facebook(self.username, self.password, self.phone_number, proxy=self.proxy)
@@ -111,7 +154,8 @@ class Starter:
                     name = profile['name']
                     about_myself = profile['about_myself']
                     location = profile['location']
-                    tw.fill_profiles_header(avatar, cover, name, about_myself, location)
+                    tw.fill_profiles_header(IMG_DIR + 'twitter/' + avatar, IMG_DIR + 'twitter/' + cover,
+                                            name, about_myself, location)
 
                     task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
                                                               'user_id': tw.usr_id})
@@ -124,7 +168,7 @@ class Starter:
                 elif user_info['activity'] == 'make_post':
                     posts = SelfPostsDB.filter_posts(user_id=user_info['user_id'], status='do_post')
                     for post in posts:
-                        tw.make_post(post['text'], post['filename'])
+                        tw.make_post(post['text'], IMG_DIR + 'twitter/' + post['filename'])
                         main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'done',
                                                                                'post_id': post['post_id']}))
                         sleep(3)

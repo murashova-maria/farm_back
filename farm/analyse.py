@@ -83,14 +83,18 @@ def flair_names(lang, eng_text) -> list:
     return list(set(names))
 
 
-def return_data_flair(text) -> tuple:
-    post = f'''{text}'''
-    eng_text, lang = transtale_to_eng(post)
-    if lang == 'iw':
-        label, score = flair_prediction_hebrew(post)
-    else:
-        label, score = flair_prediction(eng_text)
-    names = flair_names(lang, eng_text)
-    noun_keywords = flair_keywords(lang, eng_text)
-    label = label.upper()
-    return str(eng_text), str(names), str(noun_keywords), str(label), float(score), str(lang)
+def return_data_flair(text) -> tuple | list:
+    try:
+        post = f'''{text}'''
+        eng_text, lang = transtale_to_eng(post)
+        if lang == 'iw':
+            label, score = flair_prediction_hebrew(post)
+        else:
+            label, score = flair_prediction(eng_text)
+        names = flair_names(lang, eng_text)
+        noun_keywords = flair_keywords(lang, eng_text)
+        label = label.upper()
+        return str(eng_text), str(names), str(noun_keywords), str(label), float(score), str(lang)
+    except Exception as ex:
+        print(ex)
+        return [None] * 6
