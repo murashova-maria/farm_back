@@ -11,6 +11,7 @@ from time import sleep
 from pyvirtualdisplay import Display
 
 
+print(os.getpid())
 # display = Display(visible=False, size=(1920, 1080))
 # display.start()
 
@@ -43,4 +44,5 @@ t2.start()
 
 
 if __name__ == '__main__':
+    # local_graph.delete_all()
     pass

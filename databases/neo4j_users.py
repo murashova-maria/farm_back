@@ -2,9 +2,10 @@
 import uuid
 
 # DATABASE
-from py2neo import Graph, Node, Relationship, NodeMatcher
+from py2neo import Graph, Node, Relationship, NodeMatcher, RelationshipMatcher
 
 # OTHER
+from random import randint
 from datetime import datetime
 
 
@@ -13,9 +14,16 @@ class User:
         self.graph = graph
         self.matcher = NodeMatcher(self.graph)
 
-    def _attach_profile(self, user_id):
-        tp = TwitterProfile(self.graph)
-        tp.create_profile(user_id=user_id)
+    def _attach_profile(self, user_id, network):
+        if network == 'twitter':
+            tp = TwitterProfile(self.graph)
+            tp.create_profile(user_id=user_id)
+        elif network == 'facebook':
+            fb = FacebookProfile(self.graph)
+            fb.create_profile(user_id=user_id)
+        else:
+            inst = InstagramProfile(self.graph)
+            inst.create_profile(user_id)
 
     def create_user(self, username, password, phone_number='None', social_media='None',
                     status='None', activity='None', reg_date='None', proxies='None', search_tag='None'):
@@ -29,8 +37,14 @@ class User:
                          status=status, activity=activity, reg_date=reg_date,
                          proxies=proxies, search_tag=search_tag)
         self.graph.create(user_node)
-        self._attach_profile(user_id=user_id)
+        self._attach_profile(user_id=user_id, network=social_media)
         return user_node
+
+    def add_keyword_to_user(self, user_id, keyword, status='wait'):
+        user_node = self.graph.nodes.match('User', id=user_id).first()
+        keyword_node = Node('Keyword', id=randint(0, 2147483647), keyword=keyword, status=status)
+        rel = Relationship(user_node, 'HAS_KEYWORD', keyword_node)
+        self.graph.create(rel)
 
     def update_user(self, user_id, **kwargs):
         user_node = self.matcher.match("User", user_id=user_id).first()
@@ -98,10 +112,9 @@ class FacebookProfile:
         self.graph = graph
         self.matcher = NodeMatcher(self.graph)
 
-    def create_profile(self, current_location='None', native_location='None',
+    def create_profile(self, user_id, current_location='None', native_location='None',
                        company='None', position='None', city='None',
                        description='None', bio='None', avatar='None', hobbies='None'):
-        user_id = str(uuid.uuid4())
         profile_node = Node("FacebookProfile", user_id=user_id,
                             current_location=current_location, native_location=native_location,
                             company=company, position=position, city=city,
@@ -249,6 +262,82 @@ class SelfPosts:
 
     def get_all(self):
         return list(self.matcher.match('SelfPost'))
+
+
+class Conversation:
+    def __init__(self, graph):
+        self.graph = graph
+        self.matcher = NodeMatcher(self.graph)
+        self.rel_matcher = RelationshipMatcher(self.graph)
+
+    def create_chat(self, chat_id):
+        chat_node = Node('Chat', id=chat_id)
+        self.graph.create(chat_node)
+
+    def add_user_to_chat(self, chat_id, user_id, message_text=None, delay=None):
+        chat_node = self.graph.nodes.match('Chat', id=chat_id).first()
+        user_node = Node('User', id=user_id)
+        rel = Relationship(chat_node, 'HAS_USER', user_node)
+        self.graph.create(rel)
+
+    def add_message_to_user(self, chat_id, user_id, message_text, delay):
+        user_node = self.graph.nodes.match('User', id=user_id).first()
+        message_node = Node('Message', message_id=randint(0, 2147483647), message_text=message_text, delay=delay,
+                            status='wait')
+        rel = Relationship(user_node, 'HAS_MESSAGE', message_node)
+        chat_node = self.graph.nodes.match('Chat', id=chat_id).first()
+        self.graph.create(rel)
+        self.graph.create(Relationship(chat_node, 'HAS_MESSAGE', message_node))
+
+    def find_chats(self, **kwargs):
+        query = "MATCH (c:Chat)"
+        params = {}
+        for k, v in kwargs.items():
+            query += f" WHERE c.{k} = ${k}"
+            params[k] = v
+        query += " RETURN c"
+        result = self.graph.run(query, params)
+        return [r[0] for r in result]
+
+    def get_all_chats(self):
+        query = "MATCH (c:Chat) RETURN c"
+        result = self.graph.run(query)
+        return [r[0] for r in result]
+
+    def get_chat_info(self, chat_id, delay_limit=None):
+        # find chat node
+        chat_node = self.graph.nodes.match('Chat', id=chat_id).first()
+        if not chat_node:
+            return None
+
+        # find users and their messages in the chat
+        results = self.rel_matcher.match((chat_node, ), 'HAS_USER')
+        users = []
+        for rel in results:
+            user_node = rel.end_node
+            messages = []
+            if delay_limit is not None:
+                message_results = self.rel_matcher.match((user_node, ), 'HAS_MESSAGE')
+            else:
+                message_results = self.rel_matcher.match((user_node, ), 'HAS_MESSAGE')
+            for message_rel in message_results:
+                message_node = message_rel.end_node
+                messages.append({
+                    'message_id': message_node.get('message_id'),
+                    'message_text': message_node.get('message_text'),
+                    'delay': message_node.get('delay')
+                })
+            users.append({
+                'id': user_node.get('id'),
+                'messages': messages
+            })
+
+        # build chat info dictionary
+        chat_info = {
+            'id': chat_node.get('id'),
+            'users': users
+        }
+        return chat_info
 
 
 if __name__ == '__main__':

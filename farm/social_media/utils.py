@@ -23,10 +23,4 @@ def get_users_liked(api_id, api_hash, post_id: int):
 
 
 if __name__ == '__main__':
-    # UserDB.update_user('a58c3167-8422-4001-8ad9-8e82e293d0e0', social_media='twitter')
-    # data = {
-    #     'user_id': 'a58c3167-8422-4001-8ad9-8e82e293d0e0',
-    #     'social_media': 'facebook'
-    # }
-    # print(getattr(UserDB, 'update_user')(**data))
     pass

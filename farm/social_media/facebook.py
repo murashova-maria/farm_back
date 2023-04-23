@@ -119,8 +119,12 @@ class Facebook(Base):
         except WebDriverException:
             pass
 
+    def make_comment(self, link=None, users: list = None):
+        if self.driver.current_url in link:
+            pass
+
     def add_location(self, current_location: str = None, native_location: str = None):
-        if not current_location and not native_location:
+        if (not current_location and not native_location) or (current_location == 'None' and native_location == 'None'):
             return
         self._get_self_profile()
         self.driver.get(self.driver.current_url + '&sk=about_places')
@@ -153,6 +157,7 @@ class Facebook(Base):
                 self.move_and_click(save_btn)
 
     def add_hobbies(self, hobbies: list):
+        hobbies = [None if elem == 'None' else elem for elem in hobbies]
         try:
             if 'profile.php' not in self.driver.current_url:
                 self._get_self_profile()
@@ -238,6 +243,7 @@ class Facebook(Base):
 
     def add_work(self, company=None, position=None, city=None, description=None):
         work_info = [company, position, city, description]
+        work_info = [None if elem == 'None' else elem for elem in work_info]
         if not any(work_info):
             return
         self._get_self_profile()
@@ -291,7 +297,7 @@ class Facebook(Base):
             return False
 
     def change_pictures(self, avatar: str = None):
-        if not avatar:
+        if not avatar or avatar == 'None':
             return
         self._get_self_profile()
         profile_logo = self.wait(5).until(ec.presence_of_element_located((By.XPATH, self.xpaths['profile_svg'])))
@@ -303,7 +309,7 @@ class Facebook(Base):
         for _ in range(10):
             try:
                 inp_field = inp.find_element(By.XPATH, './/input[@type="file"]')
-                inp_field.send_keys(avatar)
+                inp_field.send_keys(IMG_DIR + 'facebook/' + avatar)
                 break
             except WebDriverException:
                 inp = inp.find_element(By.XPATH, '..')
@@ -411,7 +417,7 @@ class Facebook(Base):
             sleep(3)
             textbox = self.driver.find_element(By.XPATH, self.xpaths['profile_text_box'])
             self.move_and_click(textbox, text)
-            if filename:
+            if filename and filename != 'None':
                 photo_video = self.driver.find_element(By.XPATH, '//div[@aria-label="Photo/video"]')
                 self.move_and_click(photo_video)
                 sleep(1)
@@ -419,7 +425,7 @@ class Facebook(Base):
                 for form in get_form:
                     if str(form.get_attribute('accept')) == \
                             'image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv':
-                        form.send_keys(filename)
+                        form.send_keys(IMG_DIR + 'facebook/' + filename)
             sleep(7)
             post = self.driver.find_element(By.XPATH, '//div[@aria-label="Post"]')
             post.click()

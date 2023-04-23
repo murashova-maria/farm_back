@@ -94,7 +94,7 @@ def return_data_flair(text) -> tuple | list:
         names = flair_names(lang, eng_text)
         noun_keywords = flair_keywords(lang, eng_text)
         label = label.upper()
-        return str(eng_text), str(names), str(noun_keywords), str(label), float(score), str(lang)
+        return str(eng_text), str(names), list(noun_keywords), str(label), float(score), str(lang)
     except Exception as ex:
         print(ex)
         return [None] * 6

@@ -55,7 +55,7 @@ class Starter:
                     name = profile['name']
                     about_myself = profile['about_myself']
                     gender = profile['gender']
-                    inst.fill_profile(IMG_DIR + 'instagram/' + avatar, name, about_myself, gender)
+                    inst.fill_profile(avatar, name, about_myself, gender)
                     task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
                                                               'user_id': inst.usr_id})
                     main_queue.put(task)
@@ -67,7 +67,7 @@ class Starter:
                 elif user_info['activity'] == 'make_post':
                     posts = SelfPostsDB.filter_posts(user_id=user_info['user_id'], status='do_post')
                     for post in posts:
-                        inst.make_post(post['text'], IMG_DIR + 'instagram/' + post['filename'])
+                        inst.make_post(post['text'], post['filename'])
                         main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'done',
                                                                                'post_id': post['post_id']}))
                         sleep(3)
@@ -79,10 +79,10 @@ class Starter:
         login_status = fb.login()
         sleep(2)
         if not login_status:
-            self._add_user('[ERROR]: Twitter Login is unsuccessful -> Access denied.')
+            self._add_user('[ERROR]: Facebook Login is unsuccessful -> Access denied.')
             fb.driver.close()
             return
-        self._add_user('[SUCCESS]: Twitter is Logged in')
+        self._add_user('[SUCCESS]: Facebook is Logged in')
         while True:
             try:
                 # Get user's DB object.
@@ -90,7 +90,9 @@ class Starter:
                                                 phone_number=self.phone_number, social_media='facebook')[0]
                 fb.usr_id = user_info['user_id']
                 if user_info['activity'] == 'fill_profile':
-                    profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])[0]
+                    profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])
+                    if profile:
+                        profile = profile[0]
                     avatar = profile['avatar']
                     current_location = profile['current_location']
                     native_location = profile['native_location']
@@ -102,7 +104,7 @@ class Starter:
                     fb.add_location(current_location, native_location)
                     fb.add_work(company, position, city, description)
                     if avatar != 'None' and avatar:
-                        fb.change_pictures(IMG_DIR + 'facebook/' + avatar)
+                        fb.change_pictures(avatar)
                     fb.add_bio(bio)
                     task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
                                                               'user_id': user_info['user_id']})
@@ -128,7 +130,7 @@ class Starter:
                     else:
                         fb.collect_posts()
             except Exception as ex:
-                print(ex)
+                print('WHILE THREAD: ', ex)
 
     def start_twitter(self):
         tw = Twitter(self.username, self.password, self.phone_number, self.proxy)
@@ -154,7 +156,7 @@ class Starter:
                     name = profile['name']
                     about_myself = profile['about_myself']
                     location = profile['location']
-                    tw.fill_profiles_header(IMG_DIR + 'twitter/' + avatar, IMG_DIR + 'twitter/' + cover,
+                    tw.fill_profiles_header(avatar, cover,
                                             name, about_myself, location)
 
                     task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
@@ -168,7 +170,7 @@ class Starter:
                 elif user_info['activity'] == 'make_post':
                     posts = SelfPostsDB.filter_posts(user_id=user_info['user_id'], status='do_post')
                     for post in posts:
-                        tw.make_post(post['text'], IMG_DIR + 'twitter/' + post['filename'])
+                        tw.make_post(post['text'], post['filename'])
                         main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'done',
                                                                                'post_id': post['post_id']}))
                         sleep(3)

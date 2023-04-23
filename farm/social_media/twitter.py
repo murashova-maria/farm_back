@@ -165,21 +165,23 @@ class Twitter(Base):
 
     def _update_profiles_header(self, input_data: list, textarea_data: list):
         try:
+            sleep(3)
             change_box = self.driver.find_element(By.XPATH, self.xpaths['change_profile_label'])
-            input_fields = change_box.find_elements(By.TAG_NAME, 'input')
+            input_fields = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'input')))
             for index in range(4):
                 if input_data[index]:
                     if input_fields[index].get_attribute('type') == 'file':
                         if '/' not in input_data[index]:
                             continue
                         input_fields[index].send_keys(input_data[index])
-                        apply_btn = self.wait(2).until(ec.presence_of_element_located((By.XPATH, self.xpaths['apply_img'])))
+                        apply_btn = self.wait(2).until(ec.presence_of_element_located((By.XPATH,
+                                                                                       self.xpaths['apply_img'])))
                         self.move_and_click(apply_btn)
                         sleep(2)
                         input_fields = change_box.find_elements(By.TAG_NAME, 'input')
                     else:
                         input_fields[index].clear()
-                        self.move_and_click(element=input_fields[index], text=input_data[index])
+                        self.move_and_click(input_fields[index], input_data[index])
             self.rs()
             textareas = change_box.find_elements(By.TAG_NAME, 'textarea')
             for index, textarea in enumerate(textareas):
@@ -194,7 +196,7 @@ class Twitter(Base):
             save_btn = change_box.find_element(By.XPATH, self.xpaths['save_profile'])
             self.move_and_click(save_btn)
         except WebDriverException as wde:
-            print(wde)
+            print('[UPDATE PROFILE]: ', wde)
 
     def _fill_profiles_header(self, input_data: list, textarea_data: list):
         for i in range(4):
@@ -258,6 +260,7 @@ class Twitter(Base):
             log_in_btn.click()
             sleep(5)
             self._handle_login_errors()
+            sleep(5)
             if self.driver.current_url == self.home:
                 return True
         except (WebDriverException, NoSuchWindowException) as wde:
@@ -267,6 +270,14 @@ class Twitter(Base):
     def fill_profiles_header(self, avatar=None, cover=None, name=None, about_myself=None, location=None):
         self._get_profile()
         text_fields = [about_myself]
+        if avatar and avatar != 'None':
+            avatar = IMG_DIR + 'twitter/' + avatar
+        else:
+            avatar = None
+        if cover and cover != 'None':
+            cover = IMG_DIR + 'twitter/' + cover
+        else:
+            cover = None
         image_fields = [cover, avatar, name, location]
         set_the_profile = self.wait(5).until(ec.presence_of_element_located((By.XPATH, self.xpaths['set_the_profile'])))
         set_the_profile.click()
@@ -295,7 +306,7 @@ class Twitter(Base):
 
         if filename:  # Paste image if it exists.
             image_path = self.driver.find_element(By.XPATH, self.xpaths['image_path'])
-            image_path.send_keys(filename)
+            image_path.send_keys(IMG_DIR + 'twitter/' + filename)
         tweet_it = self.driver.find_element(By.XPATH, self.xpaths['tweet_it'])
         tweet_it.click()
 

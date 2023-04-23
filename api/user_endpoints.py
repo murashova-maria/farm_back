@@ -14,19 +14,17 @@ def start(username, password, phone_number, network, proxy=None):
 
 @app.get('/accounts/all/info/')
 async def get_all_users():
-    data = {}
     users = UserDB.get_all()
+    general_data = []
     for user in users:
-        data.update({user['user_id']: {
-            key: value for key, value in user.items() if key != 'user_id'
-        }})
-    if data:
-        return data
+        general_data.append({key: value for key, value in user.items()})
+    if general_data:
+        return general_data
     raise HTTPException(status_code=400, detail='Database is empy')
 
 
 @app.get('/accounts/all/profiles/')
-async def get_all_users():
+async def get_all_users_profiles():
     data = {
         'twitter': {},
         'facebook': {},
