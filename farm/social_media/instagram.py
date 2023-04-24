@@ -7,6 +7,7 @@ try:
 except ImportError:
     from base import *
     from farm.analyse import return_data_flair
+from bs4 import BeautifulSoup
 
 
 class Instagram(Base):
@@ -198,17 +199,17 @@ class Instagram(Base):
             return True
         except (TimeoutException, WebDriverException) as wde:
             pass
-            # logging.error(f'[ERROR]: Filling profile.\nError text: {wde}')
         return False
 
-    def collect_posts(self, tag=None):
-        if self.driver.current_url != 'https://www.instagram.com/':
-            self.open_homepage()
-        self.scroll_to_the_end()
+    def collect_feed(self, tag=None):
+        if tag not in self.driver.current_url:
+            self.driver.get(f'https://www.instagram.com/explore/tags/{tag}')
         sleep(5)
+        self.scroll_to_the_end()
         articles = self.wait(2).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'article')))
         try:
             for article in articles:
+                print(article.text)
                 a_tags = article.find_elements(By.TAG_NAME, 'a')
                 posts_link = [a.get_attribute('href')[:a.get_attribute('href').find('liked_by')] for a in a_tags
                               if 'liked_by' in a.get_attribute('href')][0]
@@ -232,15 +233,69 @@ class Instagram(Base):
                 rate = return_data_flair(authors_text)[1:]
                 data = [authors_username, authors_text, img_path, posts_link, datetime.now(), likes_amount,
                         None, comments_amount, None, None, *rate]
-                # self._save_new_post_to_db(author_name=authors_username, text=authors_text,
-                #                           img_path=img_path, posts_link=posts_link, date=datetime.now(),
-                #                           likes_amount=likes_amount, comments_amount=comments_amount,
-                #                           retweets_amount=None, likes_accounts=None, comments_accounts=None, *rate)
                 self._save_new_post_to_db(*data)
 
         except StaleElementReferenceException as sere:
             pass
-            # logging.warning(f'[ERROR]: Scrolling instagram feed. \nError text: {sere}')
+
+    def collect_posts(self, tag, posts_count):
+        posts = []
+        url = f'https://www.instagram.com/explore/tags/{tag}/'
+        self.driver.get(url)
+        try:
+            self.wait(3).until(ec.presence_of_all_elements_located((By.XPATH, "//main[@role='main']//article//a")))
+            link_arr = []
+            posts = []
+            while True:
+                html = BeautifulSoup(self.driver.page_source, 'html.parser')
+                content = html.find_all(
+                    'main', {'role': "main"})[0].find('article')
+
+                if "may be broken" in content.get_text():
+                    return []
+                posts_link = content.find_all('a')
+                for n, i in enumerate(posts_link):
+                    if i is None or i in link_arr:
+                        break
+                    # if i is not None and i not in link_arr:
+                    elem = self.driver.find_elements(By.XPATH, '//main[@role="main"]//article//a')[n]
+                    self.driver.execute_script("arguments[0].scrollIntoView();", elem)
+                    self.move_and_click(elem)
+                    try:
+                        articles_inner = self.driver.find_elements(By.XPATH, '//main[@role="main"]//article//a')[n]
+                        articles_inner = articles_inner.get_attribute('innerHTML')
+                        articles_soup = BeautifulSoup(articles_inner, 'html.parser').find('div', {
+                            'style': 'background: rgba(0, 0, 0, 0.3);'
+                        })
+                        likes, comments = [
+                            int(e.get_text().replace('K', "00").replace('.', ",").replace(',', ""))
+                            for e in articles_soup.find_all('li')
+                            # for e in BeautifulSoup(self.driver.find_elements(By.XPATH,
+                            #                                             '//main[@role="main"]//article//a')[n].get_attribute('innerHTML'),
+                            #                        "html.parser").find('div', {
+                            #     'style': 'background: rgba(0, 0, 0, 0.3);'}).find_all('li')
+                        ]
+                    except Exception:
+                        likes = 0
+                        comments = 0
+                    id_ = str(time.time()).replace('.', '')[8:]
+                    posts.append(
+                        {'link': f'https://www.instagram.com' + i.get('href'), 'text': i.find('img').get('alt'),
+                         'likes': likes,
+                         'comments': comments, 'shares': None, 'id': id_, 'date': None,
+                         'account': None, 'tag': tag, 'tag_id': tag,
+                         'network': 'instagram', 'pic': None})
+                    link_arr.append(i.get('href'))
+                length_posts = len(link_arr)
+
+                if length_posts >= posts_count:
+                    break
+
+            if length_posts >= posts_count:
+                posts = posts[0:posts_count - 1]
+        except TimeoutException as e:
+            pass
+        return posts
 
 
 if __name__ == '__main__':

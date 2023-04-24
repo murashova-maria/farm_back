@@ -1,5 +1,12 @@
+# TWITTER API
 import tweepy
+
+# LOCAL
 from loader import *
+
+# OTHER
+import re
+import time
 
 
 class QueuedTask:
@@ -9,9 +16,12 @@ class QueuedTask:
         self.args = args
 
     def __call__(self):
+        print('ARGS: ', self.args)
         if type(self.args) is dict:
+            self.args = {key: (value if value else 'None') for key, value in self.args.items()}
             getattr(self.obj, self.method)(**self.args)
         else:
+            self.args = [arg if arg else 'None' for arg in self.args]
             getattr(self.obj, self.method)(*self.args)
 
 

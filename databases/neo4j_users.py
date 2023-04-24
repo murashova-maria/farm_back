@@ -40,12 +40,6 @@ class User:
         self._attach_profile(user_id=user_id, network=social_media)
         return user_node
 
-    def add_keyword_to_user(self, user_id, keyword, status='wait'):
-        user_node = self.graph.nodes.match('User', id=user_id).first()
-        keyword_node = Node('Keyword', id=randint(0, 2147483647), keyword=keyword, status=status)
-        rel = Relationship(user_node, 'HAS_KEYWORD', keyword_node)
-        self.graph.create(rel)
-
     def update_user(self, user_id, **kwargs):
         user_node = self.matcher.match("User", user_id=user_id).first()
         if user_node:
@@ -68,6 +62,120 @@ class User:
 
     def get_all(self):
         return list(self.matcher.match('User'))
+
+
+class Keyword:
+    def __init__(self, graph):
+        self.graph = graph
+        self.matcher = NodeMatcher(self.graph)
+
+    def add_keyword_to_user(self, user_id, keyword, amount=15, status='wait'):
+        user_node = self.graph.nodes.match('User', user_id=user_id).first()
+        keyword_node = Node('Keyword', keyword_id=randint(0, 2147483647), keyword=keyword, status=status, amount=amount)
+        rel = Relationship(user_node, 'HAS_KEYWORD', keyword_node)
+        self.graph.create(rel)
+
+    def filter_keywords(self, **kwargs):
+        query = "MATCH (u:Keyword) WHERE "
+        params = {"params_" + key: value for key, value in kwargs.items()}
+        for key, value in kwargs.items():
+            query += f"u.{key} = $params_{key} AND "
+        query = query[:-5]
+        query += " RETURN u"
+        result = self.graph.run(query, **params)
+        return [record["u"] for record in result]
+
+    def get_users_by_keyword(self, keyword):
+        query = """
+                MATCH (u:User)-[:HAS_KEYWORD]->(k:Keyword)
+                WHERE k.keyword = $keyword
+                RETURN u
+                """
+        result = self.graph.run(query, keyword=keyword)
+        return [record["u"] for record in result]
+
+    def get_all_keywords(self):
+        return list(self.matcher.match('Keyword'))
+
+    def get_all_keywords_with_users(self):
+        query = """
+                MATCH (u:User)-[:HAS_KEYWORD]->(k:Keyword)
+                RETURN k.keyword_id as keyword_id, k.keyword as keyword, u.social_media as social_media, collect(u) as users
+                """
+        result = self.graph.run(query)
+
+        keywords_dict = {}
+        for record in result:
+            keyword_id = record["keyword_id"]
+            keyword = record["keyword"]
+            social_media = record["social_media"]
+            users = record["users"]
+
+            if keyword not in keywords_dict:
+                keywords_dict[keyword] = {}
+
+            if social_media not in keywords_dict[keyword]:
+                keywords_dict[keyword][social_media] = []
+
+            keywords_dict[keyword][social_media] += users
+
+        result_list = []
+        for keyword, media_users in keywords_dict.items():
+            kw_dict = {"keyword_id": keyword_id, "keyword_value": keyword}
+            for media, users in media_users.items():
+                media_dict = {}
+                for user in users:
+                    user_profile = self._get_profile_by_user_id(user["user_id"], media)
+                    user_dict = {"user_id": user["user_id"], "username": user["username"]}
+                    if user_profile is not None:
+                        user_dict.update({"avatar": user_profile["avatar"]})
+                    media_dict.update({media + "_user": user_dict})
+                kw_dict.update(media_dict)
+            result_list.append(kw_dict)
+        return result_list
+
+    def get_keywords_by_user_id(self, user_id):
+        query = """
+                MATCH (b:User)-[:HAS_KEYWORD]->(k:Keyword)
+                WHERE b.user_id = $user_id
+                RETURN k.keyword as keyword
+                """
+        result = self.graph.run(query, user_id=user_id)
+        return [record["keyword"] for record in result]
+
+    def _get_profile_by_user_id(self, user_id, media):
+        if media == "twitter":
+            profile_node = self.matcher.match("TwitterProfile", user_id=user_id).first()
+        elif media == "facebook":
+            profile_node = self.matcher.match("FacebookProfile", user_id=user_id).first()
+        else:
+            profile_node = self.matcher.match("InstagramProfile", user_id=user_id).first()
+        return profile_node
+
+    def delete_keywords(self, keyword_id):
+        keyword_node = self.matcher.match('Keyword', keyword_id=keyword_id).first()
+        if keyword_node:
+            self.graph.delete(keyword_node)
+            return True
+        return False
+
+    def unpin_word_from_user(self, user_id, keyword_id):
+        query = """
+                MATCH (u:User)-[r:HAS_KEYWORD]->(k:Keyword)
+                WHERE u.user_id = $user_id AND k.keyword_id = $keyword_id
+                DELETE r
+                """
+        self.graph.run(query, user_id=user_id, keyword_id=keyword_id)
+
+    def update_keyword(self, keyword_id, **kwargs):
+        keyword_node = self.matcher.match('Keyword', keyword_id=keyword_id).first()
+        if keyword_node:
+            for key, value in kwargs.items():
+                keyword_node[key] = value
+            self.graph.push(keyword_node)
+            return keyword_node
+        else:
+            return None
 
 
 class TwitterProfile:
@@ -270,11 +378,12 @@ class Conversation:
         self.matcher = NodeMatcher(self.graph)
         self.rel_matcher = RelationshipMatcher(self.graph)
 
-    def create_chat(self, chat_id):
-        chat_node = Node('Chat', id=chat_id)
+    def create_chat(self):
+        chat_id = randint(0, 10**20)
+        chat_node = Node('Chat', chat_id=chat_id)
         self.graph.create(chat_node)
 
-    def add_user_to_chat(self, chat_id, user_id, message_text=None, delay=None):
+    def add_user_to_chat(self, chat_id, user_id):
         chat_node = self.graph.nodes.match('Chat', id=chat_id).first()
         user_node = Node('User', id=user_id)
         rel = Relationship(chat_node, 'HAS_USER', user_node)
@@ -288,56 +397,6 @@ class Conversation:
         chat_node = self.graph.nodes.match('Chat', id=chat_id).first()
         self.graph.create(rel)
         self.graph.create(Relationship(chat_node, 'HAS_MESSAGE', message_node))
-
-    def find_chats(self, **kwargs):
-        query = "MATCH (c:Chat)"
-        params = {}
-        for k, v in kwargs.items():
-            query += f" WHERE c.{k} = ${k}"
-            params[k] = v
-        query += " RETURN c"
-        result = self.graph.run(query, params)
-        return [r[0] for r in result]
-
-    def get_all_chats(self):
-        query = "MATCH (c:Chat) RETURN c"
-        result = self.graph.run(query)
-        return [r[0] for r in result]
-
-    def get_chat_info(self, chat_id, delay_limit=None):
-        # find chat node
-        chat_node = self.graph.nodes.match('Chat', id=chat_id).first()
-        if not chat_node:
-            return None
-
-        # find users and their messages in the chat
-        results = self.rel_matcher.match((chat_node, ), 'HAS_USER')
-        users = []
-        for rel in results:
-            user_node = rel.end_node
-            messages = []
-            if delay_limit is not None:
-                message_results = self.rel_matcher.match((user_node, ), 'HAS_MESSAGE')
-            else:
-                message_results = self.rel_matcher.match((user_node, ), 'HAS_MESSAGE')
-            for message_rel in message_results:
-                message_node = message_rel.end_node
-                messages.append({
-                    'message_id': message_node.get('message_id'),
-                    'message_text': message_node.get('message_text'),
-                    'delay': message_node.get('delay')
-                })
-            users.append({
-                'id': user_node.get('id'),
-                'messages': messages
-            })
-
-        # build chat info dictionary
-        chat_info = {
-            'id': chat_node.get('id'),
-            'users': users
-        }
-        return chat_info
 
 
 if __name__ == '__main__':

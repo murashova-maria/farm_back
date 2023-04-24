@@ -120,8 +120,12 @@ class Facebook(Base):
             pass
 
     def make_comment(self, link=None, users: list = None):
-        if self.driver.current_url in link:
-            pass
+        if self.driver.current_url not in link:
+            self.driver.get(link)
+        ul_container = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'ul')))
+        for ul in ul_container:
+            print(ul.text)
+            sleep(5)
 
     def add_location(self, current_location: str = None, native_location: str = None):
         if (not current_location and not native_location) or (current_location == 'None' and native_location == 'None'):

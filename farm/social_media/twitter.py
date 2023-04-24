@@ -166,16 +166,18 @@ class Twitter(Base):
     def _update_profiles_header(self, input_data: list, textarea_data: list):
         try:
             sleep(3)
-            change_box = self.driver.find_element(By.XPATH, self.xpaths['change_profile_label'])
             input_fields = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'input')))
+            change_box = self.driver.find_element(By.XPATH, self.xpaths['change_profile_label'])
             for index in range(4):
                 if input_data[index]:
                     if input_fields[index].get_attribute('type') == 'file':
                         if '/' not in input_data[index]:
                             continue
                         input_fields[index].send_keys(input_data[index])
+                        sleep(2)
                         apply_btn = self.wait(2).until(ec.presence_of_element_located((By.XPATH,
                                                                                        self.xpaths['apply_img'])))
+                        sleep(2)
                         self.move_and_click(apply_btn)
                         sleep(2)
                         input_fields = change_box.find_elements(By.TAG_NAME, 'input')
@@ -195,7 +197,7 @@ class Twitter(Base):
             change_box = self.driver.find_element(By.XPATH, self.xpaths['change_profile_label'])
             save_btn = change_box.find_element(By.XPATH, self.xpaths['save_profile'])
             self.move_and_click(save_btn)
-        except WebDriverException as wde:
+        except (WebDriverException, StaleElementReferenceException) as wde:
             print('[UPDATE PROFILE]: ', wde)
 
     def _fill_profiles_header(self, input_data: list, textarea_data: list):
@@ -271,13 +273,17 @@ class Twitter(Base):
         self._get_profile()
         text_fields = [about_myself]
         if avatar and avatar != 'None':
-            avatar = IMG_DIR + 'twitter/' + avatar
+            if 'http' not in avatar:
+                avatar = IMG_DIR + 'twitter/' + avatar
         else:
             avatar = None
         if cover and cover != 'None':
-            cover = IMG_DIR + 'twitter/' + cover
+            if 'http' not in cover:
+                cover = IMG_DIR + 'twitter/' + cover
         else:
             cover = None
+        print('AVATAR: ', avatar)
+        print('COVER: ', cover)
         image_fields = [cover, avatar, name, location]
         set_the_profile = self.wait(5).until(ec.presence_of_element_located((By.XPATH, self.xpaths['set_the_profile'])))
         set_the_profile.click()
@@ -304,9 +310,12 @@ class Twitter(Base):
             self.chain.reset_actions()
             self.chain.send_keys(text).perform()
 
-        if filename:  # Paste image if it exists.
+        if filename and filename != 'None':  # Paste image if it exists.
             image_path = self.driver.find_element(By.XPATH, self.xpaths['image_path'])
-            image_path.send_keys(IMG_DIR + 'twitter/' + filename)
+            if 'http' not in filename:
+                image_path.send_keys(IMG_DIR + 'twitter/' + filename)
+            else:
+                image_path.send_keys(filename)
         tweet_it = self.driver.find_element(By.XPATH, self.xpaths['tweet_it'])
         tweet_it.click()
 
@@ -328,8 +337,8 @@ class Twitter(Base):
             return
         for article in articles:
             try:
-                posts_link = None
-                pic_link = None
+                posts_link = 'None'
+                pic_link = 'None'
                 article_text = article.find_element(By.XPATH, self.xpaths['tweet_text']).text
                 rate = return_data_flair(article_text)[1:]
                 username_field = article.find_element(By.XPATH, self.xpaths['username_articles_row'])
@@ -345,9 +354,17 @@ class Twitter(Base):
                     if 'status' in link:
                         posts_link = link
                         break
-                likes = article.find_element(By.XPATH, './/*[@data-testid="like"]').text
+                likes = article.find_element(By.XPATH, './/*[@data-testid="like"]')
+                # self.move_and_click(likes)
+                likes = likes.text
+                if 'k' in likes.lower():
+                    likes = float(likes[:likes.find('K')])*1000
                 replies = article.find_element(By.XPATH, './/*[@data-testid="reply"]').text
+                if 'k' in replies.lower():
+                    replies = float(replies[:replies.find('K')])*1000
                 retweets = article.find_element(By.XPATH, './/*[@data-testid="retweet"]').text
+                if 'k' in retweets.lower():
+                    retweets = float(retweets[:retweets.find('K')])*1000
                 self._save_new_post_to_db(username, article_text, pic_link, posts_link, datetime.now(), likes, [],
                                           replies, [],
                                           retweets, *rate)

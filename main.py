@@ -1,6 +1,7 @@
 # LOCAL
 from loader import *
-from api.endpoints import *
+from api.v1.endpoints import *
+from api.v2.endpoints import *
 from api.utils import ready_to_post
 
 # THREADING

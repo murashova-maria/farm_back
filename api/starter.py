@@ -142,8 +142,8 @@ class Starter:
             return
         self._add_user('[SUCCESS]: Twitter is Logged in')
         while True:
-            sleep(1)
             try:
+                sleep(1)
                 # Get user's DB object.
                 user_info = UserDB.filter_users(username=self.username, password=self.password,
                                                 phone_number=self.phone_number, social_media='twitter')
