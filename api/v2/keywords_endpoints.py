@@ -2,6 +2,15 @@
 from api import *
 
 
+@app.post('/keywords/')
+async def add_keywords(params: Dict[Any, Any]):
+    try:
+        main_queue.put(QueuedTask(KeywordDB, 'add_keyword_to_user', params))
+        return {'Status': 'OK'}
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail={'Status': 'Incorrect keyword ID or user_id'})
+
+
 @app.get('/keywords/')
 async def get_keywords():
     try:
@@ -9,7 +18,7 @@ async def get_keywords():
         return [keyw for keyw in keywords]
     except Exception as ex:
         print(ex)
-        raise HTTPException(status_code=400, detail=[])
+        raise HTTPException(status_code=400, detail={'Status': 'Incorrect keyword ID or user_id'})
 
 
 @app.delete('/bots/{user_id}/keywords/{keyword_id}/')

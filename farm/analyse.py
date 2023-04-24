@@ -9,13 +9,22 @@ from deep_translator import GoogleTranslator
 from deep_translator import single_detection
 
 
-tokenizer = AutoTokenizer.from_pretrained("avichr/heBERT_sentiment_analysis")  # same as 'avichr/heBERT' tokenizer
-model = AutoModel.from_pretrained("avichr/heBERT_sentiment_analysis")
-# init embedding
-tagger = SequenceTagger.load('flair/ner-english-ontonotes-large')
-tagger_keywords = SequenceTagger.load('pos')
+debug = False
 
-classifier = TextClassifier.load('en-sentiment')
+if not debug:
+    tokenizer = AutoTokenizer.from_pretrained("avichr/heBERT_sentiment_analysis")  # same as 'avichr/heBERT' tokenizer
+    model = AutoModel.from_pretrained("avichr/heBERT_sentiment_analysis")
+    # init embedding
+    tagger = SequenceTagger.load('flair/ner-english-ontonotes-large')
+    tagger_keywords = SequenceTagger.load('pos')
+
+    classifier = TextClassifier.load('en-sentiment')
+else:
+    tokenizer = None
+    model = None
+    tagger = None
+    tagger_keywords = None
+    classifier = None
 
 
 def transtale_to_eng(non_eng_text) -> tuple:

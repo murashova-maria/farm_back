@@ -2,11 +2,11 @@
 from api import *
 
 
-@app.get('/feed/{user_id}/')
-async def get_feed(user_id: str):
+@app.get('/posts/')
+async def get_feed(params: Dict[Any, Any]):
     data = {}
     try:
-        posts = FeedDB.filter_posts(user_id=user_id)
+        posts = FeedDB.filter_posts(**params)
         for feed in posts:
             data.update({feed['post_id']: {}})
             for key, value in feed.items():
