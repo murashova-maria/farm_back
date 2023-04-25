@@ -6,7 +6,6 @@ from py2neo import Graph, Node, Relationship, NodeMatcher, RelationshipMatcher
 
 # OTHER
 from random import randint
-from datetime import datetime
 
 
 class User:
@@ -394,7 +393,7 @@ class Conversation:
         self.rel_matcher = RelationshipMatcher(self.graph)
 
     def create_chat(self):
-        chat_id = randint(0, 10**20)
+        chat_id = randint(0, 2147483647)
         chat_node = Node('Chat', chat_id=chat_id)
         self.graph.create(chat_node)
 
@@ -419,38 +418,27 @@ class Schedule:
         self.graph = graph
         self.matcher = NodeMatcher(self.graph)
 
-    def create_schedule(self, user_id, action, day, schedule_range):
-        schedule_node = Node("Schedule", action=action, day=day, range=schedule_range)
-        user_node = self.matcher.match("User", user_id=user_id).first()
-        if user_node:
-            rel = Relationship(user_node, "HAS_SCHEDULE", schedule_node)
-            self.graph.create(rel)
-            return schedule_node
-        else:
-            return None
+    def create_schedule(self, user_id, action, day, time_range):
+        test_node = self.filter_schedules(user_id=user_id, day=day, time_range=time_range)
+        if test_node:
+            test_node[0]['action'] = action
+            self.graph.push(test_node[0])
+            return test_node
+        schedule_id = randint(0, 2147483647)
+        post_node = Node("Schedule", schedule_id=schedule_id, user_id=user_id, action=action,
+                         day=day, time_range=time_range)
+        self.graph.create(post_node)
+        return post_node
 
-    def update_schedule(self, schedule_id, **kwargs):
-        schedule_node = self.matcher.match("Schedule", schedule_id=schedule_id).first()
-        if schedule_node:
-            for key, value in kwargs.items():
-                schedule_node[key] = value
-            self.graph.push(schedule_node)
-            return schedule_node
-        else:
-            return None
-
-    def delete_schedule(self, schedule_id):
-        schedule_node = self.matcher.match("Schedule", schedule_id=schedule_id).first()
-        if schedule_node:
-            self.graph.delete(schedule_node)
-            return True
-        else:
-            return False
-
-    def get_user_schedule(self, user_id):
-        query = "MATCH (u:User)-[:HAS_SCHEDULE]->(s:Schedule) WHERE u.user_id=$user_id RETURN s"
-        result = self.graph.run(query, user_id=user_id)
-        return [record["s"] for record in result]
+    def filter_schedules(self, **kwargs):
+        query = "MATCH (p:Schedule) WHERE "
+        params = {"params_" + key: value for key, value in kwargs.items()}
+        for key, value in kwargs.items():
+            query += f"p.{key} = $params_{key} AND "
+        query = query[:-5]
+        query += " RETURN p"
+        result = self.graph.run(query, **params)
+        return [record["p"] for record in result]
 
 
 if __name__ == '__main__':

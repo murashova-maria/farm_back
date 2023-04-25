@@ -282,8 +282,6 @@ class Twitter(Base):
                 cover = IMG_DIR + 'twitter/' + cover
         else:
             cover = None
-        print('AVATAR: ', avatar)
-        print('COVER: ', cover)
         image_fields = [cover, avatar, name, location]
         set_the_profile = self.wait(5).until(ec.presence_of_element_located((By.XPATH, self.xpaths['set_the_profile'])))
         set_the_profile.click()
@@ -355,7 +353,6 @@ class Twitter(Base):
                         posts_link = link
                         break
                 likes = article.find_element(By.XPATH, './/*[@data-testid="like"]')
-                # self.move_and_click(likes)
                 likes = likes.text
                 if 'k' in likes.lower():
                     likes = float(likes[:likes.find('K')])*1000

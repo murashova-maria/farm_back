@@ -63,7 +63,7 @@ class Starter:
                     if user_info['search_tag']:
                         inst.collect_posts(user_info['search_tag'])
                     else:
-                        inst.collect_posts()
+                        inst.collect_posts(None)
                 elif user_info['activity'] == 'make_post':
                     posts = SelfPostsDB.filter_posts(user_id=user_info['user_id'], status='do_post')
                     for post in posts:

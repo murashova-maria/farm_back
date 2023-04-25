@@ -16,7 +16,6 @@ class QueuedTask:
         self.args = args
 
     def __call__(self):
-        print('ARGS: ', self.args)
         if type(self.args) is dict:
             self.args = {key: (value if value else 'None') for key, value in self.args.items()}
             getattr(self.obj, self.method)(**self.args)

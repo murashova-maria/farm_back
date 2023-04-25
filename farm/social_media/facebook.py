@@ -228,7 +228,6 @@ class Facebook(Base):
                     photo_link = str(links[1]) if links[1] else None
                 profile_link = str(posts_link[:posts_link.find('posts')])
                 author_name = str(profile_link.split('/')[3])
-                print("AUTHOR'S NAME: ", author_name)
                 for like in likes:
                     if len(like.text) >= 1 and self._digit_in_text(like.text):
                         local_likes.append(like.text.split('\n')[-1])

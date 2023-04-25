@@ -13,12 +13,27 @@ class User(BaseDB):
     username = Column(String)
     password = Column(String)
     phone_number = Column(String)
+    email = Column(String)
     social_media = Column(String)
     status = Column(String)
     activity = Column(String)
     reg_date = Column(DateTime)
     proxies = Column(String)
-    search_tag = Column(String)
+
+
+class Keyword(BaseDB):
+    __tablename__ = 'keywords'
+    keyword_id = Column(Integer, primary_key=True)
+
+
+class Schedule(BaseDB):
+    __tablename__ = 'schedule'
+    schedule_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer)
+    action = Column(String)
+    day = Column(Integer)
+    time_range = Column(Integer)
+    exact_time = Column(String)
 
 
 class FacebookProfile(BaseDB):
