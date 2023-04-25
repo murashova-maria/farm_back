@@ -414,5 +414,44 @@ class Conversation:
         self.graph.create(Relationship(chat_node, 'HAS_MESSAGE', message_node))
 
 
+class Schedule:
+    def __init__(self, graph):
+        self.graph = graph
+        self.matcher = NodeMatcher(self.graph)
+
+    def create_schedule(self, user_id, action, day, schedule_range):
+        schedule_node = Node("Schedule", action=action, day=day, range=schedule_range)
+        user_node = self.matcher.match("User", user_id=user_id).first()
+        if user_node:
+            rel = Relationship(user_node, "HAS_SCHEDULE", schedule_node)
+            self.graph.create(rel)
+            return schedule_node
+        else:
+            return None
+
+    def update_schedule(self, schedule_id, **kwargs):
+        schedule_node = self.matcher.match("Schedule", schedule_id=schedule_id).first()
+        if schedule_node:
+            for key, value in kwargs.items():
+                schedule_node[key] = value
+            self.graph.push(schedule_node)
+            return schedule_node
+        else:
+            return None
+
+    def delete_schedule(self, schedule_id):
+        schedule_node = self.matcher.match("Schedule", schedule_id=schedule_id).first()
+        if schedule_node:
+            self.graph.delete(schedule_node)
+            return True
+        else:
+            return False
+
+    def get_user_schedule(self, user_id):
+        query = "MATCH (u:User)-[:HAS_SCHEDULE]->(s:Schedule) WHERE u.user_id=$user_id RETURN s"
+        result = self.graph.run(query, user_id=user_id)
+        return [record["s"] for record in result]
+
+
 if __name__ == '__main__':
     pass
