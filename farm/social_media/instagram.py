@@ -14,13 +14,14 @@ from bs4 import BeautifulSoup
 
 class Instagram(Base):
     def __init__(self, username, password, phone_number=None, proxy=None):
-        try:
-            self.client = instagrapi.Client()
-            if proxy and proxy != 'None':
-                self.client.set_proxy(f'http://{proxy["username"]}:{proxy["password"]}@{proxy["ip"]}:{proxy["password"]}')
-            self.client.login(username, password)
-        except Exception:
-            self.client = None
+        self.client = None
+        # try:
+        #     self.client = instagrapi.Client()
+        #     if proxy and proxy != 'None':
+        #         self.client.set_proxy(f'http://{proxy["username"]}:{proxy["password"]}@{proxy["ip"]}:{proxy["password"]}')
+        #     self.client.login(username, password)
+        # except Exception:
+        #     self.client = None
         self.long_xpaths = {
             'add_image_to_the_publication': '//input[accept="image/jpeg,image/png,image/heic,'
                                             'image/heif,video/mp4,video/quicktime"]',
@@ -37,12 +38,12 @@ class Instagram(Base):
         self.last_tag = ''
         self.step = ''
 
-    def _liked_and_commented_users(self, post_url):
+    def _liked_and_commented_users(self, post_url) -> dict:
         try:
             comments = []
             likes = []
             if self.client is None:
-                return
+                return {'comments': [], 'likes': []}
             media_pk = self.client.media_pk_from_url(post_url)
             likers = self.client.media_likers(media_pk)
             commenters = self.client.media_comments(media_pk)
@@ -51,16 +52,13 @@ class Instagram(Base):
                 #                  'creator': comment.user.username})
                 comments.append([comment.text, comment.created_at_utc, comment.like_count, comment.user.username])
             for like in likers:
-                # {'username': like.username, 'profile_pic_url': str(like.profile_pic_url)}
                 likes.append([like.username, str(like.profile_pic_url)])
-            print('LIKES: ', likes)
-            print('COMMENTS: ', comments)
             return {'comments': comments, 'likes': likes}
         except Exception as ex:
+            pass
             # if 'login_required' in str(ex).lower():
             #     self.client.relogin()
             #     sleep(3)
-            print('EX: ', ex)
         return {'comments': [], 'likes': []}
 
     def _save_new_post_to_db(self, author_name, text, img_path, posts_link, date, likes_amount, likes_accounts,
@@ -69,8 +67,22 @@ class Instagram(Base):
         args = [self.usr_id, 'instagram', author_name, text, img_path, posts_link, 'None', date, likes_amount,
                 likes_accounts, comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
                 label, sent_rate, lang, tag]
+        args = replace_none(args)
         feed = QueuedTask(FeedDB, 'create_post', args)
         main_queue.put(feed)
+
+    def _allow_cookies_v2(self):
+        try:
+            sleep(5)
+            text = 'Allow all cookies'
+            buttons = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'button')))
+            for button in buttons:
+                if text.lower() in button.text.lower():
+                    self.move_and_click(button)
+                    break
+        except Exception as ex:
+            pass
+        sleep(4)
 
     def _allow_cookies(self) -> None:
         text = 'Allow essential and optional cookies'
@@ -83,6 +95,7 @@ class Instagram(Base):
                     self.execution_status = '[FIRST STEP]: PASSED'
             except WebDriverException:
                 break
+        self._allow_cookies_v2()
 
     def _decline_saving_login_data(self) -> None:
         xpath = self.xpath_template('Not Now', 'div')
@@ -153,9 +166,13 @@ class Instagram(Base):
         try:
             self.rs()
             inputs = self.driver.find_elements(By.TAG_NAME, 'input')
-            inputs[0].send_keys(avatar)
-        except WebDriverException:
-            pass
+            for inp in inputs:
+                if inp.get_attribute('type') == 'file':
+                    inp.send_keys(avatar)
+                    sleep(1)
+                    return 
+        except WebDriverException as ex:
+            print('WDE EX AVATAR: ', ex)
 
     def _set_like(self):
         pass
@@ -184,7 +201,7 @@ class Instagram(Base):
         try:
             self._open_from_navbar('Create')
             inputs = self.driver.find_elements(By.TAG_NAME, 'input')
-            inputs[1].send_keys(filename)
+            inputs[1].send_keys(IMG_DIR + 'instagram/' + filename)
             for _ in range(2):
                 self.rs()
                 next_btn = self.driver.find_element(By.XPATH, self.xpath_template('Next', 'div'))
@@ -222,7 +239,7 @@ class Instagram(Base):
                 field.send_keys(value)
             self._select_gender(gender)
             sleep(6)
-            self._select_avatar(avatar)
+            self._select_avatar(IMG_DIR + 'instagram/' + avatar)
             submit = self.driver.find_element(By.XPATH, '//div[contains(text(), "Submit")]')
             self.move_and_click(submit)
             sleep(3)
@@ -281,13 +298,19 @@ class Instagram(Base):
         """
         posts = self.collect_posts(tag, posts_count)
         for post in posts:
-            comments, likes = self._liked_and_commented_users(post['link']).values()
-            rate = return_data_flair(post['text'])
-            data = [None, post['text'], 'None', post['link'], 'None', len(likes), likes, len(comments), comments,
-                    'None', *rate[1:], tag]
-            self._save_new_post_to_db(*data)
+            try:
+                comments, likes = self._liked_and_commented_users(post['link']).values()
+                rate = return_data_flair(post['text'])
+                data = ['None', post['text'], 'None', post['link'], 'None', len(likes), likes, len(comments), comments,
+                        'None', *rate[1:], tag]
+                print('INSTAGRAM DATA: ', data)
+                print()
+                self._save_new_post_to_db(*data)
+            except Exception as ex:
+                print(ex)
 
     def collect_posts(self, tag, posts_count):
+        retries = 0
         posts = []
         url = f'https://www.instagram.com/explore/tags/{tag}/'
         self.driver.get(url)
@@ -338,6 +361,10 @@ class Instagram(Base):
                 length_posts = len(link_arr)
 
                 if length_posts >= posts_count:
+                    break
+                if length_posts == 0:
+                    retries += 1
+                if retries == 3:
                     break
 
             if length_posts >= posts_count:

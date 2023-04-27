@@ -90,6 +90,7 @@ class Twitter(Base):
         args = [self.usr_id, 'twitter', author_name, text, img_path, posts_link, 'None', date, likes_amount,
                 likes_accounts, comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
                 label, sent_rate, lang, tag]
+        args = replace_none(args)
         feed = QueuedTask(FeedDB, 'create_post', args)
         main_queue.put(feed)
 
@@ -317,13 +318,13 @@ class Twitter(Base):
         if text:
             self.chain.reset_actions()
             self.chain.send_keys(text).perform()
-
         if filename and filename != 'None':  # Paste image if it exists.
             image_path = self.driver.find_element(By.XPATH, self.xpaths['image_path'])
             if 'http' not in filename:
                 image_path.send_keys(IMG_DIR + 'twitter/' + filename)
             else:
                 image_path.send_keys(filename)
+        sleep(5)
         tweet_it = self.driver.find_element(By.XPATH, self.xpaths['tweet_it'])
         tweet_it.click()
 

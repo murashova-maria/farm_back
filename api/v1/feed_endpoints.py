@@ -10,7 +10,6 @@ async def get_feed(params: Dict[Any, Any]):
             posts = FeedDB.filter_posts(**params)
         else:
             posts = FeedDB.get_all()
-        print(posts)
         for feed in posts:
             ld = {}
             for key, value in feed.items():

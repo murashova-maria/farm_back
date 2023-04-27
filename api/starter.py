@@ -68,7 +68,8 @@ class Starter:
                                                                                 'status': 'done'}))
                     main_queue.put(QueuedTask(UserDB, 'update_user', {
                         'user_id': inst.usr_id,
-                        'status': 'active'
+                        'status': 'active',
+                        'activity': 'wait'
                     }))
                     sleep(5)
                 elif user_info['activity'] == 'make_post':
@@ -78,6 +79,7 @@ class Starter:
                         main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'done',
                                                                                'post_id': post['post_id']}))
                         sleep(3)
+
             except Exception as ex:
                 print(ex)
 
@@ -92,6 +94,7 @@ class Starter:
         self._add_user('Active')
         while True:
             try:
+                sleep(2)
                 # Get user's DB object.
                 user_info = UserDB.filter_users(username=self.username, password=self.password,
                                                 phone_number=self.phone_number, social_media='facebook')[0]
@@ -100,6 +103,8 @@ class Starter:
                     profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])
                     if profile:
                         profile = profile[0]
+                    else:
+                        continue
                     avatar = profile['avatar']
                     current_location = profile['current_location']
                     native_location = profile['native_location']
@@ -116,19 +121,25 @@ class Starter:
                     task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
                                                               'user_id': user_info['user_id']})
                     main_queue.put(task)
+                    sleep(3)
                 elif user_info['activity'] == 'add_hobbies':
                     profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])[0]
-                    hobbies = profile['hobbies'].split()
+                    hobbies = profile['hobbies']
+                    if type(profile['hobbies']) is str:
+                        hobbies = profile['hobbies'].split()
                     if hobbies and hobbies != 'None':
                         fb.add_hobbies(hobbies)
                     task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
                                                               'user_id': user_info['user_id']})
                     main_queue.put(task)
+                    sleep(3)
                 elif user_info['activity'] == 'add_friends':
-                    fb.add_friends(max_value=100)
+                    fb.add_friends(max_value=20)
                 elif user_info['activity'] == 'search_groups':
-                    if user_info['search_tag']:
-                        fb.join_groups_by_interests(user_info['search_tag'])
+                    for search_tag in KeywordDB.get_keywords_by_user_id(user_id=user_info['user_id'], only_kw=False):
+                        if search_tag['status'] != 'wait':
+                            continue
+                        fb.join_groups_by_interests(search_tag['keyword'], search_tag['amount'])
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                                       'activity': 'wait'}))
                 elif user_info['activity'] == 'check_feed':
@@ -149,6 +160,22 @@ class Starter:
                     sleep(5)
                     # else:
                     #     fb.collect_posts()
+                elif user_info['activity'] == 'make_post':
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {
+                        'user_id': fb.usr_id,
+                        'status': 'gardering'
+                    }))
+                    posts = SelfPostsDB.filter_posts(user_id=user_info['user_id'], status='do_post')
+                    for post in posts:
+                        fb.make_post(post['text'], post['filename'])
+                        main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'done',
+                                                                               'post_id': post['post_id']}))
+                        sleep(3)
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {
+                        'user_id': fb.usr_id,
+                        'activity': 'wait',
+                        'status': 'active'
+                    }))
             except Exception as ex:
                 print('WHILE THREAD: ', ex)
 

@@ -20,9 +20,9 @@ async def add_self_post(user_id: str, items: Dict[Any, Any]):
     try:
         text = items.get('text')
         filename = items.get('filename')
-        status = items.get('status')
-        task = QueuedTask(SelfPostsDB, 'create_post', [user_id, text, filename, status,
-                                                       datetime.now().strftime(DATE_FORMAT)])
+        exact_time = items.get('exact_time')
+        task = QueuedTask(SelfPostsDB, 'create_post', [user_id, text, filename, 'None', 'None', 'None',
+                                                       exact_time])
         main_queue.put(task)
         return {'Status': 'Success'}
     except Exception as ex:

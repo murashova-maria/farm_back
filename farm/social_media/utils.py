@@ -20,7 +20,7 @@ class QueuedTask:
             self.args = {key: (value if value else 'None') for key, value in self.args.items()}
             getattr(self.obj, self.method)(**self.args)
         else:
-            self.args = [arg if arg else 'None' for arg in self.args]
+            self.args = [arg if arg is not None else 'None' for arg in self.args]
             getattr(self.obj, self.method)(*self.args)
 
 
@@ -29,6 +29,15 @@ def get_users_liked(api_id, api_hash, post_id: int):
     api = tweepy.API(auth)
     likes = api.get_favorites(id=post_id)
     return [{'name': user.name, 'screen_name': user.screen_name, 'user_id': user.user_id} for user in likes]
+
+
+def replace_none(lst):
+    for i, val in enumerate(lst):
+        if isinstance(val, list):
+            lst[i] = replace_none(val)
+        elif val is None:
+            lst[i] = 'None'
+    return lst
 
 
 if __name__ == '__main__':

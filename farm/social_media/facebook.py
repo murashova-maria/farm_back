@@ -10,7 +10,7 @@ except ImportError:
 class Facebook(Base):
     def __init__(self, username, password, phone_number=None, proxy=None):
         self.xpaths = {
-            'composer': '//div[@data-pagelet="ProfileComposer"]',
+            'composer': "//span[contains(text(), \"What's in your mind\")]",
             'text_field': './/div[@role="button"]',
             'profile_text_box': '//div[@role="textbox"]',
             'current_location_input': '//input[@aria-label="Current city"]',
@@ -174,11 +174,14 @@ class Facebook(Base):
             self.move_and_click(add_hobbies_btn)
             sleep(3)
             spans = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'span')))
-            for span in spans:
-                if 'Search for others'.lower() in span.text.lower():
-                    self.move_and_click(span)
+            try:
+                for span in spans:
+                    if 'Search for others'.lower() in span.text.lower():
+                        self.move_and_click(span)
+            except WebDriverException as ex:
+                pass
             for hobbie in hobbies:
-                input_field = self.wait(2).until(ec.presence_of_element_located((By.XPATH,
+                input_field = self.wait(10).until(ec.presence_of_element_located((By.XPATH,
                                                                                  '//input[@placeholder="What '
                                                                                  'do you do for fun?"]')))
                 self.move_and_click(input_field)
@@ -314,7 +317,8 @@ class Facebook(Base):
                 inp_field = inp.find_element(By.XPATH, './/input[@type="file"]')
                 inp_field.send_keys(IMG_DIR + 'facebook/' + avatar)
                 break
-            except WebDriverException:
+            except WebDriverException as wde:
+                print('PROFILE PIC WDE')
                 inp = inp.find_element(By.XPATH, '..')
         try:
             close = self.wait(4).until(ec.presence_of_element_located((By.XPATH, '//span[contains(text(), "Close")]')))
@@ -408,13 +412,14 @@ class Facebook(Base):
     def make_post(self, text=None, filename=None):
         self._get_self_profile()
         self.wait_until_profile_loads(5, 2, 'profile.php')
-        sleep(2)
+        sleep(4)
         try:
-            profile_composer = self.wait(3).until(ec.presence_of_element_located((By.XPATH, self.xpaths['composer'])))
-            self.scroll_into_view(profile_composer)
-            self.rs()
-            text_field = profile_composer.find_element(By.XPATH, './/*[@role="button"]')
-            self.move_and_click(text_field, y=-200)
+            spans = self.driver.find_elements(By.TAG_NAME, 'span')
+            for span in spans:
+                print(span.text)
+                if "What's on your mind?" in span.text:
+                    self.move_and_click(span)
+                    sleep(4)
             self.rs()
             self._select_audience()
             sleep(3)
@@ -433,7 +438,7 @@ class Facebook(Base):
             post = self.driver.find_element(By.XPATH, '//div[@aria-label="Post"]')
             post.click()
         except WebDriverException as wde:
-            print(wde)
+            print('MAKE POST WDE: ', wde)
 
     def explore_platform(self):
         pass

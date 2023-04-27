@@ -74,21 +74,17 @@ class Keyword:
             user_node = self.graph.nodes.match('User', user_id=user_id).first()
             keyword_node = self.matcher.match('Keyword', keyword=keyword).first()
             if keyword_node is None:
-                keyword_node = Node('Keyword', keyword_id=randint(0, 2147483647), keyword=keyword, status=status, amount=amount)
+                keyword_node = Node('Keyword', keyword_id=randint(0, 2147483647), keyword=keyword, status=status,
+                                    amount=amount)
                 self.graph.create(keyword_node)
             rel = Relationship(user_node, 'HAS_KEYWORD', keyword_node)
             self.graph.create(rel)
         else:
             keyword_node = self.matcher.match('Keyword', keyword=keyword).first()
             if keyword_node is None:
-                keyword_node = Node('Keyword', keyword_id=randint(0, 2147483647), keyword=keyword, status=status, amount=amount)
+                keyword_node = Node('Keyword', keyword_id=randint(0, 2147483647), keyword=keyword,
+                                    status=status, amount=amount)
                 self.graph.create(keyword_node)
-
-    # def add_keyword_to_user(self, user_id, keyword, amount=15, status='wait'):
-    #     user_node = self.graph.nodes.match('User', user_id=user_id).first()
-    #     keyword_node = Node('Keyword', keyword_id=randint(0, 2147483647), keyword=keyword, status=status, amount=amount)
-    #     rel = Relationship(user_node, 'HAS_KEYWORD', keyword_node)
-    #     self.graph.create(rel)
 
     def filter_keywords(self, **kwargs):
         query = "MATCH (u:Keyword) WHERE "
@@ -434,15 +430,21 @@ class Schedule:
         self.graph = graph
         self.matcher = NodeMatcher(self.graph)
 
-    def create_schedule(self, user_id, action, day, time_range, exact_time):
-        test_node = self.filter_schedules(user_id=user_id, day=day, time_range=time_range, exact_time=exact_time)
+    def create_schedule(self, user_id, action, day, time_range, exact_time, status='None'):
+        test_node = self.filter_schedules(user_id=user_id, day=day, time_range=time_range,
+                                          exact_time=exact_time, status=status)
         if test_node:
-            test_node[0]['action'] = action
+            if exact_time and exact_time != 'None':
+                test_node[0]['exact_time'] = exact_time
+            if action and action != 'None':
+                test_node[0]['action'] = action
+            if status and status != 'None':
+                test_node[0]['status'] = status
             self.graph.push(test_node[0])
             return test_node
         schedule_id = randint(0, 2147483647)
         post_node = Node("Schedule", schedule_id=schedule_id, user_id=user_id, action=action,
-                         day=day, time_range=time_range)
+                         day=day, time_range=time_range, exact_time=exact_time, status=status)
         self.graph.create(post_node)
         return post_node
 
