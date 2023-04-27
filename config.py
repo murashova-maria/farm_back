@@ -7,11 +7,13 @@ import calendar
 from databases.neo4j_users import *
 
 
-def current_day():
-    return datetime.datetime.today().strftime('%A')
-
-
-SCHEDULE_DAYS = calendar.day_name
+RANGES = {index: f'{num}:00-{num+2}:00' if len(str(num)) == 2 else f'0{num}:00-{num+2}:00'
+          for index, num in enumerate(range(6, 22, 2))}
+RANGES.update({
+    8: '22:00-00:00',
+    9: '00:00-02:00',
+    10: '02:00-04:00'
+})
 uri = os.getenv('SERVER_NEO4J')
 db_username = os.getenv('LOGIN_NEO4J')
 db_password = os.getenv('PASSWORD_NEO4J')

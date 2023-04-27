@@ -7,3 +7,5 @@ pyvirtualdisplay==3.0
 flair==0.12.2
 transformers==4.27.4
 fastapi==0.89.1
+beautifulsoup4==4.11.2
+instagrapi==1.17.3

@@ -37,10 +37,10 @@ class Starter:
         login_status = inst.login()
         sleep(2)
         if not login_status:
-            self._add_user('[ERROR]: Instagram Login is unsuccessful -> Access denied.')
+            self._add_user('Banned')
             inst.driver.close()
             return
-        self._add_user('[SUCCESS]: Instagram is Logged in')
+        self._add_user('Active')
         while True:
             sleep(1)
             try:
@@ -55,15 +55,22 @@ class Starter:
                     name = profile['name']
                     about_myself = profile['about_myself']
                     gender = profile['gender']
-                    inst.fill_profile(avatar, name, about_myself, gender)
+                    inst.fill_profile(name, None, about_myself, gender, avatar)
                     task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
                                                               'user_id': inst.usr_id})
                     main_queue.put(task)
                 elif user_info['activity'] == 'check_feed':
-                    if user_info['search_tag']:
-                        inst.collect_posts(user_info['search_tag'])
-                    else:
-                        inst.collect_posts(None)
+                    for search_tag in KeywordDB.get_keywords_by_user_id(user_id=user_info['user_id'], only_kw=False):
+                        if search_tag['status'] != 'wait':
+                            continue
+                        inst.handle_posts(search_tag['keyword'], search_tag['amount'])
+                        main_queue.put(QueuedTask(KeywordDB, 'update_keyword', {'keyword_id': search_tag['keyword_id'],
+                                                                                'status': 'done'}))
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {
+                        'user_id': inst.usr_id,
+                        'status': 'active'
+                    }))
+                    sleep(5)
                 elif user_info['activity'] == 'make_post':
                     posts = SelfPostsDB.filter_posts(user_id=user_info['user_id'], status='do_post')
                     for post in posts:
@@ -79,10 +86,10 @@ class Starter:
         login_status = fb.login()
         sleep(2)
         if not login_status:
-            self._add_user('[ERROR]: Facebook Login is unsuccessful -> Access denied.')
+            self._add_user('Banned')
             fb.driver.close()
             return
-        self._add_user('[SUCCESS]: Facebook is Logged in')
+        self._add_user('Active')
         while True:
             try:
                 # Get user's DB object.
@@ -125,10 +132,23 @@ class Starter:
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                                       'activity': 'wait'}))
                 elif user_info['activity'] == 'check_feed':
-                    if user_info['search_tag']:
-                        fb.collect_posts(user_info['search_tag'])
-                    else:
-                        fb.collect_posts()
+                    amount_of_tweets = 0
+                    for search_tag in KeywordDB.get_keywords_by_user_id(user_id=user_info['user_id'], only_kw=False):
+                        if search_tag['status'] != 'wait':
+                            continue
+                        for _ in range(search_tag['amount']):
+                            amount_of_tweets += fb.collect_posts(search_tag['keyword'])
+                            if amount_of_tweets >= search_tag['amount']:
+                                break
+                        main_queue.put(QueuedTask(KeywordDB, 'update_keyword', {'keyword_id': search_tag['keyword_id'],
+                                                                                'status': 'done'}))
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {
+                        'user_id': fb.usr_id,
+                        'status': 'active'
+                    }))
+                    sleep(5)
+                    # else:
+                    #     fb.collect_posts()
             except Exception as ex:
                 print('WHILE THREAD: ', ex)
 
@@ -137,10 +157,10 @@ class Starter:
         login_status = tw.login()
         sleep(2)
         if not login_status:
-            self._add_user('[ERROR]: Twitter Login is unsuccessful -> Access denied.')
+            self._add_user('Blocked')
             tw.driver.close()
             return
-        self._add_user('[SUCCESS]: Twitter is Logged in')
+        self._add_user('Created')
         while True:
             try:
                 sleep(1)
@@ -150,6 +170,10 @@ class Starter:
                 user_info = user_info[0]
                 tw.usr_id = user_info['user_id']
                 if user_info['activity'] == 'fill_profile':
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {
+                        'user_id': tw.usr_id,
+                        'status': 'gardering'
+                    }))
                     profile = TwitterProfileDB.filter_profiles(user_id=user_info['user_id'])[0]
                     avatar = profile['avatar']
                     cover = profile['cover']
@@ -159,21 +183,46 @@ class Starter:
                     tw.fill_profiles_header(avatar, cover,
                                             name, about_myself, location)
 
-                    task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
+                    task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'active',
                                                               'user_id': tw.usr_id})
                     main_queue.put(task)
                 elif user_info['activity'] == 'check_feed':
-                    if user_info['search_tag']:
-                        tw.collect_posts(user_info['search_tag'])
-                    else:
-                        tw.collect_posts()
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {
+                        'user_id': tw.usr_id,
+                        'status': 'gardering'
+                    }))
+                    amount_of_tweets = 0
+                    for search_tag in KeywordDB.get_keywords_by_user_id(user_id=user_info['user_id'], only_kw=False):
+                        if search_tag['status'] != 'wait':
+                            continue
+                        for _ in range(search_tag['amount']):
+                            amount_of_tweets += tw.collect_posts(search_tag['keyword'])
+                            if amount_of_tweets >= search_tag['amount']:
+                                break
+                        main_queue.put(QueuedTask(KeywordDB, 'update_keyword', {'keyword_id': search_tag['keyword_id'],
+                                                                                'status': 'done'}))
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {
+                        'user_id': tw.usr_id,
+                        'activity': 'wait',
+                        'status': 'active'
+                    }))
+                    sleep(5)
                 elif user_info['activity'] == 'make_post':
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {
+                        'user_id': tw.usr_id,
+                        'status': 'gardering'
+                    }))
                     posts = SelfPostsDB.filter_posts(user_id=user_info['user_id'], status='do_post')
                     for post in posts:
                         tw.make_post(post['text'], post['filename'])
                         main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'done',
                                                                                'post_id': post['post_id']}))
                         sleep(3)
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {
+                        'user_id': tw.usr_id,
+                        'activity': 'wait',
+                        'status': 'active'
+                    }))
             except Exception as ex:
                 print(ex)
 

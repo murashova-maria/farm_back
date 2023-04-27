@@ -4,13 +4,18 @@ from api import *
 
 @app.get('/posts/')
 async def get_feed(params: Dict[Any, Any]):
-    data = {}
+    data = []
     try:
-        posts = FeedDB.filter_posts(**params)
+        if params:
+            posts = FeedDB.filter_posts(**params)
+        else:
+            posts = FeedDB.get_all()
+        print(posts)
         for feed in posts:
-            data.update({feed['post_id']: {}})
+            ld = {}
             for key, value in feed.items():
-                data[feed['post_id']].update({key: value})
+                ld.update({key: value})
+            data.append(ld)
         return data
     except Exception as ex:
         print('EXCEPTION: ', ex)

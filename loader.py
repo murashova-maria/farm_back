@@ -7,6 +7,7 @@ from queue import Queue
 from config import *
 from databases.neo4j_users import *
 from farm.social_media.utils import QueuedTask
+from databases.utils import get_exact_date, get_randomized_date
 
 # logging.basicConfig(
 #     level=logging.DEBUG,

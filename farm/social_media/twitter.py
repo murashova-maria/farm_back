@@ -86,10 +86,10 @@ class Twitter(Base):
 
     def _save_new_post_to_db(self, author_name, text, img_path, posts_link, date, likes_amount, likes_accounts,
                              comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                             label, sent_rate, lang):
+                             label, sent_rate, lang, tag):
         args = [self.usr_id, 'twitter', author_name, text, img_path, posts_link, 'None', date, likes_amount,
                 likes_accounts, comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                label, sent_rate, lang]
+                label, sent_rate, lang, tag]
         feed = QueuedTask(FeedDB, 'create_post', args)
         main_queue.put(feed)
 
@@ -128,30 +128,36 @@ class Twitter(Base):
                 print('ERRORS:', wde)
 
     def _get_profile(self):
-        app_tab_bar = self.wait(3).until(ec.presence_of_element_located((By.XPATH, self.xpaths['get_profile'])))
-        self.chain.reset_actions()
-        self.chain.move_to_element(app_tab_bar)
-        self.rs()
-        self.chain.click()
-        self.chain.perform()
-        self.chain.reset_actions()
-        self._is_account_suspended()
+        for _ in range(2):
+            try:
+                app_tab_bar = self.wait(3).until(ec.presence_of_element_located((By.XPATH, self.xpaths['get_profile'])))
+                self.chain.reset_actions()
+                self.chain.move_to_element(app_tab_bar)
+                self.rs()
+                self.chain.click()
+                self.chain.perform()
+                self.chain.reset_actions()
+                self._is_account_suspended()
+                return
+            except Exception as ex:
+                self.open_homepage()
 
     def review(self, tag: str):
         # Open 'review' or 'search' field to start search.
         if self.driver.current_url != self.home:
             self.open_homepage()
         self._is_account_suspended()
-        try:
-            review_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH, self.xpaths['explore'])))
-            review_btn.click()
+        for _ in range(2):
+            try:
+                review_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH, self.xpaths['explore'])))
+                review_btn.click()
 
-            search_box = self.wait(3).until(ec.presence_of_element_located((By.XPATH, self.xpaths['search_field'])))
-            search_box.click()
-            search_box.send_keys(tag + Keys.ENTER)
-            return True
-        except WebDriverException:
-            pass
+                search_box = self.wait(3).until(ec.presence_of_element_located((By.XPATH, self.xpaths['search_field'])))
+                search_box.click()
+                search_box.send_keys(tag + Keys.ENTER)
+                return True
+            except WebDriverException:
+                self.open_homepage()
         return False
 
     def _fill_start_interests(self, interests: list):
@@ -201,8 +207,10 @@ class Twitter(Base):
             print('[UPDATE PROFILE]: ', wde)
 
     def _fill_profiles_header(self, input_data: list, textarea_data: list):
+        print('FILLING STARTED')
         for i in range(4):
             change_box = self.driver.find_element(By.XPATH, self.xpaths['change_profile_label'])
+            print('INPUT DATA FOR FILLING: ', input_data)
             if 'Pick a profile picture' in change_box.text and input_data[1]:
                 file_input = change_box.find_element(By.XPATH, './/input[@data-testid="fileInput"]')
                 file_input.send_keys(input_data[1])
@@ -293,6 +301,8 @@ class Twitter(Base):
             self._fill_profiles_header(image_fields, text_fields)
         else:
             self._update_profiles_header(image_fields, text_fields)
+        sleep(2)
+        self.open_homepage()
 
     def make_post(self, text: None | str = None, filename: None | str = None):
         # If there is nothing to post - cancel.
@@ -318,6 +328,7 @@ class Twitter(Base):
         tweet_it.click()
 
     def collect_posts(self, tag='#News'):
+        amount_of_articles = 0
         if 'search' not in self.driver.current_url:
             self.review(tag)
         if not self.scroll_height:
@@ -362,11 +373,14 @@ class Twitter(Base):
                 retweets = article.find_element(By.XPATH, './/*[@data-testid="retweet"]').text
                 if 'k' in retweets.lower():
                     retweets = float(retweets[:retweets.find('K')])*1000
-                self._save_new_post_to_db(username, article_text, pic_link, posts_link, datetime.now(), likes, [],
+                self._save_new_post_to_db(username, article_text, pic_link, posts_link, datetime.datetime.now(), likes,
+                                          [],
                                           replies, [],
-                                          retweets, *rate)
+                                          retweets, *rate, tag)
+                amount_of_articles += 1
             except Exception as ex:
                 print(ex)
+        return amount_of_articles
 
 
 if __name__ == '__main__':

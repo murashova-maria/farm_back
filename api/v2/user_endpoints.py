@@ -31,6 +31,23 @@ async def get_bots_info(social_media: str = None, country: str = None):
 @app.get('/bots/{user_id}/keywords/')
 async def keywords_by_usrid(user_id: str):
     try:
-        return KeywordDB.get_keywords_by_user_id(user_id)
+        return [{'keyword': key['keyword'], 'keyword_id': key['keyword_id']}
+                for key in KeywordDB.get_keywords_by_user_id(user_id, only_kw=False)]
     except Exception as ex:
         raise HTTPException(status_code=400, detail=[])
+
+
+@app.post('/bots/new/')
+async def create_account(item: Dict[Any, Any]):
+    username = item.get('username')
+    password = item.get('password')
+    phone_number = item.get('phone_number')
+    network = item.get('network')
+    proxy = item.get('proxy')
+    if None in (username, password, phone_number, network):
+        raise HTTPException(status_code=400, detail='Missing parameter(s)')
+    if network not in ('twitter', 'facebook', 'instagram'):
+        raise HTTPException(status_code=400, detail='Invalid network')
+    thread = Thread(target=start, args=(username, password, phone_number, network, proxy))
+    thread.start()
+    return {'Success': 'User creation started'}

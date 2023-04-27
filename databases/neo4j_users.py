@@ -25,7 +25,8 @@ class User:
             inst.create_profile(user_id)
 
     def create_user(self, username, password, phone_number='None', social_media='None',
-                    status='None', activity='None', reg_date='None', proxies='None', search_tag='None'):
+                    status='None', activity='None', reg_date='None', proxies='None', search_tag='None',
+                    amount_of_friends=0):
         user_id = str(uuid.uuid4())
         check_usr = self.matcher.match("User", username=username, password=password, phone_number=phone_number,
                                        social_media=social_media).first()
@@ -34,7 +35,7 @@ class User:
         user_node = Node("User", user_id=user_id, username=username, password=password,
                          phone_number=phone_number, social_media=social_media,
                          status=status, activity=activity, reg_date=reg_date,
-                         proxies=proxies, search_tag=search_tag)
+                         proxies=proxies, search_tag=search_tag, amount_of_friends=amount_of_friends)
         self.graph.create(user_node)
         self._attach_profile(user_id=user_id, network=social_media)
         return user_node
@@ -114,7 +115,14 @@ class Keyword:
     def get_all_keywords_with_users(self):
         query = """
                 MATCH (u:User)-[:HAS_KEYWORD]->(k:Keyword)
-                RETURN k.keyword_id as keyword_id, k.keyword as keyword, u.social_media as social_media, collect(u) as users
+                OPTIONAL MATCH (u)-[:HAS_PROFILE]->(p)
+                RETURN k.keyword_id as keyword_id, k.keyword as keyword,
+                       k.amount as amount, k.status as status,
+                       u.user_id as user_id, u.username as username, 
+                       u.phone_number as phone_number, u.social_media as social_media,
+                       u.status as user_status, u.activity as user_activity,
+                       u.reg_date as reg_date, u.proxies as proxies, u.search_tag as search_tag,
+                       p.avatar as avatar
                 """
         result = self.graph.run(query)
 
@@ -122,38 +130,46 @@ class Keyword:
         for record in result:
             keyword_id = record["keyword_id"]
             keyword = record["keyword"]
-            social_media = record["social_media"]
-            users = record["users"]
+            amount = record["amount"]
+            status = record["status"]
 
             if keyword not in keywords_dict:
-                keywords_dict[keyword] = {}
+                keywords_dict[keyword] = {"keyword_id": keyword_id, "keyword_value": keyword,
+                                          "amount": amount, "status": status, "users": []}
 
-            if social_media not in keywords_dict[keyword]:
-                keywords_dict[keyword][social_media] = []
+            user_id = record["user_id"]
+            username = record["username"]
+            phone_number = record["phone_number"]
+            social_media = record["social_media"]
+            user_status = record["user_status"]
+            user_activity = record["user_activity"]
+            reg_date = record["reg_date"]
+            proxies = record["proxies"]
+            search_tag = record["search_tag"]
+            avatar = record["avatar"]
 
-            keywords_dict[keyword][social_media] += users
+            user_dict = {"user_id": user_id, "username": username, "phone_number": phone_number,
+                         "social_media": social_media, "status": user_status, "activity": user_activity,
+                         "reg_date": reg_date, "proxies": proxies, "search_tag": search_tag}
+
+            if avatar is not None:
+                user_dict["avatar"] = avatar
+
+            keywords_dict[keyword]["users"].append(user_dict)
 
         result_list = []
-        for keyword, media_users in keywords_dict.items():
-            kw_dict = {"keyword_id": keyword_id, "keyword_value": keyword}
-            for media, users in media_users.items():
-                media_dict = {}
-                for user in users:
-                    user_profile = self._get_profile_by_user_id(user["user_id"], media)
-                    user_dict = {"user_id": user["user_id"], "username": user["username"]}
-                    if user_profile is not None:
-                        user_dict.update({"avatar": user_profile["avatar"]})
-                    media_dict.update({media + "_user": user_dict})
-                kw_dict.update(media_dict)
-            result_list.append(kw_dict)
+        for keyword, data in keywords_dict.items():
+            result_list.append(data)
         return result_list
 
-    def get_keywords_by_user_id(self, user_id):
+    def get_keywords_by_user_id(self, user_id, only_kw=True):
         query = """
                 MATCH (b:User)-[:HAS_KEYWORD]->(k:Keyword)
                 WHERE b.user_id = $user_id
                 RETURN k.keyword as keyword
                 """
+        if not only_kw:
+            query = query.replace('k.keyword as keyword', 'k as keyword')
         result = self.graph.run(query, user_id=user_id)
         return [record["keyword"] for record in result]
 
@@ -313,7 +329,7 @@ class Feed:
     def create_post(self, user_id, social_media, author_name='None', text='None', image_path='None',
                     posts_link='None', status='None', date='None', likes_amount='None', likes_accounts='None',
                     comments_amount='None', comments_accounts='None', retweets_amount='None', text_names='None',
-                    noun_keywords='None', label='None', sent_rate='None', language='None'):
+                    noun_keywords='None', label='None', sent_rate='None', language='None', tag='None'):
         post_id = str(uuid.uuid4())
         post_node = Node("Post", post_id=post_id, user_id=user_id, social_media=social_media,
                          author_name=author_name, text=text, image_path=image_path,
@@ -321,7 +337,7 @@ class Feed:
                          likes_accounts=likes_accounts, comments_amount=comments_amount,
                          comments_accounts=comments_accounts, retweets_amount=retweets_amount,
                          text_names=text_names, noun_keywords=noun_keywords, label=label,
-                         sent_rate=sent_rate, language=language)
+                         sent_rate=sent_rate, language=language, tag=tag)
         self.graph.create(post_node)
         return post_node
 
@@ -354,11 +370,11 @@ class SelfPosts:
         self.graph = graph
         self.matcher = NodeMatcher(self.graph)
 
-    def create_post(self, user_id, social_media, text='None', filename='None',
-                    status='None', date='None'):
+    def create_post(self, user_id, text='None', filename='None',
+                    status='None', day='None', time_range='None', exact_time='None'):
         post_id = str(uuid.uuid4())
-        post_node = Node("SelfPost", post_id=post_id, user_id=user_id, social_media=social_media,
-                         text=text, filename=filename, status=status, date=date)
+        post_node = Node("SelfPost", post_id=post_id, user_id=user_id, text=text, filename=filename, status=status, day=day, time_range=time_range,
+                         exact_time=exact_time)
         self.graph.create(post_node)
         return post_node
 
@@ -418,8 +434,8 @@ class Schedule:
         self.graph = graph
         self.matcher = NodeMatcher(self.graph)
 
-    def create_schedule(self, user_id, action, day, time_range):
-        test_node = self.filter_schedules(user_id=user_id, day=day, time_range=time_range)
+    def create_schedule(self, user_id, action, day, time_range, exact_time):
+        test_node = self.filter_schedules(user_id=user_id, day=day, time_range=time_range, exact_time=exact_time)
         if test_node:
             test_node[0]['action'] = action
             self.graph.push(test_node[0])
@@ -438,6 +454,11 @@ class Schedule:
         query = query[:-5]
         query += " RETURN p"
         result = self.graph.run(query, **params)
+        return [record["p"] for record in result]
+
+    def get_all_schedules(self):
+        query = "MATCH (p:Schedule) RETURN p"
+        result = self.graph.run(query)
         return [record["p"] for record in result]
 
 

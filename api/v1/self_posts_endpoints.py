@@ -18,12 +18,11 @@ async def get_self_posts(user_id: str):
 @app.post('/accounts/{user_id}/self_posts/')
 async def add_self_post(user_id: str, items: Dict[Any, Any]):
     try:
-        social_media = items.get('social_media')
         text = items.get('text')
         filename = items.get('filename')
         status = items.get('status')
-        task = QueuedTask(SelfPostsDB, 'create_post', [user_id, social_media, text, filename,
-                                                       status, datetime.now().strftime(DATE_FORMAT)])
+        task = QueuedTask(SelfPostsDB, 'create_post', [user_id, text, filename, status,
+                                                       datetime.now().strftime(DATE_FORMAT)])
         main_queue.put(task)
         return {'Status': 'Success'}
     except Exception as ex:

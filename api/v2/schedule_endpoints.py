@@ -3,12 +3,49 @@ from api import *
 
 
 @app.post('/bots/{user_id}/schedules/')
-async def bots_schedule(user_id: str, day: str, time_range: str, action: str):
+async def bots_schedule(user_id: str, params: Dict[Any, Any]):
     try:
-        data = [user_id, action, day, time_range]
+        action = params.get('action')
+        day = params.get('day')
+        time_range = params.get('time_range')
+        exact_time = get_randomized_date(int(day), RANGES[int(time_range)])
+        data = [user_id, action, day, time_range, exact_time]
+        if action == 'make_post' and params:
+            post_data = {
+                'user_id': user_id,
+                'text': params.get('text'),
+                'filename': params.get('filename'),
+                'status': 'None',
+                'day': day,
+                'time_range': time_range,
+                'exact_time': exact_time,
+            }
+            main_queue.put(QueuedTask(SelfPostsDB, 'create_post', post_data))
         main_queue.put(QueuedTask(ScheduleDB, 'create_schedule', data))
         return {'Status': "OK"}
-    except Exception:
+    except Exception as ex:
+        print(ex)
+        raise HTTPException(status_code=400, detail=[])
+
+
+@app.post('/bots/{user_id}/self_posts/')
+async def create_self_post(user_id, params: Dict[Any, Any]):
+    try:
+        day = params.get('day')
+        time_range = params.get('time_range')
+        post_data = {
+            'user_id': user_id,
+            'text': params.get('text'),
+            'filename': params.get('filename'),
+            'status': 'None',
+            'day': day,
+            'time_range': time_range,
+            'exact_time': get_randomized_date(int(day), RANGES[int(time_range)])
+
+        }
+        main_queue.put(QueuedTask(SelfPostsDB, 'create_post', post_data))
+    except Exception as ex:
+        print(ex)
         raise HTTPException(status_code=400, detail=[])
 
 
@@ -16,7 +53,7 @@ async def bots_schedule(user_id: str, day: str, time_range: str, action: str):
 async def bots_schedule(user_id: str):
     try:
         schedules = ScheduleDB.filter_schedules(user_id=user_id)
-        full_schedule = [["" for y in range(11)] for x in range(7)]
+        full_schedule = [["" for _ in range(11)] for _ in range(7)]
         for schedule in schedules:
             day = schedule['day']
             time_range = schedule['time_range']

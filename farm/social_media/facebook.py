@@ -37,10 +37,10 @@ class Facebook(Base):
     def _save_new_post_to_db(self, author_name=None, text=None, img_path=None,
                              posts_link=None, date=None, likes_amount=None,
                              likes_accounts=None, comments_amount=None, comments_accounts=None, retweets_amount=None,
-                             text_names=None, noun_keywords=None, label=None, sent_rate=None, lang=None):
+                             text_names=None, noun_keywords=None, label=None, sent_rate=None, lang=None, tag=None):
         args = [self.usr_id, 'twitter', author_name, text, img_path, posts_link, 'None', date, likes_amount,
                 likes_accounts, comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                label, sent_rate, lang]
+                label, sent_rate, lang, tag]
         feed = QueuedTask(FeedDB, 'create_post', args)
         main_queue.put(feed)
 

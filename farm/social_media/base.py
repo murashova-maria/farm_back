@@ -96,14 +96,15 @@ class Base:
     def scroll_into_view(self, element=None):
         self.driver.execute_script("arguments[0].scrollIntoView();", element)
 
-    def move_and_click(self, element, text=None, y=0):
+    def move_and_click(self, element, text=None, y=0, to_click=True):
         # Simple way to click on the element 'by hands'.
         # Needs to make our actions more 'human'.
         self.chain.reset_actions()  # Reset ActionChains' moves from both sides just in case.
         self.chain.move_to_element(element)
         if y:
             self.scroll_by(y=y)
-        self.chain.click()
+        if to_click:
+            self.chain.click()
         if text:
             self.chain.send_keys(text)
         self.chain.perform()

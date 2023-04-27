@@ -1,4 +1,5 @@
 # LOCAL
+import datetime
 import logging
 
 try:
@@ -7,11 +8,19 @@ try:
 except ImportError:
     from base import *
     from farm.analyse import return_data_flair
+import instagrapi
 from bs4 import BeautifulSoup
 
 
 class Instagram(Base):
     def __init__(self, username, password, phone_number=None, proxy=None):
+        try:
+            self.client = instagrapi.Client()
+            if proxy and proxy != 'None':
+                self.client.set_proxy(f'http://{proxy["username"]}:{proxy["password"]}@{proxy["ip"]}:{proxy["password"]}')
+            self.client.login(username, password)
+        except Exception:
+            self.client = None
         self.long_xpaths = {
             'add_image_to_the_publication': '//input[accept="image/jpeg,image/png,image/heic,'
                                             'image/heif,video/mp4,video/quicktime"]',
@@ -28,18 +37,38 @@ class Instagram(Base):
         self.last_tag = ''
         self.step = ''
 
-    def _liked_users(self, post_url):
-        pass
-
-    def _commented_users(self, post_url):
-        pass
+    def _liked_and_commented_users(self, post_url):
+        try:
+            comments = []
+            likes = []
+            if self.client is None:
+                return
+            media_pk = self.client.media_pk_from_url(post_url)
+            likers = self.client.media_likers(media_pk)
+            commenters = self.client.media_comments(media_pk)
+            for comment in commenters:
+                # comments.append({'text': comment.text, 'date': comment.created_at_utc, 'likes': comment.like_count,
+                #                  'creator': comment.user.username})
+                comments.append([comment.text, comment.created_at_utc, comment.like_count, comment.user.username])
+            for like in likers:
+                # {'username': like.username, 'profile_pic_url': str(like.profile_pic_url)}
+                likes.append([like.username, str(like.profile_pic_url)])
+            print('LIKES: ', likes)
+            print('COMMENTS: ', comments)
+            return {'comments': comments, 'likes': likes}
+        except Exception as ex:
+            # if 'login_required' in str(ex).lower():
+            #     self.client.relogin()
+            #     sleep(3)
+            print('EX: ', ex)
+        return {'comments': [], 'likes': []}
 
     def _save_new_post_to_db(self, author_name, text, img_path, posts_link, date, likes_amount, likes_accounts,
                              comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                             label, sent_rate, lang):
+                             label, sent_rate, lang, tag):
         args = [self.usr_id, 'instagram', author_name, text, img_path, posts_link, 'None', date, likes_amount,
                 likes_accounts, comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                label, sent_rate, lang]
+                label, sent_rate, lang, tag]
         feed = QueuedTask(FeedDB, 'create_post', args)
         main_queue.put(feed)
 
@@ -61,7 +90,7 @@ class Instagram(Base):
             decline_btn = self.wait(5).until(ec.presence_of_element_located((By.XPATH, xpath)))
             self.move_and_click(decline_btn)
         except WebDriverException as wde:
-            input(f'{wde} ::: >>> ')
+            print(wde)
 
     def _wait_until_homepage_load(self) -> bool:
         for _ in range(20):
@@ -144,7 +173,8 @@ class Instagram(Base):
             sleep(2)
             login_btn = self.driver.find_element(By.XPATH, '//*[contains(text(), "Log in")]')
             login_btn.click()
-            self._wait_until_homepage_load()
+            if not self._wait_until_homepage_load():
+                return False
             self._decline_saving_login_data()
             return True
         except (WebDriverException, TimeoutException) as wte:
@@ -172,6 +202,7 @@ class Instagram(Base):
         return False
 
     def fill_profile(self, name=None, username=None, bio=None, gender=None, avatar=None):
+        print(name, username, bio, gender, avatar)
         input_fields = {
             'pepName': name,
             'pepUsername': username,
@@ -181,7 +212,7 @@ class Instagram(Base):
             return False
         try:
             for key, value in input_fields.items():
-                if not value:
+                if not value or value == 'None' or 'jpg' in value or 'png' in value:
                     continue
                 field = self.wait(3).until(ec.presence_of_element_located((By.ID, key)))
                 try:
@@ -209,7 +240,6 @@ class Instagram(Base):
         articles = self.wait(2).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'article')))
         try:
             for article in articles:
-                print(article.text)
                 a_tags = article.find_elements(By.TAG_NAME, 'a')
                 posts_link = [a.get_attribute('href')[:a.get_attribute('href').find('liked_by')] for a in a_tags
                               if 'liked_by' in a.get_attribute('href')][0]
@@ -238,6 +268,25 @@ class Instagram(Base):
         except StaleElementReferenceException as sere:
             pass
 
+    def handle_posts(self, tag: str, posts_count: int):
+        """
+        author_name, text, img_path, posts_link, date, likes_amount, likes_accounts,
+                             comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
+                             label, sent_rate, lang, tag
+            'link': f'https://www.instagram.com' + i.get('href'),
+            'text': i.find('img').get('alt'),
+            'likes': likes,
+            'comments': comments,
+            'shares': None
+        """
+        posts = self.collect_posts(tag, posts_count)
+        for post in posts:
+            comments, likes = self._liked_and_commented_users(post['link']).values()
+            rate = return_data_flair(post['text'])
+            data = [None, post['text'], 'None', post['link'], 'None', len(likes), likes, len(comments), comments,
+                    'None', *rate[1:], tag]
+            self._save_new_post_to_db(*data)
+
     def collect_posts(self, tag, posts_count):
         posts = []
         url = f'https://www.instagram.com/explore/tags/{tag}/'
@@ -257,10 +306,9 @@ class Instagram(Base):
                 for n, i in enumerate(posts_link):
                     if i is None or i in link_arr:
                         break
-                    # if i is not None and i not in link_arr:
                     elem = self.driver.find_elements(By.XPATH, '//main[@role="main"]//article//a')[n]
                     self.driver.execute_script("arguments[0].scrollIntoView();", elem)
-                    self.move_and_click(elem)
+                    self.move_and_click(elem, to_click=False)
                     try:
                         articles_inner = self.driver.find_elements(By.XPATH, '//main[@role="main"]//article//a')[n]
                         articles_inner = articles_inner.get_attribute('innerHTML')
@@ -280,11 +328,12 @@ class Instagram(Base):
                         comments = 0
                     id_ = str(time.time()).replace('.', '')[8:]
                     posts.append(
-                        {'link': f'https://www.instagram.com' + i.get('href'), 'text': i.find('img').get('alt'),
+                        {'link': f'https://www.instagram.com' + i.get('href'),
+                         'text': i.find('img').get('alt'),
                          'likes': likes,
-                         'comments': comments, 'shares': None, 'id': id_, 'date': None,
-                         'account': None, 'tag': tag, 'tag_id': tag,
-                         'network': 'instagram', 'pic': None})
+                         'comments': comments,
+                         'shares': None
+                         })
                     link_arr.append(i.get('href'))
                 length_posts = len(link_arr)
 

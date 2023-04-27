@@ -21,16 +21,26 @@ def make_post():
     while True:
         sleep(2)
         for post in SelfPostsDB.filter_posts(status='None'):
-            if ready_to_post(post['date']):
+            if ready_to_post(post['exact_time']):
                 main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'do_post',
                                                                        'post_id': post['post_id']}))
                 main_queue.put(QueuedTask(UserDB, 'update_user', {'activity': 'make_post', 'status': 'in process',
                                                                   'user_id': post['user_id']}))
 
 
+def check_schedule():
+    while True:
+        sleep(4)
+        for schedule in ScheduleDB.get_all_schedules():
+            if ready_to_post(schedule['exact_time']):
+                main_queue.put(QueuedTask(UserDB, 'update_user', {'activity': schedule['action'],
+                                                                  'status': 'in process',
+                                                                  'user_id': schedule['user_id']}))
+
+
 def handle_queue():
     while True:
-        sleep(0.5)
+        sleep(0.1)
         task = main_queue.get()
         task()
         main_queue.task_done()
