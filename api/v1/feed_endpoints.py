@@ -14,6 +14,7 @@ async def get_feed(params: Optional[Dict[Any, Any]] = None):
             ld = {}
             for key, value in feed.items():
                 ld.update({key: value})
+            ld.update({'username': 'None'})
             data.append(ld)
         return data
     except Exception as ex:

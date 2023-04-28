@@ -62,8 +62,7 @@ class Twitter(Base):
     def _close_notification(self):
         try:
             close_not = self.wait(2).until(ec.presence_of_element_located((By.XPATH,
-                                                                           '//div[@data-testid='
-                                                                           '"app-bar-close"]')))
+                                                                           '//div[@data-testid="app-bar-close" and @aria-label="Close"]')))
             self.move_and_click(close_not)
         except (WebDriverException, TimeoutException):
             pass
@@ -340,6 +339,8 @@ class Twitter(Base):
                 sleep(5)
                 tweet_it = self.driver.find_element(By.XPATH, self.xpaths['tweet_it'])
                 tweet_it.click()
+                sleep(2)
+                self._close_notification()
                 return
             except Exception as ex:
                 pass
