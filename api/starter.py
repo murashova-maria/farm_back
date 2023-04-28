@@ -74,10 +74,16 @@ class Starter:
                     sleep(5)
                 elif user_info['activity'] == 'make_post':
                     posts = SelfPostsDB.filter_posts(user_id=user_info['user_id'], status='do_post')
-                    for post in posts:
+                    if len(posts) > 0:
+                        post = posts[0]
                         inst.make_post(post['text'], post['filename'])
                         main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'done',
                                                                                'post_id': post['post_id']}))
+                        main_queue.put(QueuedTask(UserDB, 'update_user', {
+                            'user_id': inst.usr_id,
+                            'status': 'active',
+                            'activity': 'wait'
+                        }))
                         sleep(3)
 
             except Exception as ex:
@@ -166,16 +172,16 @@ class Starter:
                         'status': 'gardering'
                     }))
                     posts = SelfPostsDB.filter_posts(user_id=user_info['user_id'], status='do_post')
-                    for post in posts:
+                    if len(posts) > 0:
+                        post = posts[0]
                         fb.make_post(post['text'], post['filename'])
                         main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'done',
                                                                                'post_id': post['post_id']}))
-                        sleep(3)
-                    main_queue.put(QueuedTask(UserDB, 'update_user', {
-                        'user_id': fb.usr_id,
-                        'activity': 'wait',
-                        'status': 'active'
-                    }))
+                        main_queue.put(QueuedTask(UserDB, 'update_user', {
+                            'user_id': fb.usr_id,
+                            'status': 'active',
+                            'activity': 'wait'
+                        }))
             except Exception as ex:
                 print('WHILE THREAD: ', ex)
 
@@ -220,6 +226,7 @@ class Starter:
                     }))
                     amount_of_tweets = 0
                     for search_tag in KeywordDB.get_keywords_by_user_id(user_id=user_info['user_id'], only_kw=False):
+                        print(search_tag)
                         if search_tag['status'] != 'wait':
                             continue
                         for _ in range(search_tag['amount']):
@@ -240,16 +247,16 @@ class Starter:
                         'status': 'gardering'
                     }))
                     posts = SelfPostsDB.filter_posts(user_id=user_info['user_id'], status='do_post')
-                    for post in posts:
+                    if len(posts) > 0:
+                        post = posts[0]
                         tw.make_post(post['text'], post['filename'])
                         main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'done',
                                                                                'post_id': post['post_id']}))
-                        sleep(3)
-                    main_queue.put(QueuedTask(UserDB, 'update_user', {
-                        'user_id': tw.usr_id,
-                        'activity': 'wait',
-                        'status': 'active'
-                    }))
+                        main_queue.put(QueuedTask(UserDB, 'update_user', {
+                            'user_id': tw.usr_id,
+                            'status': 'active',
+                            'activity': 'wait'
+                        }))
             except Exception as ex:
                 print(ex)
 

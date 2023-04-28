@@ -430,18 +430,27 @@ class Schedule:
         self.graph = graph
         self.matcher = NodeMatcher(self.graph)
 
+    def update_schedule(self, schedule_id, **kwargs):
+        existing_schedule = self.graph.nodes.match("Schedule", schedule_id=schedule_id).first()
+        if existing_schedule is None:
+            return None
+
+        for key, value in kwargs.items():
+            existing_schedule[key] = value
+        self.graph.push(existing_schedule)
+        return existing_schedule
+
     def create_schedule(self, user_id, action, day, time_range, exact_time, status='None'):
-        test_node = self.filter_schedules(user_id=user_id, day=day, time_range=time_range,
-                                          exact_time=exact_time, status=status)
-        if test_node:
-            if exact_time and exact_time != 'None':
-                test_node[0]['exact_time'] = exact_time
-            if action and action != 'None':
-                test_node[0]['action'] = action
-            if status and status != 'None':
-                test_node[0]['status'] = status
-            self.graph.push(test_node[0])
-            return test_node
+        test_node = self.filter_schedules(user_id=user_id, day=day, time_range=time_range)
+        if len(test_node) > 0:
+            params = {}
+            if action != 'None':
+                params.update({'action': action})
+            if exact_time != 'None':
+                params.update({'exact_time': exact_time})
+            params.update({'status': status})
+            schedule_id = test_node[0]['schedule_id']
+            return self.update_schedule(schedule_id, **params)
         schedule_id = randint(0, 2147483647)
         post_node = Node("Schedule", schedule_id=schedule_id, user_id=user_id, action=action,
                          day=day, time_range=time_range, exact_time=exact_time, status=status)

@@ -170,7 +170,7 @@ class Instagram(Base):
                 if inp.get_attribute('type') == 'file':
                     inp.send_keys(avatar)
                     sleep(1)
-                    return 
+                    return
         except WebDriverException as ex:
             print('WDE EX AVATAR: ', ex)
 

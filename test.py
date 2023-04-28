@@ -11,7 +11,7 @@ if __name__ == '__main__':
     sh = ScheduleDB
     for schedule in sh.get_all_schedules():
         print(schedule)
-    #     local_graph.delete(schedule)
+        # local_graph.delete(schedule)
     # kw.add_keyword_to_user('New dog', usr_id, 15)
     # print(kw.get_all_keywords_with_users())
     # print(kw.get_keywords_by_user_id(usr_id, only_kw=True))

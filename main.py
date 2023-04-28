@@ -28,7 +28,7 @@ def make_post():
                 if ready_to_post(post['exact_time']):
                     main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'do_post',
                                                                            'post_id': post['post_id']}))
-                    main_queue.put(QueuedTask(UserDB, 'update_user', {'activity': 'make_post', 'status': 'in process',
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {'activity': 'make_post', 'status': 'gardering',
                                                                       'user_id': post['user_id']}))
             except (ValueError, TypeError) as te:
                 print('MAKE_POST: ', te)
@@ -39,8 +39,6 @@ def check_schedule():
         sleep(4)
         try:
             for schedule in ScheduleDB.filter_schedules(status='None'):
-                if schedule['action'] == 'make_post':
-                    continue
                 if ready_to_post(schedule['exact_time']):
                     main_queue.put(QueuedTask(ScheduleDB, 'create_schedule', {'day': schedule['day'],
                                                                               'time_range': schedule['time_range'],
@@ -49,7 +47,7 @@ def check_schedule():
                                                                               'action': schedule['action'],
                                                                               'exact_time': schedule['exact_time']}))
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'activity': schedule['action'],
-                                                                      'status': 'in process',
+                                                                      'status': 'gardering',
                                                                       'user_id': schedule['user_id']}))
         except (ValueError, TypeError) as te:
             print('CHECK_SCHEDULE: ', te)
