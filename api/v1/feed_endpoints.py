@@ -3,13 +3,18 @@ from api import *
 
 
 @app.get('/posts/')
-async def get_feed(params: Optional[Dict[Any, Any]] = None):
-    data = []
+async def get_feed(social_media: Optional[str] = None, country: Optional[str] = None):
+    data: List[Dict[str, Any]] = []
     try:
-        if params:
-            posts = FeedDB.filter_posts(**params)
+        if social_media and country:
+            posts = FeedDB.filter_posts(social_media=social_media, country=country)
+        elif social_media:
+            posts = FeedDB.filter_posts(social_media=social_media)
+        elif country:
+            posts = FeedDB.filter_posts(country=country)
         else:
             posts = FeedDB.get_all()
+
         for feed in posts:
             ld = {}
             for key, value in feed.items():
@@ -20,3 +25,4 @@ async def get_feed(params: Optional[Dict[Any, Any]] = None):
     except Exception as ex:
         print('EXCEPTION: ', ex)
         raise HTTPException(status_code=400, detail='Invalid data')
+    

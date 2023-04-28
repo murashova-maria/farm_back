@@ -8,9 +8,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 # OTHER
-from typing import Dict, Any
 from threading import Thread
 from datetime import datetime
+from typing import Dict, Any, List
 
 app = FastAPI()
 origins = ['*']
