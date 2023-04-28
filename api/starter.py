@@ -11,7 +11,7 @@ except ImportError:
 
 
 class Starter:
-    def __init__(self, username, password, phone_number, network, proxy=None):
+    def __init__(self, username, password, phone_number, network, proxy=None, country='None'):
         self.username = username
         self.password = password
         self.phone_number = phone_number
@@ -20,6 +20,7 @@ class Starter:
             proxy = proxy.split(':')
             proxy = {'ip': proxy[0], 'port': proxy[1], 'username': proxy[2], 'password': proxy[3]}
         self.proxy = proxy
+        self.country = country
 
     def _add_user(self, status: str = 'Success'):
         usr = UserDB.filter_users(username=self.username, password=self.password,
@@ -187,7 +188,8 @@ class Starter:
                 print('WHILE THREAD: ', ex)
 
     def start_twitter(self):
-        tw = Twitter(self.username, self.password, self.phone_number, self.proxy)
+        is_country_exist = False
+        tw = Twitter(self.username, self.password, self.phone_number, self.proxy, self.country)
         login_status = tw.login()
         sleep(2)
         if not login_status:
@@ -195,6 +197,7 @@ class Starter:
             tw.driver.close()
             return
         self._add_user('Created')
+        tw.users_country = self.country
         while True:
             try:
                 sleep(1)
@@ -203,6 +206,9 @@ class Starter:
                                                 phone_number=self.phone_number, social_media='twitter')
                 user_info = user_info[0]
                 tw.usr_id = user_info['user_id']
+                if not is_country_exist:
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': tw.usr_id, 'country': self.country}))
+                    is_country_exist = True
                 if user_info['activity'] == 'fill_profile':
                     main_queue.put(QueuedTask(UserDB, 'update_user', {
                         'user_id': tw.usr_id,

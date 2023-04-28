@@ -26,7 +26,7 @@ class User:
 
     def create_user(self, username, password, phone_number='None', social_media='None',
                     status='None', activity='None', reg_date='None', proxies='None', search_tag='None',
-                    amount_of_friends=0, already_used_keywords: list = None):
+                    amount_of_friends=0, already_used_keywords: list = None, country='None'):
         if already_used_keywords is None:
             already_used_keywords = []
         user_id = str(uuid.uuid4())
@@ -38,7 +38,7 @@ class User:
                          phone_number=phone_number, social_media=social_media,
                          status=status, activity=activity, reg_date=reg_date,
                          proxies=proxies, search_tag=search_tag, amount_of_friends=amount_of_friends,
-                         already_used_keywords=already_used_keywords)
+                         already_used_keywords=already_used_keywords, country=country)
         self.graph.create(user_node)
         self._attach_profile(user_id=user_id, network=social_media)
         return user_node
@@ -328,7 +328,7 @@ class Feed:
     def create_post(self, user_id, social_media, author_name='None', text='None', image_path='None',
                     posts_link='None', status='None', date='None', likes_amount='None', likes_accounts='None',
                     comments_amount='None', comments_accounts='None', retweets_amount='None', text_names='None',
-                    noun_keywords='None', label='None', sent_rate='None', language='None', tag='None'):
+                    noun_keywords='None', label='None', sent_rate='None', language='None', tag='None', country='None'):
         post_id = str(uuid.uuid4())
         post_node = Node("Post", post_id=post_id, user_id=user_id, social_media=social_media,
                          author_name=author_name, text=text, image_path=image_path,
@@ -336,7 +336,7 @@ class Feed:
                          likes_accounts=likes_accounts, comments_amount=comments_amount,
                          comments_accounts=comments_accounts, retweets_amount=retweets_amount,
                          text_names=text_names, noun_keywords=noun_keywords, label=label,
-                         sent_rate=sent_rate, language=language, tag=tag)
+                         sent_rate=sent_rate, language=language, tag=tag, country=country)
         self.graph.create(post_node)
         return post_node
 

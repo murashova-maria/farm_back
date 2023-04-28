@@ -9,7 +9,7 @@ except ImportError as ie:
 
 
 class Twitter(Base):
-    def __init__(self, username, password, phone_number=None, proxy=None):
+    def __init__(self, username, password, phone_number=None, proxy=None, country='None'):
         # Dict with all xpath. It was created to avoid PEP808 attention number's E501
         self.xpaths = {
             'login': '//span[text()="Log in"]',
@@ -54,6 +54,7 @@ class Twitter(Base):
         self.repetitions_counter = 0
         self.last_post = ''
         self.usr_id = None
+        self.users_country = country
 
     def handle_correct_window(self):
         pass
@@ -98,7 +99,7 @@ class Twitter(Base):
                              label, sent_rate, lang, tag):
         args = [self.usr_id, 'twitter', author_name, text, img_path, posts_link, 'None', date, likes_amount,
                 likes_accounts, comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                label, sent_rate, lang, tag]
+                label, sent_rate, lang, tag, self.users_country]
         args = replace_none(args)
         feed = QueuedTask(FeedDB, 'create_post', args)
         main_queue.put(feed)

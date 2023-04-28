@@ -3,7 +3,7 @@ from api import *
 
 
 @app.get('/posts/')
-async def get_feed(params: Dict[Any, Any]):
+async def get_feed(params: Optional[Dict[Any, Any]] = None):
     data = []
     try:
         if params:

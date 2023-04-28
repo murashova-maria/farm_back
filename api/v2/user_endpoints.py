@@ -2,8 +2,8 @@
 from api import *
 
 
-def start(username, password, phone_number, network, proxy=None):
-    net = Starter(username, password, phone_number, network, proxy)
+def start(username, password, phone_number, network, proxy=None, country='None'):
+    net = Starter(username, password, phone_number, network, proxy, country)
     if net.network == 'facebook':
         net.start_facebook()
     elif net.network == 'twitter':
@@ -21,9 +21,29 @@ async def get_bots_info(social_media: str = None, country: str = None):
         if country:
             params.update({'country': country})
         if params:
-            return [{key: value for key, value in user.items()} for user in UserDB.filter_users(**params)]
+            users = [{key: value for key, value in user.items()} for user in UserDB.filter_users(**params)]
+            for index, user in enumerate(users):
+                amount_of_posts = len(SelfPostsDB.filter_posts(user_id=user['user_id']))
+                if user['social_media'] == 'twitter':
+                    name = TwitterProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
+                elif user['social_media'] == 'facebook':
+                    name = FacebookProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
+                else:
+                    name = InstagramProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
+                users[index].update({'amount_of_posts': amount_of_posts, 'name': name})
+            return users
         else:
-            return [{key: value for key, value in user.items()} for user in UserDB.get_all()]
+            users = [{key: value for key, value in user.items()} for user in UserDB.get_all()]
+            for index, user in enumerate(users):
+                amount_of_posts = len(SelfPostsDB.filter_posts(user_id=user['user_id']))
+                if user['social_media'] == 'twitter':
+                    name = TwitterProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
+                elif user['social_media'] == 'facebook':
+                    name = FacebookProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
+                else:
+                    name = InstagramProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
+                users[index].update({'amount_of_posts': amount_of_posts, 'name': name})
+            return users
     except Exception as ex:
         raise HTTPException(status_code=400, detail=[])
 
@@ -44,10 +64,11 @@ async def create_account(item: Dict[Any, Any]):
     phone_number = item.get('phone_number')
     network = item.get('network')
     proxy = item.get('proxy')
+    country = item.get('country')
     if None in (username, password, phone_number, network):
         raise HTTPException(status_code=400, detail='Missing parameter(s)')
     if network not in ('twitter', 'facebook', 'instagram'):
         raise HTTPException(status_code=400, detail='Invalid network')
-    thread = Thread(target=start, args=(username, password, phone_number, network, proxy))
+    thread = Thread(target=start, args=(username, password, phone_number, network, proxy, country))
     thread.start()
     return {'Success': 'User creation started'}
