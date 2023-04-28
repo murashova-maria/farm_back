@@ -26,7 +26,9 @@ class User:
 
     def create_user(self, username, password, phone_number='None', social_media='None',
                     status='None', activity='None', reg_date='None', proxies='None', search_tag='None',
-                    amount_of_friends=0):
+                    amount_of_friends=0, already_used_keywords: list = None):
+        if already_used_keywords is None:
+            already_used_keywords = []
         user_id = str(uuid.uuid4())
         check_usr = self.matcher.match("User", username=username, password=password, phone_number=phone_number,
                                        social_media=social_media).first()
@@ -35,7 +37,8 @@ class User:
         user_node = Node("User", user_id=user_id, username=username, password=password,
                          phone_number=phone_number, social_media=social_media,
                          status=status, activity=activity, reg_date=reg_date,
-                         proxies=proxies, search_tag=search_tag, amount_of_friends=amount_of_friends)
+                         proxies=proxies, search_tag=search_tag, amount_of_friends=amount_of_friends,
+                         already_used_keywords=already_used_keywords)
         self.graph.create(user_node)
         self._attach_profile(user_id=user_id, network=social_media)
         return user_node

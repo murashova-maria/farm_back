@@ -1,9 +1,11 @@
 # LOCAL
 try:
     from .base import *
+    from .fb_utils import *
     from ..analyse import return_data_flair
 except ImportError:
     from base import *
+    from fb_utils import *
     from farm.analyse import return_data_flair
 
 
@@ -41,6 +43,9 @@ class Facebook(Base):
         args = [self.usr_id, 'twitter', author_name, text, img_path, posts_link, 'None', date, likes_amount,
                 likes_accounts, comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
                 label, sent_rate, lang, tag]
+        args = replace_none(args)
+        print('ARGS: ', args)
+        print()
         feed = QueuedTask(FeedDB, 'create_post', args)
         main_queue.put(feed)
 
@@ -202,50 +207,14 @@ class Facebook(Base):
         except (WebDriverException, TimeoutException) as err:
             print('ERR: ', err)
 
-    def collect_posts(self, tag='News'):
-        if tag != self.last_tag or \
-                ('hashtag' not in self.driver.current_url and 'search' not in self.driver.current_url):
-            self._search(tag, 'posts')
-            self.last_tag = tag
-        self.scroll_by(0, 1500)
-        articles = self.wait(3).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="article"]')))
-        for article in articles:
-            likes_amount = None
-            comments_amount = None
-            shares_amount = None
-            local_likes = []
-            try:
-                articles_text = article.text[:article.text.find('All reactions:')]
-                if not articles_text:
-                    continue
-                likes = article.find_elements(By.XPATH, './/*[div[@role="button"]]')
-                users_link = article.find_elements(By.XPATH, './/a[@href and @role="link"]')
-                links = [usr.get_attribute('href') for usr in users_link if 'photo' in usr.get_attribute('href') or
-                         'posts' in usr.get_attribute('href')]
-                if len(links) < 1:
-                    continue
-                posts_link = links[0] if links[0] else None
-                if len(links) < 2:
-                    photo_link = None
-                else:
-                    photo_link = str(links[1]) if links[1] else None
-                profile_link = str(posts_link[:posts_link.find('posts')])
-                author_name = str(profile_link.split('/')[3])
-                for like in likes:
-                    if len(like.text) >= 1 and self._digit_in_text(like.text):
-                        local_likes.append(like.text.split('\n')[-1])
-                for value in local_likes:
-                    if 'shares' in value.lower():
-                        shares_amount = str(value)
-                    elif 'comments' in value.lower():
-                        comments_amount = str(value)
-                    elif self._digit_in_text(value):
-                        likes_amount = str(value)
-                rate = return_data_flair(articles_text)[1:]
-                self._save_new_post_to_db(author_name, articles_text, photo_link, posts_link,
-                                          None, likes_amount, None, comments_amount, None, shares_amount, *rate)
-            except (StaleElementReferenceException, WebDriverException):
-                pass
+    def collect_posts(self, tag='News', amount=15):
+        result, people = parsing_posts(tag, amount, self.driver)
+        for index, res in enumerate(result):
+            data = [str(res.get('account')), str(res.get('text')), str(res.get('pic')), str(res.get('link')),
+                    str(res.get('date')), str(res.get('likes')), replace_none_dict(people[index]),
+                    str(res.ge('comments')), 'None', str(res.get('shares')),
+                    *return_data_flair(str(res.get('text')))[1:], tag]
+            self._save_new_post_to_db(*data)
 
     def add_work(self, company=None, position=None, city=None, description=None):
         work_info = [company, position, city, description]

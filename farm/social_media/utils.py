@@ -40,5 +40,10 @@ def replace_none(lst):
     return lst
 
 
+def replace_none_dict(d: dict) -> dict:
+    return {k: 'None' if v is None else v for k, v in d.items()}
+
+
+
 if __name__ == '__main__':
     pass

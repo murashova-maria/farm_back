@@ -151,21 +151,22 @@ class Starter:
                 elif user_info['activity'] == 'check_feed':
                     amount_of_tweets = 0
                     for search_tag in KeywordDB.get_keywords_by_user_id(user_id=user_info['user_id'], only_kw=False):
+                        if search_tag['keyword'] in user_info['already_used_keywords']:
+                            continue
                         if search_tag['status'] != 'wait':
                             continue
                         for _ in range(search_tag['amount']):
                             amount_of_tweets += fb.collect_posts(search_tag['keyword'])
                             if amount_of_tweets >= search_tag['amount']:
                                 break
-                        main_queue.put(QueuedTask(KeywordDB, 'update_keyword', {'keyword_id': search_tag['keyword_id'],
-                                                                                'status': 'done'}))
+                        user_info['already_used_keywords'].append(search_tag['keyword'])
                     main_queue.put(QueuedTask(UserDB, 'update_user', {
                         'user_id': fb.usr_id,
-                        'status': 'active'
+                        'activity': 'wait',
+                        'status': 'active',
+                        'already_used_keywords': user_info['already_used_keywords'],
                     }))
                     sleep(5)
-                    # else:
-                    #     fb.collect_posts()
                 elif user_info['activity'] == 'make_post':
                     main_queue.put(QueuedTask(UserDB, 'update_user', {
                         'user_id': fb.usr_id,
@@ -226,19 +227,20 @@ class Starter:
                     }))
                     amount_of_tweets = 0
                     for search_tag in KeywordDB.get_keywords_by_user_id(user_id=user_info['user_id'], only_kw=False):
-                        print(search_tag)
+                        if search_tag['keyword'] in user_info['already_used_keywords']:
+                            continue
                         if search_tag['status'] != 'wait':
                             continue
                         for _ in range(search_tag['amount']):
                             amount_of_tweets += tw.collect_posts(search_tag['keyword'])
                             if amount_of_tweets >= search_tag['amount']:
                                 break
-                        main_queue.put(QueuedTask(KeywordDB, 'update_keyword', {'keyword_id': search_tag['keyword_id'],
-                                                                                'status': 'done'}))
+                        user_info['already_used_keywords'].append(search_tag['keyword'])
                     main_queue.put(QueuedTask(UserDB, 'update_user', {
                         'user_id': tw.usr_id,
                         'activity': 'wait',
-                        'status': 'active'
+                        'status': 'active',
+                        'already_used_keywords': user_info['already_used_keywords'],
                     }))
                     sleep(5)
                 elif user_info['activity'] == 'make_post':
