@@ -6,5 +6,5 @@ from loader import *
 
 
 if __name__ == '__main__':
-    # local_graph.delete_all()
+    local_graph.delete_all()
     pass

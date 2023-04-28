@@ -58,6 +58,15 @@ class Twitter(Base):
     def handle_correct_window(self):
         pass
 
+    def _close_notification(self):
+        try:
+            close_not = self.wait(2).until(ec.presence_of_element_located((By.XPATH,
+                                                                           '//div[@data-testid='
+                                                                           '"app-bar-close"]')))
+            self.move_and_click(close_not)
+        except (WebDriverException, TimeoutException):
+            pass
+
     def _is_account_suspended(self):
         try:
             self.wait(2).until(ec.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Account suspended')]")))
@@ -142,6 +151,7 @@ class Twitter(Base):
                 return
             except Exception as ex:
                 self.open_homepage()
+                self._close_notification()
 
     def review(self, tag: str):
         # Open 'review' or 'search' field to start search.
@@ -208,10 +218,8 @@ class Twitter(Base):
             print('[UPDATE PROFILE]: ', wde)
 
     def _fill_profiles_header(self, input_data: list, textarea_data: list):
-        print('FILLING STARTED')
         for i in range(4):
             change_box = self.driver.find_element(By.XPATH, self.xpaths['change_profile_label'])
-            print('INPUT DATA FOR FILLING: ', input_data)
             if 'Pick a profile picture' in change_box.text and input_data[1]:
                 file_input = change_box.find_element(By.XPATH, './/input[@data-testid="fileInput"]')
                 file_input.send_keys(input_data[1])
@@ -273,6 +281,7 @@ class Twitter(Base):
             self._handle_login_errors()
             sleep(5)
             if self.driver.current_url == self.home:
+                self._close_notification()
                 return True
         except (WebDriverException, NoSuchWindowException) as wde:
             print('LOGIN:', wde)
@@ -306,27 +315,33 @@ class Twitter(Base):
         self.open_homepage()
 
     def make_post(self, text: None | str = None, filename: None | str = None):
-        # If there is nothing to post - cancel.
-        if not text and not filename or text == 'None' and filename == 'None':
-            return
-        if self.driver.current_url != self.home:
-            self.open_homepage()
-        # Select and click 'tweet' button
-        tweet_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH, self.xpaths['tweet_btn'])))
-        tweet_btn.click()
-        # Here we use ActionChains, because Twitter doesn't have input field for that place in its HTML code.
-        if text:
-            self.chain.reset_actions()
-            self.chain.send_keys(text).perform()
-        if filename and filename != 'None':  # Paste image if it exists.
-            image_path = self.driver.find_element(By.XPATH, self.xpaths['image_path'])
-            if 'http' not in filename:
-                image_path.send_keys(IMG_DIR + 'twitter/' + filename)
-            else:
-                image_path.send_keys(filename)
-        sleep(5)
-        tweet_it = self.driver.find_element(By.XPATH, self.xpaths['tweet_it'])
-        tweet_it.click()
+        for _ in range(2):
+            try:
+                self._close_notification()
+                # If there is nothing to post - cancel.
+                if not text and not filename or text == 'None' and filename == 'None':
+                    return
+                if self.driver.current_url != self.home:
+                    self.open_homepage()
+                # Select and click 'tweet' button
+                tweet_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH, self.xpaths['tweet_btn'])))
+                tweet_btn.click()
+                # Here we use ActionChains, because Twitter doesn't have input field for that place in its HTML code.
+                if text:
+                    self.chain.reset_actions()
+                    self.chain.send_keys(text).perform()
+                if filename and filename != 'None':  # Paste image if it exists.
+                    image_path = self.driver.find_element(By.XPATH, self.xpaths['image_path'])
+                    if 'http' not in filename:
+                        image_path.send_keys(IMG_DIR + 'twitter/' + filename)
+                    else:
+                        image_path.send_keys(filename)
+                sleep(5)
+                tweet_it = self.driver.find_element(By.XPATH, self.xpaths['tweet_it'])
+                tweet_it.click()
+                return
+            except Exception as ex:
+                self._close_notification()
 
     def collect_posts(self, tag='#News'):
         amount_of_articles = 0
