@@ -341,7 +341,7 @@ class Twitter(Base):
                 tweet_it.click()
                 return
             except Exception as ex:
-                self._close_notification()
+                pass
 
     def collect_posts(self, tag='#News'):
         amount_of_articles = 0
