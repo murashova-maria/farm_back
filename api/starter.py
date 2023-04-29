@@ -108,7 +108,6 @@ class Starter:
                 user_info = UserDB.filter_users(username=self.username, password=self.password,
                                                 phone_number=self.phone_number, social_media='facebook')[0]
                 fb.usr_id = user_info['user_id']
-                print(user_info['activity'])
                 if user_info['activity'] == 'fill_profile':
                     profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])
                     if profile:
