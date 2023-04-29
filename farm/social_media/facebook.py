@@ -39,13 +39,12 @@ class Facebook(Base):
     def _save_new_post_to_db(self, author_name=None, text=None, img_path=None,
                              posts_link=None, date=None, likes_amount=None,
                              likes_accounts=None, comments_amount=None, comments_accounts=None, retweets_amount=None,
-                             text_names=None, noun_keywords=None, label=None, sent_rate=None, lang=None, tag=None):
-        args = [self.usr_id, 'twitter', author_name, text, img_path, posts_link, 'None', date, likes_amount,
+                             text_names=None, noun_keywords=None, label=None, sent_rate=None, lang=None, tag=None,
+                             authors_link=None, authors_pic_link=None):
+        args = [self.usr_id, 'facebook', author_name, text, img_path, posts_link, 'None', date, likes_amount,
                 likes_accounts, comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                label, sent_rate, lang, tag]
+                label, sent_rate, lang, tag, authors_link, authors_pic_link]
         args = replace_none(args)
-        print('ARGS: ', args)
-        print()
         feed = QueuedTask(FeedDB, 'create_post', args)
         main_queue.put(feed)
 
@@ -208,13 +207,35 @@ class Facebook(Base):
             print('ERR: ', err)
 
     def collect_posts(self, tag='News', amount=15):
-        result, people = parsing_posts(tag, amount, self.driver)
-        for index, res in enumerate(result):
-            data = [str(res.get('account')), str(res.get('text')), str(res.get('pic')), str(res.get('link')),
-                    str(res.get('date')), str(res.get('likes')), replace_none_dict(people[index]),
-                    str(res.ge('comments')), 'None', str(res.get('shares')),
-                    *return_data_flair(str(res.get('text')))[1:], tag]
-            self._save_new_post_to_db(*data)
+        try:
+            result, data_debug, people = parsing_posts(tag, amount, self.driver, 0, data_debug={
+                'exceptions': '',
+                'tracebacks': '',
+                'error_number': 0
+            })
+            for res in result:
+                text = res.get('text')
+                user = res.get('account')
+                user_link = res.get('account_link')
+                posts_pubdate = res.get('date')
+                likes_amount = res.get('likes')
+                comments_amount = res.get('comments')
+                shares_amount = res.get('shares')
+                users_profile_pic = res.get('link')
+                self._save_new_post_to_db(user, text, None, user_link, posts_pubdate, likes_amount, [],
+                                          comments_amount, [], shares_amount, *return_data_flair(text)[1:], tag,
+                                          user_link, users_profile_pic)
+            # with open('results.txt', 'a') as output:
+            #     for res in result:
+            #         print(res)
+            #         output.write(str(res) + '\n')
+            #     output.close()
+            # with open('peoples.txt', 'a') as output_second:
+            #     for p in people:
+            #         output_second.write(str(p) + '\n')
+            #     output_second.close()
+        except Exception as ex:
+            print('EX: ' * 50, ex)
 
     def add_work(self, company=None, position=None, city=None, description=None):
         work_info = [company, position, city, description]
@@ -308,28 +329,29 @@ class Facebook(Base):
     def login(self) -> bool:
         self.open_homepage()
         self.accept_cookies()
-        try:
-            email_field = self.wait(3).until(ec.presence_of_element_located((By.ID, 'email')))
-            self.move_and_click(email_field, self.username)
-            self.rs()
-
-            pass_field = self.wait(3).until(ec.presence_of_element_located((By.ID, 'pass')))
-            self.move_and_click(pass_field, self.password)
-
-            self.rs()
-            login_btn = self.driver.find_element(By.NAME, 'login')
-            self.move_and_click(login_btn)
+        for _ in range(2):
             try:
-                divs = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'div')))
-                for div in divs:
-                    if 'access denied' in div.text.lower():
-                        return False
-            except WebDriverException:
-                pass
-            self._change_language()
-            return True
-        except WebDriverException as wde:
-            print(wde)
+                email_field = self.wait(3).until(ec.presence_of_element_located((By.ID, 'email')))
+                self.move_and_click(email_field, self.username)
+                self.rs()
+
+                pass_field = self.wait(3).until(ec.presence_of_element_located((By.ID, 'pass')))
+                self.move_and_click(pass_field, self.password)
+
+                self.rs()
+                login_btn = self.driver.find_element(By.NAME, 'login')
+                self.move_and_click(login_btn)
+                try:
+                    divs = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'div')))
+                    for div in divs:
+                        if 'access denied' in div.text.lower():
+                            return False
+                except WebDriverException:
+                    pass
+                self._change_language()
+                return True
+            except WebDriverException as wde:
+                print(wde)
         return False
 
     def get_exact_users_friends(self, profile_link: str = None, limit=100):

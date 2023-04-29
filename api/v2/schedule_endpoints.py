@@ -55,9 +55,13 @@ async def bots_schedule(user_id: str):
         schedules = ScheduleDB.filter_schedules(user_id=user_id)
         full_schedule = [["" for _ in range(11)] for _ in range(7)]
         for schedule in schedules:
-            day = schedule['day']
-            time_range = schedule['time_range']
-            full_schedule[int(day)][int(time_range)] = schedule['action']
+            try:
+                day = schedule['day']
+                time_range = schedule['time_range']
+                full_schedule[int(day)][int(time_range)] = schedule['action']
+            except Exception as ex:
+                pass
         return full_schedule
-    except Exception:
+    except Exception as ex:
+        print(ex)
         raise HTTPException(status_code=400, detail=[])

@@ -4,14 +4,15 @@ from api import *
 
 @app.get('/accounts/{user_id}/self_posts/')
 async def get_self_posts(user_id: str):
-    data = {}
+    data = []
     posts = SelfPostsDB.filter_posts(user_id=user_id)
     if not posts:
         raise HTTPException(status_code=400, detail='User does not have posts')
     for post in posts:
-        data.update({user_id: {}})
+        ld = {}
         for key, value in post.items():
-            data[user_id].update({key: value})
+            ld.update({key: value})
+        data.append(ld)
     return data
 
 

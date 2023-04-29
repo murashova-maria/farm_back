@@ -25,4 +25,3 @@ async def get_feed(social_media: Optional[str] = None, country: Optional[str] = 
     except Exception as ex:
         print('EXCEPTION: ', ex)
         raise HTTPException(status_code=400, detail='Invalid data')
-    

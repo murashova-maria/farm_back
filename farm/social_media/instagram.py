@@ -15,13 +15,15 @@ from bs4 import BeautifulSoup
 class Instagram(Base):
     def __init__(self, username, password, phone_number=None, proxy=None):
         self.client = None
-        # try:
-        #     self.client = instagrapi.Client()
-        #     if proxy and proxy != 'None':
-        #         self.client.set_proxy(f'http://{proxy["username"]}:{proxy["password"]}@{proxy["ip"]}:{proxy["password"]}')
-        #     self.client.login(username, password)
-        # except Exception:
-        #     self.client = None
+        try:
+            self.client = instagrapi.Client()
+            if proxy and proxy != 'None':
+                print(f'http://{proxy["username"]}:{proxy["password"]}@{proxy["ip"]}:{proxy["password"]}')
+                self.client.set_proxy(f'http://{proxy["username"]}:{proxy["password"]}@{proxy["ip"]}:'
+                                      f'{proxy["password"]}')
+            self.client.login(username, password)
+        except Exception:
+            self.client = None
         self.long_xpaths = {
             'add_image_to_the_publication': '//input[accept="image/jpeg,image/png,image/heic,'
                                             'image/heif,video/mp4,video/quicktime"]',
@@ -61,15 +63,27 @@ class Instagram(Base):
             #     sleep(3)
         return {'comments': [], 'likes': []}
 
-    def _save_new_post_to_db(self, author_name, text, img_path, posts_link, date, likes_amount, likes_accounts,
-                             comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                             label, sent_rate, lang, tag):
+    def _save_new_post_to_db(self, author_name, text, img_path, posts_link, date=None, likes_amount=None,
+                             likes_accounts=None, comments_amount=None, comments_accounts=None,
+                             retweets_amount=None, text_names=None, noun_keywords=None,
+                             label=None, sent_rate=None, lang=None, tag=None, authors_link=None, authors_pic_link=None):
         args = [self.usr_id, 'instagram', author_name, text, img_path, posts_link, 'None', date, likes_amount,
                 likes_accounts, comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                label, sent_rate, lang, tag]
+                label, sent_rate, lang, tag, authors_link, authors_pic_link]
         args = replace_none(args)
         feed = QueuedTask(FeedDB, 'create_post', args)
         main_queue.put(feed)
+
+    def _unknown_browser(self):
+        try:
+            sleep(3)
+            divs = self.driver.find_elements(By.TAG_NAME, 'div')
+            for div in divs:
+                if 'unknown browser' in div.text:
+                    return True
+        except Exception as ex:
+            pass
+        return False
 
     def _allow_cookies_v2(self):
         try:
@@ -190,6 +204,8 @@ class Instagram(Base):
             sleep(2)
             login_btn = self.driver.find_element(By.XPATH, '//*[contains(text(), "Log in")]')
             login_btn.click()
+            if self._unknown_browser():
+                return False
             if not self._wait_until_homepage_load():
                 return False
             self._decline_saving_login_data()
@@ -229,14 +245,17 @@ class Instagram(Base):
             return False
         try:
             for key, value in input_fields.items():
-                if not value or value == 'None' or 'jpg' in value or 'png' in value:
-                    continue
-                field = self.wait(3).until(ec.presence_of_element_located((By.ID, key)))
                 try:
-                    field.clear()
+                    if not value or value == 'None' or 'jpg' in value or 'png' in value:
+                        continue
+                    field = self.wait(3).until(ec.presence_of_element_located((By.ID, key)))
+                    try:
+                        field.clear()
+                    except Exception as ex:
+                        pass
+                    field.send_keys(value)
                 except Exception as ex:
                     pass
-                field.send_keys(value)
             self._select_gender(gender)
             sleep(6)
             self._select_avatar(IMG_DIR + 'instagram/' + avatar)
@@ -286,16 +305,6 @@ class Instagram(Base):
             pass
 
     def handle_posts(self, tag: str, posts_count: int):
-        """
-        author_name, text, img_path, posts_link, date, likes_amount, likes_accounts,
-                             comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                             label, sent_rate, lang, tag
-            'link': f'https://www.instagram.com' + i.get('href'),
-            'text': i.find('img').get('alt'),
-            'likes': likes,
-            'comments': comments,
-            'shares': None
-        """
         posts = self.collect_posts(tag, posts_count)
         for post in posts:
             try:
@@ -303,8 +312,8 @@ class Instagram(Base):
                 rate = return_data_flair(post['text'])
                 data = ['None', post['text'], 'None', post['link'], 'None', len(likes), likes, len(comments), comments,
                         'None', *rate[1:], tag]
-                print('INSTAGRAM DATA: ', data)
-                print()
+                # print('INSTAGRAM DATA: ', data)
+                # print()
                 self._save_new_post_to_db(*data)
             except Exception as ex:
                 print(ex)

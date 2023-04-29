@@ -4,6 +4,7 @@ except ImportError:
     from base import *
 from dateutil import parser
 from bs4 import BeautifulSoup
+import traceback
 
 
 def content_parsing(content2):
@@ -103,14 +104,14 @@ def els_m(browser, xpath):
     return len(els)
 
 
-def parsing_posts(tag, posts_count, driver, recent=True):
+def parsing_posts(tag, posts_count, driver, index, data_debug, recent=True):
     """Parsing posts"""
     result = []
     people_a = []
     if driver:
         articles = []
         try:
-            url = f'https://www.facebook.com/search/posts?q={tag}"'
+            url = f'https://www.facebook.com/search/posts?q={tag}'
             if recent:
                 url += '&filters=eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D'
             driver.get(url)
@@ -118,10 +119,20 @@ def parsing_posts(tag, posts_count, driver, recent=True):
             WebDriverWait(driver, 30).until(
                 ec.presence_of_all_elements_located((By.XPATH, "//div[@role='feed']//a[@role='link' and @tabindex='0']")))
             time.sleep(3)
+            soup_data = BeautifulSoup(driver.page_source, "lxml")
+            # if "You’re Temporarily BlockedIt looks like you were misusing this feature by going too fast." in soup_data.get_text():
+            #     account_controller.status_to_blocked(index)
+            # else:
+            #     account_controller.status_to_not_blocked(index)
             articles = driver.find_elements(
                 By.XPATH, "//div[@role='feed']/div")
         except Exception as e:
-            pass
+            data_debug['exceptions'] = data_debug['exceptions'] + "\n______________________________\n" + str(e)
+            data_debug['tracebacks'] = data_debug[
+                                           'tracebacks'] + "\n______________________________\n" + traceback.format_exc()
+            data_debug['error_number'] += 1
+            print(traceback.format_exc())
+            print(e)
 
         num = 0
         links = []
@@ -228,6 +239,7 @@ def parsing_posts(tag, posts_count, driver, recent=True):
                     people = driver.find_elements(By.XPATH,
                                                   "//div[@role='dialog']/div/div/div/div/div/div/div/div//div[@data-visualcompletion='ignore-dynamic']")
                     people = [BeautifulSoup(p.get_attribute('innerHTML'), 'html.parser') for p in people]
+                    soup_data = BeautifulSoup(driver.page_source, "lxml")
                     for l in people:
                         try:
                             name = l.find('a').get('aria-label')
@@ -237,7 +249,11 @@ def parsing_posts(tag, posts_count, driver, recent=True):
                                  'post': link, 'like': True, 'share': False,'network':"Facebook",
                                  'comment': False})
                         except Exception as e:
-                            pass
+                            data_debug['exceptions'] = data_debug[
+                                                           'exceptions'] + "\n______________________________\n No some user inf"
+
+                            print(l)
+                            print(l.find('a'))
                     try:
                         close_btn = driver.find_element(By.XPATH, "//div[@aria-label='Close' or @aria-label='Закрыть']")
                         driver.execute_script("arguments[0].click();", close_btn)
@@ -327,6 +343,12 @@ def parsing_posts(tag, posts_count, driver, recent=True):
                         if last_n == els_m(driver,
                                            "//div[@role='dialog']/div/div/div/div/div/div/div/div//div["
                                            "@data-visualcompletion='ignore-dynamic']") or last_n > 1000:
+                            # try:
+                            #     close_btn = driver.find_element(By.XPATH,
+                            #                                     "//div[@aria-label='Close' or @aria-label='Закрыть']")
+                            #     driver.execute_script("arguments[0].click();", close_btn)
+                            # except Exception:
+                            #     pass
                             time.sleep(2)
                             break
                         last_n = els_m(driver,
@@ -351,7 +373,13 @@ def parsing_posts(tag, posts_count, driver, recent=True):
                                  'share': True,
                                  'comment': False,'network':"Facebook",})
                         except Exception as e:
-                            pass
+                            data_debug['exceptions'] = data_debug[
+                                                           'exceptions'] + "\n______________________________\n" + str(e)
+                            data_debug['tracebacks'] = data_debug[
+                                                           'tracebacks'] + "\n______________________________\n" + traceback.format_exc()
+                            data_debug['error_number'] += 1
+                            print(e)
+                            print(traceback.format_exc())
                 try:
                     close_btn = driver.find_element(By.XPATH, "//div[@aria-label='Close' or @aria-label='Закрыть']")
                     driver.execute_script("arguments[0].click();", close_btn)
@@ -374,17 +402,13 @@ def parsing_posts(tag, posts_count, driver, recent=True):
         print(f'[FACEBOOK]: Post count: {length_posts}')
         article_arr = [BeautifulSoup(e.get_attribute('innerHTML'), 'html.parser') for e in articles[0:]
                        if len(BeautifulSoup(e.get_attribute('innerHTML'), 'html.parser').find_all('a', {'role': 'link', 'tabindex': '0'}))>2]
-        with open('page.html', 'w', encoding="utf-8") as f:
-            f.write(driver.page_source)
         for num, i in enumerate(article_arr):
             print(links[num])
             print(dates[num])
-            if "/ads/" not in links[num] and dates[num] != 'no date' and links[
-                num] != 'no link' :
+            if "/ads/" not in links[num] and dates[num] != 'no date' and links[num] != 'no link':
                 data = content_parsing(i)
                 if data['text'].strip() != "" and data['text'] != "Facebook":
                     print(data['text'])
-
                     data['tag'] = tag
                     data['tag_id'] = tag
                     data['network'] = 'facebook'
@@ -392,8 +416,13 @@ def parsing_posts(tag, posts_count, driver, recent=True):
                     try:
                         dates[num] = dates[num].split(",")
                         dates[num] = dates[num][1].strip() + dates[num][2].replace("at", "")
-                        dates[num] = (datetime.strptime(dates[num], "%B %d %Y %H:%M %p"))
+                        dates[num] = (datetime.datetime.strptime(dates[num], "%B %d %Y %H:%M %p"))
                     except Exception as e:
+                        data_debug['exceptions'] = data_debug['exceptions'] + "\n______________________________\n"+str(e)
+                        data_debug['tracebacks'] = data_debug['tracebacks'] + "\n______________________________\n"+traceback.format_exc()
+                        data_debug['error_number'] += 1
+                        print(traceback.format_exc())
+                        print(links[num])
                         continue
                     data['date'] = dates[num]
                     data['date'] = dates[num]
@@ -402,4 +431,4 @@ def parsing_posts(tag, posts_count, driver, recent=True):
             time.sleep(4)
     else:
         print('Login error')
-    return result, people_a
+    return result, data_debug, people_a

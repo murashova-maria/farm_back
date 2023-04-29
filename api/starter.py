@@ -16,6 +16,7 @@ class Starter:
         self.password = password
         self.phone_number = phone_number
         self.network = network
+        self.pure_proxy = proxy
         if proxy is not None and proxy != 'None':
             proxy = proxy.split(':')
             proxy = {'ip': proxy[0], 'port': proxy[1], 'username': proxy[2], 'password': proxy[3]}
@@ -26,11 +27,12 @@ class Starter:
         usr = UserDB.filter_users(username=self.username, password=self.password,
                                   phone_number=self.phone_number, network=self.network)
         if usr:
-            st = QueuedTask(UserDB, 'update_user', {'user_id': usr['user_id'], 'status': status, 'activity': 'wait'})
+            st = QueuedTask(UserDB, 'update_user', {'user_id': usr['user_id'], 'status': status, 'activity': 'wait',
+                                                    'proxy': self.pure_proxy})
             main_queue.put(st)
             return
         st = QueuedTask(UserDB, 'create_user', [self.username, self.password, self.phone_number,
-                                                self.network, status])
+                                                self.network, status, 'wait', 'None', self.pure_proxy])
         main_queue.put(st)
 
     def start_instagram(self):
@@ -106,6 +108,7 @@ class Starter:
                 user_info = UserDB.filter_users(username=self.username, password=self.password,
                                                 phone_number=self.phone_number, social_media='facebook')[0]
                 fb.usr_id = user_info['user_id']
+                print(user_info['activity'])
                 if user_info['activity'] == 'fill_profile':
                     profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])
                     if profile:
@@ -150,17 +153,16 @@ class Starter:
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                                       'activity': 'wait'}))
                 elif user_info['activity'] == 'check_feed':
-                    amount_of_tweets = 0
                     for search_tag in KeywordDB.get_keywords_by_user_id(user_id=user_info['user_id'], only_kw=False):
                         if search_tag['keyword'] in user_info['already_used_keywords']:
                             continue
                         if search_tag['status'] != 'wait':
                             continue
-                        for _ in range(search_tag['amount']):
-                            amount_of_tweets += fb.collect_posts(search_tag['keyword'])
-                            if amount_of_tweets >= search_tag['amount']:
-                                break
+                        fb.collect_posts(search_tag['keyword'], search_tag['amount'])
+                        if user_info['already_used_keywords'] == 'None':
+                            user_info['already_used_keywords'] = []
                         user_info['already_used_keywords'].append(search_tag['keyword'])
+                        break
                     main_queue.put(QueuedTask(UserDB, 'update_user', {
                         'user_id': fb.usr_id,
                         'activity': 'wait',
@@ -265,6 +267,7 @@ class Starter:
                             'status': 'active',
                             'activity': 'wait'
                         }))
+                        sleep(2)
             except Exception as ex:
                 print(ex)
 

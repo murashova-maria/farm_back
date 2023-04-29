@@ -328,7 +328,8 @@ class Feed:
     def create_post(self, user_id, social_media, author_name='None', text='None', image_path='None',
                     posts_link='None', status='None', date='None', likes_amount='None', likes_accounts='None',
                     comments_amount='None', comments_accounts='None', retweets_amount='None', text_names='None',
-                    noun_keywords='None', label='None', sent_rate='None', language='None', tag='None', country='None'):
+                    noun_keywords='None', label='None', sent_rate='None', language='None', tag='None', country='None',
+                    authors_link='None', authors_pic_link='None'):
         post_id = str(uuid.uuid4())
         post_node = Node("Post", post_id=post_id, user_id=user_id, social_media=social_media,
                          author_name=author_name, text=text, image_path=image_path,
@@ -336,7 +337,8 @@ class Feed:
                          likes_accounts=likes_accounts, comments_amount=comments_amount,
                          comments_accounts=comments_accounts, retweets_amount=retweets_amount,
                          text_names=text_names, noun_keywords=noun_keywords, label=label,
-                         sent_rate=sent_rate, language=language, tag=tag, country=country)
+                         sent_rate=sent_rate, language=language, tag=tag, country=country, authors_link=authors_link,
+                         authors_pic_link=authors_pic_link)
         self.graph.create(post_node)
         return post_node
 

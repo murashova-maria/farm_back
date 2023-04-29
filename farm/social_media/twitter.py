@@ -61,9 +61,20 @@ class Twitter(Base):
 
     def _close_notification(self):
         try:
-            close_not = self.wait(2).until(ec.presence_of_element_located((By.XPATH,
-                                                                           '//div[@data-testid="app-bar-close" and @aria-label="Close"]')))
-            self.move_and_click(close_not)
+            divs = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'div')))
+            for div in divs:
+                if div.get_attribute('data-testid') == "app-bar-close":
+                    self.move_and_click(div)
+                    return
+        except (WebDriverException, TimeoutException):
+            pass
+
+    def _decline_hover_card(self):
+        try:
+            hover_card = self.wait(3).until(ec.presence_of_element_located((By.XPATH,
+                                                                            '//div[@data-testid="HoverCard"]')))
+            buttons = hover_card.find_elements(By.XPATH, './/div[@role="button"]')
+            self.move_and_click(buttons[-1])
         except (WebDriverException, TimeoutException):
             pass
 
@@ -95,10 +106,10 @@ class Twitter(Base):
 
     def _save_new_post_to_db(self, author_name, text, img_path, posts_link, date, likes_amount, likes_accounts,
                              comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                             label, sent_rate, lang, tag):
+                             label, sent_rate, lang, tag, authors_link='None', authors_pic_link='None'):
         args = [self.usr_id, 'twitter', author_name, text, img_path, posts_link, 'None', date, likes_amount,
                 likes_accounts, comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                label, sent_rate, lang, tag, self.users_country]
+                label, sent_rate, lang, tag, self.users_country, authors_link, authors_pic_link]
         args = replace_none(args)
         feed = QueuedTask(FeedDB, 'create_post', args)
         main_queue.put(feed)
@@ -289,6 +300,8 @@ class Twitter(Base):
 
     def fill_profiles_header(self, avatar=None, cover=None, name=None, about_myself=None, location=None):
         self._get_profile()
+        if about_myself == 'None':
+            about_myself = None
         text_fields = [about_myself]
         if avatar and avatar != 'None':
             if 'http' not in avatar:
@@ -300,6 +313,10 @@ class Twitter(Base):
                 cover = IMG_DIR + 'twitter/' + cover
         else:
             cover = None
+        if name == 'None':
+            name = None
+        if location == 'None':
+            location = None
         image_fields = [cover, avatar, name, location]
         set_the_profile = self.wait(5).until(ec.presence_of_element_located((By.XPATH, self.xpaths['set_the_profile'])))
         set_the_profile.click()
@@ -330,6 +347,7 @@ class Twitter(Base):
                 if text:
                     self.chain.reset_actions()
                     self.chain.send_keys(text).perform()
+                self._decline_hover_card()
                 if filename and filename != 'None':  # Paste image if it exists.
                     image_path = self.driver.find_element(By.XPATH, self.xpaths['image_path'])
                     if 'http' not in filename:
@@ -345,7 +363,7 @@ class Twitter(Base):
             except Exception as ex:
                 pass
 
-    def collect_posts(self, tag='#News'):
+    def collect_posts(self, tag='NFT'):
         amount_of_articles = 0
         if 'search' not in self.driver.current_url:
             self.review(tag)
@@ -364,12 +382,31 @@ class Twitter(Base):
             return
         for article in articles:
             try:
+                user_name = 'None'
+                posts_date = 'None'
                 posts_link = 'None'
                 pic_link = 'None'
+                authors_pic_link = 'None'
                 article_text = article.find_element(By.XPATH, self.xpaths['tweet_text']).text
                 rate = return_data_flair(article_text)[1:]
                 username_field = article.find_element(By.XPATH, self.xpaths['username_articles_row'])
                 username = username_field.find_element(By.XPATH, './/a[@href]').get_attribute('href')
+                try:
+                    usr_avatar = article.find_element(By.XPATH, '//div[@data-testid="Tweet-User-Avatar"]')
+                    authors_pic_link = usr_avatar.find_element(By.XPATH, './/img[@src]').get_attribute('src')
+                    print('PIC LINK: ', authors_pic_link)
+                except WebDriverException:
+                    pass
+                try:
+                    user_name_field = article.find_element(By.XPATH, './/div[@data-testid="User-Name"]')
+                    user_name = user_name_field.text.split('\n')[0]
+                except WebDriverException:
+                    pass
+                try:
+                    time_element = article.find_element(By.XPATH, './/time[@datetime]')
+                    posts_date = time_element.get_attribute('datetime')
+                except WebDriverException:
+                    pass
                 try:
                     pic = article.find_element(By.XPATH, self.xpaths['image_xpath'])
                     pic_link = pic.find_element(By.TAG_NAME, 'img').get_attribute('src')
@@ -391,10 +428,10 @@ class Twitter(Base):
                 retweets = article.find_element(By.XPATH, './/*[@data-testid="retweet"]').text
                 if 'k' in retweets.lower():
                     retweets = float(retweets[:retweets.find('K')])*1000
-                self._save_new_post_to_db(username, article_text, pic_link, posts_link, datetime.datetime.now(), likes,
+                self._save_new_post_to_db(user_name, article_text, pic_link, posts_link, posts_date, likes,
                                           [],
                                           replies, [],
-                                          retweets, *rate, tag)
+                                          retweets, *rate, tag, username, authors_pic_link)
                 amount_of_articles += 1
             except Exception as ex:
                 print(ex)

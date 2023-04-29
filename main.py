@@ -22,9 +22,6 @@ def make_post():
         sleep(2)
         for post in SelfPostsDB.filter_posts(status='None'):
             try:
-                # print(post['exact_time'])
-                # print(ready_to_post(post['exact_time']))
-                # print()
                 if ready_to_post(post['exact_time']):
                     main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'do_post',
                                                                            'post_id': post['post_id']}))
@@ -39,13 +36,17 @@ def check_schedule():
         sleep(4)
         try:
             for schedule in ScheduleDB.filter_schedules(status='None'):
+                # print(schedule)
                 if ready_to_post(schedule['exact_time']):
-                    main_queue.put(QueuedTask(ScheduleDB, 'create_schedule', {'day': schedule['day'],
-                                                                              'time_range': schedule['time_range'],
-                                                                              'user_id': schedule['user_id'],
-                                                                              'status': 'done',
-                                                                              'action': schedule['action'],
-                                                                              'exact_time': schedule['exact_time']}))
+                    main_queue.put(QueuedTask(ScheduleDB, 'update_schedule', {
+                        # 'day': schedule['day'],
+                        # 'time_range': schedule['time_range'],
+                        # 'user_id': schedule['user_id'],
+                        'status': 'done',
+                        'action': schedule['action'],
+                        'schedule_id': schedule['schedule_id'],
+                        # 'exact_time': schedule['exact_time']
+                    }))
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'activity': schedule['action'],
                                                                       'status': 'gardering',
                                                                       'user_id': schedule['user_id']}))

@@ -30,7 +30,9 @@ async def get_bots_info(social_media: str = None, country: str = None):
                     name = FacebookProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
                 else:
                     name = InstagramProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
-                users[index].update({'amount_of_posts': amount_of_posts, 'name': name})
+                users[index].update({'amount_of_posts': amount_of_posts})
+                if name != 'None':
+                    users[index].update({'username': name})
             return users
         else:
             users = [{key: value for key, value in user.items()} for user in UserDB.get_all()]
@@ -42,7 +44,9 @@ async def get_bots_info(social_media: str = None, country: str = None):
                     name = FacebookProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
                 else:
                     name = InstagramProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
-                users[index].update({'amount_of_posts': amount_of_posts, 'username': name})
+                users[index].update({'amount_of_posts': amount_of_posts})
+                if name != 'None':
+                    users[index].update({'username': name})
             return users
     except Exception as ex:
         raise HTTPException(status_code=400, detail=[])
