@@ -109,24 +109,27 @@ class Starter:
                                                 phone_number=self.phone_number, social_media='facebook')[0]
                 fb.usr_id = user_info['user_id']
                 if user_info['activity'] == 'fill_profile':
-                    profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])
-                    if profile:
-                        profile = profile[0]
-                    else:
-                        continue
-                    avatar = profile['avatar']
-                    current_location = profile['current_location']
-                    native_location = profile['native_location']
-                    company = profile['company']
-                    position = profile['position']
-                    city = profile['city']
-                    description = profile['description']
-                    bio = profile['bio']
-                    fb.add_location(current_location, native_location)
-                    fb.add_work(company, position, city, description)
-                    if avatar != 'None' and avatar:
-                        fb.change_pictures(avatar)
-                    fb.add_bio(bio)
+                    try:
+                        profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])
+                        if profile:
+                            profile = profile[0]
+                        else:
+                            continue
+                        avatar = profile['avatar']
+                        current_location = profile['current_location']
+                        native_location = profile['native_location']
+                        company = profile['company']
+                        position = profile['position']
+                        city = profile['city']
+                        description = profile['description']
+                        bio = profile['bio']
+                        fb.add_location(current_location, native_location)
+                        fb.add_work(company, position, city, description)
+                        if avatar != 'None' and avatar:
+                            fb.change_pictures(avatar)
+                        fb.add_bio(bio)
+                    except Exception as ex:
+                        print(ex)
                     task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
                                                               'user_id': user_info['user_id']})
                     main_queue.put(task)
