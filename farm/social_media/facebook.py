@@ -306,10 +306,12 @@ class Facebook(Base):
             try:
                 inp_field = inp.find_element(By.XPATH, './/input[@type="file"]')
                 inp_field.send_keys(IMG_DIR + 'facebook/' + avatar)
+                sleep(1)
                 break
             except WebDriverException as wde:
                 print('PROFILE PIC WDE')
                 inp = inp.find_element(By.XPATH, '..')
+        sleep(10)
         try:
             close = self.wait(4).until(ec.presence_of_element_located((By.XPATH, '//span[contains(text(), "Close")]')))
             self.move_and_click(close)
