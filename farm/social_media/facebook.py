@@ -8,6 +8,9 @@ except ImportError:
     from fb_utils import *
     from farm.analyse import return_data_flair
 
+# OTHER
+from random import choice
+
 
 class Facebook(Base):
     def __init__(self, username, password, phone_number=None, proxy=None):
@@ -35,6 +38,19 @@ class Facebook(Base):
         self.friends_counter = 0
         self.last_tag = None
         self.usr_id = None
+        self.name = None
+
+    def _get_profiles_name(self):
+        self._get_self_profile()
+        try:
+            sleep(2)
+            h1_tag = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'h1')))
+            for h1 in h1_tag:
+                if h1.text and len(h1.text) > 3:
+                    self.name = h1.text
+                    return
+        except WebDriverException:
+            pass
 
     def _save_new_post_to_db(self, author_name=None, text=None, img_path=None,
                              posts_link=None, date=None, likes_amount=None,
@@ -123,13 +139,33 @@ class Facebook(Base):
         except WebDriverException:
             pass
 
-    def make_comment(self, link=None, users: list = None):
-        if self.driver.current_url not in link:
-            self.driver.get(link)
-        ul_container = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'ul')))
-        for ul in ul_container:
-            print(ul.text)
-            sleep(5)
+    def make_comment(self, link, comment_text):
+        self.driver.get(link)
+        sleep(randint(8, 15))
+        try:
+            self.scroll_by(y=800)
+            sleep(3)
+            text_box = self.driver.find_element(By.XPATH, '//div[@aria-label="Write a comment"]')
+            self.move_and_click(text_box, comment_text)
+            sleep(2)
+            submit = self.driver.find_element(By.ID, 'focused-state-composer-submit')
+            self.move_and_click(submit)
+            try:
+                self.wait(3).until(ec.alert_is_present())
+                alert = self.driver.switch_to.alert
+                alert.dismiss()
+            except (UnexpectedAlertPresentException, NoAlertPresentException):
+                pass
+            try:
+                close_btn = self.driver.find_element(By.XPATH, '//div[@aria-label="Close"]')
+                self.move_and_click(close_btn)
+            except Exception as ex:
+                pass
+            self.open_homepage()
+            return True
+        except (WebDriverException, TimeoutException) as wde:
+            print(wde)
+        return False
 
     def add_location(self, current_location: str = None, native_location: str = None):
         if (not current_location and not native_location) or (current_location == 'None' and native_location == 'None'):
@@ -206,6 +242,22 @@ class Facebook(Base):
         except (WebDriverException, TimeoutException) as err:
             print('ERR: ', err)
 
+    def scroll_feed(self, minutes: float | int):
+        end_time = datetime.now() + timedelta(minutes=minutes)
+        article = self.wait(3).until(ec.presence_of_element_located((By.XPATH, '//div[@role="article"]')))
+        self.move_and_click(element=article, to_click=False)
+        while True:
+            if self.driver.current_url != self.homepage:
+                self.open_homepage()
+            if datetime.now() >= end_time:
+                return
+            direction = choice(['Down', 'Up'])
+            if direction == 'Down':
+                timeout_ranges = [5, 20]
+            else:
+                timeout_ranges = [2, 10]
+            self.scroll_down_by_hands(direction=direction, timeout=randint(*timeout_ranges))
+
     def collect_posts(self, tag='News', amount=15):
         try:
             result, data_debug, people = parsing_posts(tag, amount, self.driver, 0, data_debug={
@@ -225,15 +277,6 @@ class Facebook(Base):
                 self._save_new_post_to_db(user, text, None, user_link, posts_pubdate, likes_amount, [],
                                           comments_amount, [], shares_amount, *return_data_flair(text)[1:], tag,
                                           user_link, users_profile_pic)
-            # with open('results.txt', 'a') as output:
-            #     for res in result:
-            #         print(res)
-            #         output.write(str(res) + '\n')
-            #     output.close()
-            # with open('peoples.txt', 'a') as output_second:
-            #     for p in people:
-            #         output_second.write(str(p) + '\n')
-            #     output_second.close()
         except Exception as ex:
             print('EX: ' * 50, ex)
 
@@ -343,14 +386,18 @@ class Facebook(Base):
                 self.rs()
                 login_btn = self.driver.find_element(By.NAME, 'login')
                 self.move_and_click(login_btn)
+                sleep(2)
                 try:
                     divs = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'div')))
                     for div in divs:
                         if 'access denied' in div.text.lower():
                             return False
+                        if 'mobile number' in div.text.lower():
+                            return False
                 except WebDriverException:
                     pass
                 self._change_language()
+                self._get_profiles_name()
                 return True
             except WebDriverException as wde:
                 print(wde)
@@ -436,7 +483,8 @@ class Facebook(Base):
     def explore_platform(self):
         pass
 
-    def join_groups_by_interests(self, tag: str, max_amount_of_groups: int = 3):
+    def join_groups_by_interests(self, tag: str, *args):
+        max_amount_of_groups = randint(3,7)
         self.driver.get('https://www.facebook.com/groups/feed/')
         sleep(3)
         self._search(tag, tab='groups')
@@ -451,6 +499,48 @@ class Facebook(Base):
                 close_btn.click()
             except (TimeoutException, WebDriverException):
                 pass
+
+    def comments_chain(self, masters_name: str, text: str, link: str):
+        if self.driver.current_url != link:
+            self.driver.get(link)
+        self.scroll_by(y=1200)
+        try:
+            lis = self.wait(5).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="article"]')))
+            # lis = self.wait(5).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'li')))
+            for li in lis:
+                if masters_name not in li.text:
+                    continue
+                self.scroll_into_view(li)
+                self.scroll_by(y=-300)
+                buttons = li.find_elements(By.XPATH, './/div[@role="button"]')
+                for btn in buttons:
+                    if btn.text == 'Reply':
+                        self.scroll_into_view(btn)
+                        self.move_and_click(btn, text)
+                        self.rs()
+                        submit_btn = li.find_element(By.XPATH, './/div[@id="focused-state-composer-submit"]')
+                        self.move_and_click(submit_btn)
+                        sleep(2)
+                        try:
+                            part_reviews = self.driver.find_element(By.XPATH,
+                                                                    '//*[contains(text(), "Participation review")]')
+                            self.move_and_click(part_reviews)
+                            self.chain.send_keys(Keys.ESCAPE).perform()
+                            self.chain.reset_actions()
+                        except WebDriverException:
+                            pass
+            try:
+                buttons = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="button"]')))
+                for btn in buttons:
+                    if 'View more comments' in btn.text:
+                        self.scroll_into_view(btn)
+                        self.move_and_click(btn)
+                        sleep(2)
+                        break
+            except Exception as ex:
+                pass
+        except (WebDriverException, TimeoutException) as wde:
+            print(wde)
 
 
 if __name__ == '__main__':

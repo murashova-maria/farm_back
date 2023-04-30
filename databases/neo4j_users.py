@@ -26,9 +26,11 @@ class User:
 
     def create_user(self, username, password, phone_number='None', social_media='None',
                     status='None', activity='None', reg_date='None', proxies='None', search_tag='None',
-                    amount_of_friends=0, already_used_keywords: list = None, country='None'):
+                    amount_of_friends=0, already_used_keywords: list = None, country='None', groups_used='None'):
         if already_used_keywords is None:
             already_used_keywords = []
+        if groups_used == 'None' or groups_used is None:
+            groups_used = []
         user_id = str(uuid.uuid4())
         check_usr = self.matcher.match("User", username=username, password=password, phone_number=phone_number,
                                        social_media=social_media).first()
@@ -38,7 +40,8 @@ class User:
                          phone_number=phone_number, social_media=social_media,
                          status=status, activity=activity, reg_date=reg_date,
                          proxies=proxies, search_tag=search_tag, amount_of_friends=amount_of_friends,
-                         already_used_keywords=already_used_keywords, country=country)
+                         already_used_keywords=already_used_keywords, country=country,
+                         groups_used=groups_used)
         self.graph.create(user_node)
         self._attach_profile(user_id=user_id, network=social_media)
         return user_node
@@ -249,10 +252,10 @@ class FacebookProfile:
         self.graph = graph
         self.matcher = NodeMatcher(self.graph)
 
-    def create_profile(self, user_id, current_location='None', native_location='None',
+    def create_profile(self, user_id, name='None', current_location='None', native_location='None',
                        company='None', position='None', city='None',
                        description='None', bio='None', avatar='None', hobbies='None'):
-        profile_node = Node("FacebookProfile", user_id=user_id,
+        profile_node = Node("FacebookProfile", user_id=user_id, name=name,
                             current_location=current_location, native_location=native_location,
                             company=company, position=position, city=city,
                             description=description, bio=bio, avatar=avatar, hobbies=hobbies)
@@ -409,25 +412,33 @@ class Conversation:
         self.matcher = NodeMatcher(self.graph)
         self.rel_matcher = RelationshipMatcher(self.graph)
 
-    def create_chat(self):
-        chat_id = randint(0, 2147483647)
-        chat_node = Node('Chat', chat_id=chat_id)
+    def create_conversation(self, **kwargs):
+        conv_id = randint(0, 2147483647)
+        chat_node = Node('Conversation', conv_id=conv_id, **kwargs)
         self.graph.create(chat_node)
 
-    def add_user_to_chat(self, chat_id, user_id):
-        chat_node = self.graph.nodes.match('Chat', id=chat_id).first()
-        user_node = Node('User', id=user_id)
-        rel = Relationship(chat_node, 'HAS_USER', user_node)
-        self.graph.create(rel)
+    def update_conversation(self, conv_id: int, **kwargs) -> dict | None:
+        conv_node = self.matcher.match("Conversation", conv_id=conv_id).first()
+        if conv_node:
+            for key, value in kwargs.items():
+                conv_node[key] = value
+            self.graph.push(conv_node)
+            return conv_node
+        else:
+            return None
 
-    def add_message_to_user(self, chat_id, user_id, message_text, delay):
-        user_node = self.graph.nodes.match('User', id=user_id).first()
-        message_node = Node('Message', message_id=randint(0, 2147483647), message_text=message_text, delay=delay,
-                            status='wait')
-        rel = Relationship(user_node, 'HAS_MESSAGE', message_node)
-        chat_node = self.graph.nodes.match('Chat', id=chat_id).first()
-        self.graph.create(rel)
-        self.graph.create(Relationship(chat_node, 'HAS_MESSAGE', message_node))
+    def filter_conversations(self, **kwargs):
+        query = "MATCH (p:Conversation) WHERE "
+        params = {"params_" + key: value for key, value in kwargs.items()}
+        for key, value in kwargs.items():
+            query += f"p.{key} = $params_{key} AND "
+        query = query[:-5]
+        query += " RETURN p"
+        result = self.graph.run(query, **params)
+        return [record["p"] for record in result]
+
+    def get_all(self):
+        return list(self.matcher.match('Conversation'))
 
 
 class Schedule:

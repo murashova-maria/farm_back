@@ -1,6 +1,9 @@
 # LOCAL
 from api import *
 
+# OTHER
+import aiofiles
+
 
 @app.post('/bots/{user_id}/schedules/')
 async def bots_schedule(user_id: str, params: Dict[Any, Any]):
@@ -11,10 +14,13 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
         exact_time = get_randomized_date(int(day), RANGES[int(time_range)])
         data = [user_id, action, day, time_range, exact_time]
         if action == 'make_post' and params:
+            filename = f'{user_id}.jpg'
+            async with aiofiles.open(IMG_DIR + filename, 'wb') as f:
+                await f.write(params.get('filename').read())
             post_data = {
                 'user_id': user_id,
                 'text': params.get('text'),
-                'filename': params.get('filename'),
+                'filename': filename,
                 'status': 'None',
                 'day': day,
                 'time_range': time_range,

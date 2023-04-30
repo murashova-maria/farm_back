@@ -1,7 +1,6 @@
 # BUILT-IN
 import os
 import datetime
-import calendar
 
 # LOCAL
 from databases.neo4j_users import *
@@ -20,10 +19,11 @@ db_password = os.getenv('PASSWORD_NEO4J')
 local_graph = Graph(uri, auth=(db_username, db_password))
 
 UserDB = User(local_graph)
+FeedDB = Feed(local_graph)
+KeywordDB = Keyword(local_graph)
+ScheduleDB = Schedule(local_graph)
+SelfPostsDB = SelfPosts(local_graph)
+ConversationDB = Conversation(local_graph)
 TwitterProfileDB = TwitterProfile(local_graph)
 FacebookProfileDB = FacebookProfile(local_graph)
 InstagramProfileDB = InstagramProfile(local_graph)
-KeywordDB = Keyword(local_graph)
-FeedDB = Feed(local_graph)
-SelfPostsDB = SelfPosts(local_graph)
-ScheduleDB = Schedule(local_graph)

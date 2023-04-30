@@ -1,5 +1,6 @@
 # LIBS
 import os
+import json
 import logging
 from queue import Queue
 
@@ -7,6 +8,7 @@ from queue import Queue
 from config import *
 from databases.neo4j_users import *
 from farm.social_media.utils import QueuedTask
+from tmp_solutions.conv_tmp import HandleConversation
 from databases.utils import get_exact_date, get_randomized_date
 
 # logging.basicConfig(
@@ -14,6 +16,12 @@ from databases.utils import get_exact_date, get_randomized_date
 #     format='%(asctime)s %(levelname) %(message)s',
 #     handlers=[logging.StreamHandler()]
 # )
+
+
+def read_json(filename='conversations.json'):
+    with open(filename, 'r') as f:
+        return json.load(f)
+
 
 GOLOGIN_API_TOKEN = os.getenv('GOLOGIN_API_TOKEN')
 

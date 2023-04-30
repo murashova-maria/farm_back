@@ -28,11 +28,12 @@ class Starter:
                                   phone_number=self.phone_number, network=self.network)
         if usr:
             st = QueuedTask(UserDB, 'update_user', {'user_id': usr['user_id'], 'status': status, 'activity': 'wait',
-                                                    'proxy': self.pure_proxy})
+                                                    'proxy': self.pure_proxy,
+                                                    'reg_date': datetime.datetime.now()})
             main_queue.put(st)
             return
         st = QueuedTask(UserDB, 'create_user', [self.username, self.password, self.phone_number,
-                                                self.network, status, 'wait', 'None', self.pure_proxy])
+                                                self.network, status, 'wait', datetime.datetime.now(), self.pure_proxy])
         main_queue.put(st)
 
     def start_instagram(self):
@@ -101,6 +102,11 @@ class Starter:
             fb.driver.close()
             return
         self._add_user('Active')
+        user_info = UserDB.filter_users(username=self.username, password=self.password,
+                                        phone_number=self.phone_number, social_media='facebook')[0]
+        task = QueuedTask(FacebookProfileDB, 'update_profile', {'name': str(fb.name),
+                                                                'user_id': user_info['user_id']})
+        main_queue.put(task)
         while True:
             try:
                 sleep(2)
@@ -146,14 +152,21 @@ class Starter:
                     main_queue.put(task)
                     sleep(3)
                 elif user_info['activity'] == 'add_friends':
-                    fb.add_friends(max_value=20)
+                    fb.add_friends(max_value=randint(3, 25))
                 elif user_info['activity'] == 'search_groups':
                     for search_tag in KeywordDB.get_keywords_by_user_id(user_id=user_info['user_id'], only_kw=False):
+                        if search_tag['keyword'] in user_info['groups_used']:
+                            continue
                         if search_tag['status'] != 'wait':
                             continue
                         fb.join_groups_by_interests(search_tag['keyword'], search_tag['amount'])
+                        if user_info['groups_used'] == 'None':
+                            user_info['groups_used'] = []
+                        user_info['groups_used'].append(search_tag['keyword'])
+                        break
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
-                                                                      'activity': 'wait'}))
+                                                                      'activity': 'wait',
+                                                                      'groups_used': user_info['groups_used']}))
                 elif user_info['activity'] == 'check_feed':
                     for search_tag in KeywordDB.get_keywords_by_user_id(user_id=user_info['user_id'], only_kw=False):
                         if search_tag['keyword'] in user_info['already_used_keywords']:
@@ -188,6 +201,19 @@ class Starter:
                             'status': 'active',
                             'activity': 'wait'
                         }))
+                elif user_info['activity'] == 'leave_comment':
+                    fb.make_comment('https://www.facebook.com/groups/241680586186052/permalink/1898152053872222/',
+                                    'Awesome!')
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {
+                        'user_id': fb.usr_id,
+                        'activity': 'wait',
+                        'status': 'active',
+                    }))
+                elif user_info['activity'] == 'scroll_feed':
+                    fb.scroll_feed(randint(5, 10))
+                for conv_id, conversation in read_json().items():
+                    for post, values in conversation['tmp_data'].items():
+                        pass
             except Exception as ex:
                 print('WHILE THREAD: ', ex)
 

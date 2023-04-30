@@ -1,9 +1,10 @@
 # BUILT-IN LIBS
+import os
 import sys
 import zipfile
 from time import sleep
 from random import choice
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # AUTOMATION
 from selenium import webdriver
@@ -18,7 +19,8 @@ import undetected_chromedriver as uc
 
 # ERRORS
 from selenium.common.exceptions import TimeoutException
-from selenium.common.exceptions import NoSuchWindowException, WebDriverException, StaleElementReferenceException
+from selenium.common.exceptions import NoSuchWindowException, WebDriverException, StaleElementReferenceException, \
+    UnexpectedAlertPresentException, NoAlertPresentException
 
 # LOCAL
 from loader import *
@@ -80,6 +82,17 @@ class Base:
             if text in self.driver.current_url:
                 return
             sleep(delay)
+
+    def scroll_down_by_hands(self, direction: str = 'Down', timeout: int = 10):
+        self.chain.reset_actions()
+        if direction == 'Down':
+            self.chain.key_down(Keys.ARROW_DOWN)
+            sleep(timeout)
+            self.chain.key_up(Keys.ARROW_DOWN)
+        else:
+            self.chain.key_up(Keys.ARROW_UP)
+            sleep(timeout)
+            self.chain.key_up(Keys.ARROW_UP)
 
     def open_homepage(self):
         self.driver.get(self.url)
