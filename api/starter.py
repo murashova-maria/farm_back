@@ -212,12 +212,21 @@ class Starter:
                 elif user_info['activity'] == 'scroll_feed':
                     fb.scroll_feed(randint(5, 10))
                 for conv_id, conversation in read_json().items():
-                    for post, values in conversation['tmp_data'].items():
-                        if values['index'] >= len(values['chain']):
+                    for post_link, values in conversation['tmp_data'].items():
+                        index = values['index']
+                        next_time_message = values['next_time_message']
+                        chain = values['chain']
+                        master_accounts = conversation['master_accs']
+                        meek_accounts = conversation['meek_accs']
+                        thread = conversation['thread']
+                        if index >= len(chain):
                             continue
-                        if values['chain'][values['index']] == fb.usr_id and \
-                                values['next_time_message'] >= datetime.now():
-                            pass
+                        if fb.usr_id != chain[index]:
+                            continue
+                        if next_time_message < datetime.now():
+                            continue
+
+
             except Exception as ex:
                 print('WHILE THREAD: ', ex)
 

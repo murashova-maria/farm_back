@@ -9,3 +9,5 @@ transformers==4.27.4
 fastapi==0.89.1
 beautifulsoup4==4.11.2
 instagrapi==1.17.3
+aiofiles==23.1.0
+python-multipart==0.0.6

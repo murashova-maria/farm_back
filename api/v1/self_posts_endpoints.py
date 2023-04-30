@@ -21,6 +21,7 @@ async def add_self_post(user_id: str, items: Dict[Any, Any]):
     try:
         text = items.get('text')
         filename = items.get('filename')
+        # filename = f'{user_id}_post_image_{randint(0, 10000)}.jpg'
         exact_time = items.get('exact_time')
         task = QueuedTask(SelfPostsDB, 'create_post', [user_id, text, filename, 'None', 'None', 'None',
                                                        exact_time])

@@ -83,10 +83,14 @@ async def update_account(user_id: str, item: Dict[Any, Any]):
     return {'Success': 'Database updated successfully'}
 
 
-@app.put('/accounts/{user_id}/profile/{network}/')
-async def update_profile(user_id: str, network: str, item: Dict[Any, Any]):
+@app.put('/accounts/{user_id}/profile/')
+async def update_profile(user_id: str, item: Dict[Any, Any]):
     item.update({'user_id': user_id})
-    print(item)
+    network = UserDB.filter_users(user_id=user_id)
+    if network:
+        network = network[0]['social_media']
+    else:
+        return {'Error': 'Invalid user_id'}
     if network == 'twitter':
         profile_object = TwitterProfileDB
     elif network == 'facebook':
