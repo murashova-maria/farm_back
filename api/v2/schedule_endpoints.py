@@ -6,20 +6,22 @@ import aiofiles
 
 
 @app.post('/bots/{user_id}/schedules/')
-async def bots_schedule(user_id: str, file_name: Annotated[bytes, File()], day: Annotated[str, Form()],
-                        action: Annotated[str, Form()], time_range: Annotated[int, Form()], text: Annotated[str, Form()]):
+async def bots_schedule(user_id: str, params: Dict[Any, Any]):
     try:
+        action = params.get('action')
+        day = params.get('day')
+        time_range = params.get('time_range')
         exact_time = get_randomized_date(int(day), RANGES[int(time_range)])
         data = [user_id, action, day, time_range, exact_time]
         social_media = UserDB.filter_users(user_id=user_id)[0]['social_media']
-        if action == 'make_post' and text:
+        if action == 'make_post' and params:
             filename = f'{user_id}.jpg'
-            if filename is not None:
+            if params.get('filename') is not None:
                 async with aiofiles.open(IMG_DIR + f'{social_media}/' + filename, 'wb') as f:
-                    await f.write(file_name.read())
+                    await f.write(params.get('filename').read())
             post_data = {
                 'user_id': user_id,
-                'text': text,
+                'text': params.get('text'),
                 'filename': filename,
                 'status': 'None',
                 'day': day,

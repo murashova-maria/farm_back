@@ -213,7 +213,11 @@ class Starter:
                     fb.scroll_feed(randint(5, 10))
                 for conv_id, conversation in read_json().items():
                     for post, values in conversation['tmp_data'].items():
-                        pass
+                        if values['index'] >= len(values['chain']):
+                            continue
+                        if values['chain'][values['index']] == fb.usr_id and \
+                                values['next_time_message'] >= datetime.now():
+                            pass
             except Exception as ex:
                 print('WHILE THREAD: ', ex)
 
