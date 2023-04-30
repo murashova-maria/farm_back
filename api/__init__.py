@@ -3,9 +3,9 @@ from loader import *
 from api.starter import Starter
 
 # API
-from typing import Optional
-from fastapi import FastAPI, HTTPException
+from typing import Optional, Annotated
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 
 # OTHER
 from threading import Thread
