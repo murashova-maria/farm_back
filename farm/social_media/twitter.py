@@ -57,6 +57,23 @@ class Twitter(Base):
         self.users_country = country
         self.user_link = None
 
+    def _rate_publication(self, article, decision: int):
+        like = article.find_element(By.XPATH, './/[div@data-testid="like" and @role="button"]')
+        retweet = article.find_element(By.XPATH, './/[div[@data-testid="retweet" and @role="button"]')
+        if decision == 1:
+            self.move_and_click(like)
+        elif decision == 2:
+            self.move_and_click(retweet)
+            sleep(1)
+            retweet_confirm = article.find_element(By.XPATH, './/div[@data-testid="retweetConfirm"]')
+            self.move_and_click(retweet_confirm)
+        else:
+            self.move_and_click(like)
+            self.move_and_click(retweet)
+            sleep(1)
+            retweet_confirm = article.find_element(By.XPATH, './/div[@data-testid="retweetConfirm"]')
+            self.move_and_click(retweet_confirm)
+
     def handle_correct_window(self):
         pass
 
@@ -162,6 +179,7 @@ class Twitter(Base):
         self._get_profile()
         sleep(3)
         self.user_link = self.driver.current_url
+        main_queue.put(QueuedTask(UserDB, 'update_user', {'user_link': self.user_link, 'user_id': self.usr_id}))
 
     def _get_profile(self):
         for _ in range(2):
@@ -196,15 +214,6 @@ class Twitter(Base):
             except WebDriverException:
                 self.open_homepage()
         return False
-
-    def _fill_start_interests(self, interests: list):
-        try:
-            modal_header = self.wait(3).until(ec.presence_of_element_located((By.ID, 'modal-header')))
-            if 'what do you want to see on Twitter?' not in modal_header.text.lower():
-                return
-            lis = self.driver.find_elements(By.TAG_NAME, 'li')
-        except (WebDriverException, TimeoutException):
-            pass
 
     def _update_profiles_header(self, input_data: list, textarea_data: list):
         try:
@@ -309,10 +318,6 @@ class Twitter(Base):
             if self.driver.current_url == self.home:
                 self._close_notification()
                 self._sheet_dialog()
-                try:
-                    self.get_users_link()
-                except Exception as ex:
-                    pass
                 return True
         except (WebDriverException, NoSuchWindowException) as wde:
             print('LOGIN:', wde)
@@ -414,7 +419,6 @@ class Twitter(Base):
                 try:
                     usr_avatar = article.find_element(By.XPATH, '//div[@data-testid="Tweet-User-Avatar"]')
                     authors_pic_link = usr_avatar.find_element(By.XPATH, './/img[@src]').get_attribute('src')
-                    print('PIC LINK: ', authors_pic_link)
                 except WebDriverException:
                     pass
                 try:

@@ -21,9 +21,7 @@ class Facebook(Base):
             'current_location_input': '//input[@aria-label="Current city"]',
             'hometown_input': '//input[@aria-label="Hometown"]',
             'profile_svg': '//div[@aria-label="Update profile picture"]',
-
             'cookie_accept_btn': '//button[@data-cookiebanner="accept_button"]',
-
             'select_audience': '//div[@aria-label="Select audience"]',
             'bio_field': '//textarea[@aria-label="Enter bio text"]',
             'add_hobbies': '//div[@aria-label="Add hobbies" and @role="button"]',

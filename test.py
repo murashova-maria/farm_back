@@ -6,7 +6,11 @@ from loader import *
 
 
 if __name__ == '__main__':
-    pass
+    for keyword in KeywordDB.get_all_keywords():
+        print(keyword)
+    #     local_graph.delete(keyword)
+        # if keyword['keyword'] != 'Nord-Kivu' and keyword['keyword'] != 'ΣΥΡΙΖΑ':
+
     # conversations = ConversationDB.get_all()
     # for conv in conversations:
     #     print(conv)

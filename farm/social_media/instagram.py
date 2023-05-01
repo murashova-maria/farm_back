@@ -9,6 +9,7 @@ except ImportError:
     from base import *
     from farm.analyse import return_data_flair
 import instagrapi
+from instagrapi.exceptions import ChallengeRequired, TwoFactorRequired
 from bs4 import BeautifulSoup
 
 
@@ -24,7 +25,9 @@ class Instagram(Base):
                 port = proxy.get('port')
                 self.client.set_proxy(f'http://{proxy_username}:{proxy_password}@{ip}:{port}')
             self.client.login(username, password)
-        except Exception:
+        except (ChallengeRequired, TwoFactorRequired):
+            self.client = None
+        except Exception as insta_another_exception:
             self.client = None
         self.long_xpaths = {
             'add_image_to_the_publication': '//input[accept="image/jpeg,image/png,image/heic,'

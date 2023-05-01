@@ -105,6 +105,7 @@ class Starter:
             fb.driver.close()
             return
         self._add_user('Active')
+        sleep(10)
         user_info = UserDB.filter_users(username=self.username, password=self.password,
                                         phone_number=self.phone_number, social_media='facebook')[0]
         task = QueuedTask(FacebookProfileDB, 'update_profile', {'name': str(fb.name),

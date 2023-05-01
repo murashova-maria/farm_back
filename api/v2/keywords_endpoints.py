@@ -14,37 +14,49 @@ async def add_keywords(params: Dict[Any, Any]):
 @app.get('/keywords/')
 async def get_keywords():
     try:
-        tmp = []
-        general = []
+        # Получаем все ключевые слова и связанные с ними профили пользователей
         keywords = KeywordDB.get_all_keywords_with_users()
-        for keyw in keywords:
-            twitter_profile = []
-            facebook_profile = []
-            instagram_profile = []
-            for user in keyw['users']:
+
+        # Создаем словарь для хранения ключевых слов и связанных с ними профилей пользователей
+        result = {}
+
+        # Добавляем каждое ключевое слово и связанные с ними профили пользователей в словарь
+        for keyword in keywords:
+            keyword_name = keyword['keyword']
+            keyword.pop('keyword')
+            users = keyword.pop('users')
+
+            # Создаем список профилей пользователей для каждой социальной сети
+            twitter_profiles = []
+            facebook_profiles = []
+            instagram_profiles = []
+
+            # Группируем профили пользователей по социальным сетям
+            for user in users:
                 if user['social_media'] == 'twitter':
-                    twitter_profile.append(user)
+                    twitter_profiles.append(user)
                 elif user['social_media'] == 'facebook':
-                    facebook_profile.append(user)
-                else:
-                    instagram_profile.append(user)
-            if facebook_profile:
-                keyw.update({'facebook': facebook_profile[0]})
-            if twitter_profile:
-                keyw.update({'twitter': twitter_profile[0]})
-            if instagram_profile:
-                keyw.update({'instagram': instagram_profile[0]})
-            general.append(keyw)
-            keyw.pop('users')
-        for word in KeywordDB.get_all_keywords():
-            for s_word in general:
-                if word.get('keyword') != s_word.get('keyword'):
-                    tmp.append({key: value for key, value in word.items()})
-        return [x for x in [*general, *tmp] if x.get('keyword') != 'scroll_feed']
-        # return [keyw for keyw in keywords]
+                    facebook_profiles.append(user)
+                elif user['social_media'] == 'instagram':
+                    instagram_profiles.append(user)
+
+            # Добавляем первый профиль пользователя для каждой социальной сети к ключевому слову
+            if facebook_profiles:
+                keyword['facebook'] = facebook_profiles[0]
+            if twitter_profiles:
+                keyword['twitter'] = twitter_profiles[0]
+            if instagram_profiles:
+                keyword['instagram'] = instagram_profiles[0]
+
+            # Добавляем ключевое слово и связанные с ним профили пользователей в словарь
+            result[keyword_name] = keyword
+
+        # Возвращаем список ключевых слов и связанных с ними профилей пользователей
+        return list(result.values())
     except Exception as ex:
         print(ex)
         raise HTTPException(status_code=400, detail={'Status': 'Incorrect keyword ID or user_id'})
+
 
 
 @app.delete('/bots/{user_id}/keywords/{keyword_id}/')
@@ -74,7 +86,6 @@ async def delete_keyword(keyword_id: str):
 @app.put('/keywords/{keyword_id}/')
 async def update_keyword(keyword_id: str | int, params: Dict[Any, Any]):
     keyword_id = int(keyword_id)
-    kw_value = None
     to_delete = []
     try:
         for keyword in KeywordDB.get_all_keywords_with_users():
