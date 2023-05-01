@@ -35,6 +35,18 @@ async def create_conversation(params: Dict[Any, Any]):
         return HTTPException(status_code=400, detail='Wrong data')
 
 
+@app.get('/conversations/')
+async def get_conversations():
+    try:
+        all_convs = read_json()
+        general = []
+        for key, value in all_convs.items():
+            general.append({**value, 'conversation_id': key})
+        return general
+    except Exception:
+        return HTTPException(status_code=400, detail='Wrong data')
+
+
 @app.put('/conversation/{conversation_id}/')
 async def add_user_to_conversation(conversation_id: int | str, params: Dict[Any, Any]):
     conversation_id = int(conversation_id)

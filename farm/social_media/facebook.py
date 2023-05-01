@@ -92,6 +92,8 @@ class Facebook(Base):
                 try:
                     if text in a.get_attribute('href'):
                         self.move_and_click(a)
+                        sleep(2)
+                        self.get_friends_amount()
                         return True
                 except Exception as ex:
                     pass

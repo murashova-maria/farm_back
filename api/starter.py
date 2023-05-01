@@ -109,8 +109,8 @@ class Starter:
                                         phone_number=self.phone_number, social_media='facebook')[0]
         task = QueuedTask(FacebookProfileDB, 'update_profile', {'name': str(fb.name),
                                                                 'user_id': user_info['user_id']})
-        fb.get_friends_amount()
         main_queue.put(task)
+        fb.get_friends_amount()
         while True:
             try:
                 sleep(2)
@@ -246,7 +246,6 @@ class Starter:
                             dt += datetime.timedelta(minutes=randint(1, 20))
                             res[conv_id]['tmp_data'][post_name]['next_comment_date'] += int(dt.timestamp())
                             main_queue.put(QueuedTask(HandleConversation(read_json()), 'update_current_data', res))
-
             except Exception as ex:
                 print('WHILE THREAD: ', ex)
 
@@ -264,6 +263,10 @@ class Starter:
                                                           'user_link': tw.user_link}))
         tw.users_country = self.country
         while True:
+            if tw.user_link is None:
+                tw.get_users_link()
+                main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': tw.usr_id,
+                                                                  'user_link': tw.user_link}))
             try:
                 sleep(1)
                 # Get user's DB object.

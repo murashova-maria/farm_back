@@ -158,8 +158,9 @@ class Twitter(Base):
             except WebDriverException as wde:
                 print('ERRORS:', wde)
 
-    def _get_users_link(self):
+    def get_users_link(self):
         self._get_profile()
+        sleep(3)
         self.user_link = self.driver.current_url
 
     def _get_profile(self):
@@ -309,7 +310,7 @@ class Twitter(Base):
                 self._close_notification()
                 self._sheet_dialog()
                 try:
-                    self._get_users_link()
+                    self.get_users_link()
                 except Exception as ex:
                     pass
                 return True
