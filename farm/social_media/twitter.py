@@ -300,6 +300,10 @@ class Twitter(Base):
             sleep(5)
             if self.driver.current_url == self.home:
                 self._close_notification()
+                try:
+                    self._get_users_link()
+                except Exception as ex:
+                    pass
                 return True
         except (WebDriverException, NoSuchWindowException) as wde:
             print('LOGIN:', wde)
