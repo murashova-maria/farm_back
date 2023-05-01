@@ -57,9 +57,12 @@ class Facebook(Base):
         try:
             a_tags = self.wait(2).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'a')))
             for a in a_tags:
-                if 'sk=friends' in a.get_attribute('href'):
-                    main_queue.put(QueuedTask(UserDB, 'update_user', {'amount_of_friends': a.text,
-                                                                      'user_id': self.usr_id}))
+                try:
+                    if 'sk=friends' in a.get_attribute('href'):
+                        main_queue.put(QueuedTask(UserDB, 'update_user', {'amount_of_friends': a.text,
+                                                                          'user_id': self.usr_id}))
+                except Exception as ex:
+                    pass
 
         except (WebDriverException, TimeoutException):
             pass
