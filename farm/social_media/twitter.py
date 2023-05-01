@@ -309,11 +309,11 @@ class Twitter(Base):
             sleep(5)
             if self.driver.current_url == self.home:
                 self._close_notification()
+                self._sheet_dialog()
                 try:
                     self._get_users_link()
                 except Exception as ex:
                     pass
-                self._sheet_dialog()
                 return True
         except (WebDriverException, NoSuchWindowException) as wde:
             print('LOGIN:', wde)
