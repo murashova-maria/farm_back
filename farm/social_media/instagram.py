@@ -294,7 +294,7 @@ class Instagram(Base):
                 else:
                     likes_amount = None
                 rate = return_data_flair(authors_text)[1:]
-                data = [authors_username, authors_text, img_path, posts_link, datetime.now(), likes_amount,
+                data = [authors_username, authors_text, img_path, posts_link, datetime.datetime.now(), likes_amount,
                         None, comments_amount, None, None, *rate]
                 self._save_new_post_to_db(*data)
 

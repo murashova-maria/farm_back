@@ -5,11 +5,12 @@ from loader import DATE_FORMAT
 from datetime import datetime
 
 
-def ready_to_post(date: str):
+def ready_to_post(date):
     if date == 'now':
         return True
-    datetime_format = datetime.strptime(date, DATE_FORMAT)
-    return datetime_format <= datetime.now()
+    if type(date) is str:
+        date = datetime.strptime(date, DATE_FORMAT)
+    return date <= datetime.now()
 
 
 if __name__ == '__main__':

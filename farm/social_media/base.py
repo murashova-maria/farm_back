@@ -2,9 +2,10 @@
 import os
 import sys
 import zipfile
+import datetime
 from time import sleep
 from random import choice
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 # AUTOMATION
 from selenium import webdriver
