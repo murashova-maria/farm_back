@@ -109,6 +109,7 @@ class Starter:
                                         phone_number=self.phone_number, social_media='facebook')[0]
         task = QueuedTask(FacebookProfileDB, 'update_profile', {'name': str(fb.name),
                                                                 'user_id': user_info['user_id']})
+        fb.get_friends_amount()
         main_queue.put(task)
         while True:
             try:
@@ -117,7 +118,6 @@ class Starter:
                 user_info = UserDB.filter_users(username=self.username, password=self.password,
                                                 phone_number=self.phone_number, social_media='facebook')[0]
                 fb.usr_id = user_info['user_id']
-                print(user_info['activity'])
                 if user_info['activity'] == 'fill_profile':
                     try:
                         profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])
@@ -260,6 +260,8 @@ class Starter:
             tw.driver.close()
             return
         self._add_user('Created')
+        main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': tw.usr_id,
+                                                          'user_link': tw.user_link}))
         tw.users_country = self.country
         while True:
             try:

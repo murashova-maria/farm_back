@@ -53,6 +53,17 @@ class Facebook(Base):
         except WebDriverException:
             pass
 
+    def get_friends_amount(self):
+        try:
+            a_tags = self.wait(2).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'a')))
+            for a in a_tags:
+                if 'sk=friends' in a.get_attribute('href'):
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {'amount_of_friends': a.text,
+                                                                      'user_id': self.usr_id}))
+
+        except (WebDriverException, TimeoutException):
+            pass
+
     def _save_new_post_to_db(self, author_name=None, text=None, img_path=None,
                              posts_link=None, date=None, likes_amount=None,
                              likes_accounts=None, comments_amount=None, comments_accounts=None, retweets_amount=None,
