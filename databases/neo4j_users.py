@@ -156,7 +156,7 @@ class Keyword:
             status = record["status"]
 
             if keyword not in keywords_dict:
-                keywords_dict[keyword] = {"keyword_id": keyword_id, "keyword_value": keyword,
+                keywords_dict[keyword] = {"keyword_id": keyword_id, "keyword": keyword,
                                           "amount": amount, "status": status, "users": []}
 
             user_id = record["user_id"]

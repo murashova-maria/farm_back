@@ -14,6 +14,7 @@ async def add_keywords(params: Dict[Any, Any]):
 @app.get('/keywords/')
 async def get_keywords():
     try:
+        tmp = []
         general = []
         keywords = KeywordDB.get_all_keywords_with_users()
         for keyw in keywords:
@@ -35,7 +36,11 @@ async def get_keywords():
                 keyw.update({'instagram': instagram_profile[0]})
             general.append(keyw)
             keyw.pop('users')
-        return general
+        for word in KeywordDB.get_all_keywords():
+            for s_word in general:
+                if word.get('keyword') != s_word.get('keyword'):
+                    tmp.append({key: value for key, value in word.items()})
+        return [x for x in [*general, *tmp] if x.get('keyword') != 'scroll_feed']
         # return [keyw for keyw in keywords]
     except Exception as ex:
         print(ex)
