@@ -26,7 +26,8 @@ class User:
 
     def create_user(self, username, password, phone_number='None', social_media='None',
                     status='None', activity='None', reg_date='None', proxies='None', search_tag='None',
-                    amount_of_friends=0, already_used_keywords: list = None, country='None', groups_used='None'):
+                    amount_of_friends=0, already_used_keywords: list = None, country='None', groups_used='None',
+                    user_link: str = 'None'):
         if already_used_keywords is None:
             already_used_keywords = []
         if groups_used == 'None' or groups_used is None:
@@ -41,7 +42,7 @@ class User:
                          status=status, activity=activity, reg_date=reg_date,
                          proxies=proxies, search_tag=search_tag, amount_of_friends=amount_of_friends,
                          already_used_keywords=already_used_keywords, country=country,
-                         groups_used=groups_used)
+                         groups_used=groups_used, user_link=user_link)
         self.graph.create(user_node)
         self._attach_profile(user_id=user_id, network=social_media)
         return user_node
@@ -74,6 +75,25 @@ class Keyword:
     def __init__(self, graph):
         self.graph = graph
         self.matcher = NodeMatcher(self.graph)
+
+    def update_keyword_for_user(self, keyword, social_media, user_id=None):
+        if user_id is None:
+            # Unlink the keyword from all users of the given social media
+            query = """
+                    MATCH (u:User)-[r:HAS_KEYWORD]->(k:Keyword)
+                    WHERE u.social_media = $social_media AND k.keyword = $keyword
+                    DELETE r
+                    """
+            self.graph.run(query, keyword=keyword, social_media=social_media)
+        else:
+            # Unlink the keyword from the given user and social media
+            query = """
+                    MATCH (u:User)-[r:HAS_KEYWORD]->(k:Keyword)
+                    WHERE u.user_id = $user_id AND u.social_media = $social_media AND k.keyword = $keyword
+                    DELETE r
+                    """
+            self.graph.run(query, user_id=user_id, keyword=keyword, social_media=social_media)
+            self.add_keyword_to_user(keyword, user_id)
 
     def add_keyword_to_user(self, keyword, user_id=None, amount=15, status='wait'):
         if user_id:

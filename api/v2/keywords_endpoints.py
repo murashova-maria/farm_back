@@ -14,8 +14,29 @@ async def add_keywords(params: Dict[Any, Any]):
 @app.get('/keywords/')
 async def get_keywords():
     try:
+        general = []
         keywords = KeywordDB.get_all_keywords_with_users()
-        return [keyw for keyw in keywords]
+        for keyw in keywords:
+            twitter_profile = []
+            facebook_profile = []
+            instagram_profile = []
+            for user in keyw['users']:
+                if user['social_media'] == 'twitter':
+                    twitter_profile.append(user)
+                elif user['social_media'] == 'facebook':
+                    facebook_profile.append(user)
+                else:
+                    instagram_profile.append(user)
+            if facebook_profile:
+                keyw.update({'facebook': facebook_profile[0]})
+            if twitter_profile:
+                keyw.update({'twitter': twitter_profile[0]})
+            if instagram_profile:
+                keyw.update({'instagram': instagram_profile[0]})
+            general.append(keyw)
+            keyw.pop('users')
+        return general
+        # return [keyw for keyw in keywords]
     except Exception as ex:
         print(ex)
         raise HTTPException(status_code=400, detail={'Status': 'Incorrect keyword ID or user_id'})
@@ -46,11 +67,26 @@ async def delete_keyword(keyword_id: str):
 
 
 @app.put('/keywords/{keyword_id}/')
-async def update_keyword(keyword_id: str, params: Dict[Any, Any]):
+async def update_keyword(keyword_id: str | int, params: Dict[Any, Any]):
+    keyword_id = int(keyword_id)
+    kw_value = None
+    to_delete = []
     try:
-        keyword_id = int(keyword_id)
-        params.update({'keyword_id': keyword_id})
-        main_queue.put(QueuedTask(KeywordDB, 'update_keyword', params))
+        for keyword in KeywordDB.get_all_keywords_with_users():
+            if keyword_id != keyword['keyword_id']:
+                continue
+            kw_value = keyword['keyword_value']
+            for user in keyword['users']:
+                for key, value in params.items():
+                    if key == user['social_media']:
+                        to_delete.append(user['user_id'])
+                    if value is not None:
+                        main_queue.put(QueuedTask(KeywordDB, 'update_keyword_for_user', {'keyword': kw_value,
+                                                                                         'social_media': key,
+                                                                                         'user_id': value}))
+        for to_be_deleted in to_delete:
+            main_queue.put(QueuedTask(KeywordDB, 'unpin_word_from_user', {'keyword_id': keyword_id,
+                                                                             'user_id': to_be_deleted}))
         return {'Status': 'OK'}
     except ValueError:
         raise HTTPException(status_code=400, detail={'Status': 'Incorrect keyword ID or user_id'})

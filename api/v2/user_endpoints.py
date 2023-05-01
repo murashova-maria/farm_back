@@ -76,3 +76,20 @@ async def create_account(item: Dict[Any, Any]):
     thread = Thread(target=start, args=(username, password, phone_number, network, proxy, country))
     thread.start()
     return {'Success': 'User creation started'}
+
+
+@app.get('/bots/{user_id}/avatar/')
+async def return_users_avatar(user_id: str):
+    users_object = UserDB.filter_users(user_id=user_id)
+    if not users_object or users_object is None:
+        return {'Error': 'Wrong user_id'}
+    sm = users_object[0]['social_media']
+    if sm == 'facebook':
+        profile = FacebookProfileDB.filter_profiles(user_id=user_id)[0]
+    elif sm == 'twitter':
+        profile = TwitterProfileDB.filter_profiles(user_id=user_id)[0]
+    else:
+        profile = InstagramProfileDB.filter_profiles(user_id=user_id)[0]
+    file_path = f'{IMG_DIR}{sm}/{profile["avatar"]}'
+    print(file_path)
+    return FileResponse(file_path, media_type='application/octet-stream', filename=profile['avatar'])

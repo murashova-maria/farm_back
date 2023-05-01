@@ -1,4 +1,6 @@
 # LOCAL
+import datetime
+
 from loader import *
 from farm.social_media.twitter import *
 from farm.social_media.facebook import *
@@ -29,11 +31,12 @@ class Starter:
         if usr:
             st = QueuedTask(UserDB, 'update_user', {'user_id': usr['user_id'], 'status': status, 'activity': 'wait',
                                                     'proxy': self.pure_proxy,
-                                                    'reg_date': datetime.datetime.now()})
+                                                    'reg_date': datetime.datetime.now().timestamp()})
             main_queue.put(st)
             return
         st = QueuedTask(UserDB, 'create_user', [self.username, self.password, self.phone_number,
-                                                self.network, status, 'wait', datetime.datetime.now(), self.pure_proxy])
+                                                self.network, status, 'wait', datetime.datetime.now().timestamp(),
+                                                self.pure_proxy])
         main_queue.put(st)
 
     def start_instagram(self):
@@ -114,6 +117,7 @@ class Starter:
                 user_info = UserDB.filter_users(username=self.username, password=self.password,
                                                 phone_number=self.phone_number, social_media='facebook')[0]
                 fb.usr_id = user_info['user_id']
+                print(user_info['activity'])
                 if user_info['activity'] == 'fill_profile':
                     try:
                         profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])
@@ -129,6 +133,11 @@ class Starter:
                         city = profile['city']
                         description = profile['description']
                         bio = profile['bio']
+                        hobbies = profile['hobbies']
+                        if type(hobbies) is str:
+                            hobbies = hobbies.split()
+                        if hobbies != 'None' and hobbies is not None:
+                            fb.add_hobbies(hobbies)
                         fb.add_location(current_location, native_location)
                         fb.add_work(company, position, city, description)
                         if avatar != 'None' and avatar:
@@ -136,17 +145,6 @@ class Starter:
                         fb.add_bio(bio)
                     except Exception as ex:
                         print(ex)
-                    task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
-                                                              'user_id': user_info['user_id']})
-                    main_queue.put(task)
-                    sleep(3)
-                elif user_info['activity'] == 'add_hobbies':
-                    profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])[0]
-                    hobbies = profile['hobbies']
-                    if type(profile['hobbies']) is str:
-                        hobbies = profile['hobbies'].split()
-                    if hobbies and hobbies != 'None':
-                        fb.add_hobbies(hobbies)
                     task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
                                                               'user_id': user_info['user_id']})
                     main_queue.put(task)
@@ -210,22 +208,44 @@ class Starter:
                         'status': 'active',
                     }))
                 elif user_info['activity'] == 'scroll_feed':
-                    fb.scroll_feed(randint(5, 10))
-                for conv_id, conversation in read_json().items():
-                    for post_link, values in conversation['tmp_data'].items():
-                        index = values['index']
-                        next_time_message = values['next_time_message']
-                        chain = values['chain']
-                        master_accounts = conversation['master_accs']
-                        meek_accounts = conversation['meek_accs']
-                        thread = conversation['thread']
-                        if index >= len(chain):
+                    fb.scroll_feed(randint(1, 10))
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
+                                                                      'activity': 'wait'}))
+                elif user_info['activity'] == 'comments_chain':
+                    fb.comments_chain('Kevin James', 'Agree...',
+                                      'https://www.facebook.com/groups/513282220488457/permalink/736594434823900/')
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
+                                                                      'activity': 'wait'}))
+                res = read_json()
+                for conv_id, conversation in res.items():
+                    for post_name, post_tmp_values in conversation['tmp_data'].items():
+                        index = int(post_tmp_values['index'])
+                        if index >= len(post_tmp_values['full_chain']):
                             continue
-                        if fb.usr_id != chain[index]:
-                            continue
-                        if next_time_message < datetime.now():
-                            continue
-
+                        if post_tmp_values['next_comment_date'] <= datetime.datetime.now().timestamp() \
+                                and post_tmp_values['full_chain'][index] == fb.usr_id:
+                            if fb.usr_id in conversation['meek_accs']:
+                                if 'reactions' in conversation:
+                                    fb.make_comment(post_name, conversation['reactions'][index])
+                                else:
+                                    master_exist = post_tmp_values['full_chain'][:index]
+                                    masters_name = [UserDB.filter_users(user_id=user_id)
+                                                    for user_id in conversation['master_accs']]
+                                    for name in masters_name:
+                                        if name['user_id'] not in master_exist:
+                                            masters_name.remove(name['user_id'])
+                                    fb.comments_chain(choice(masters_name), post_name,
+                                                      conversation['thread'][index]['text'])
+                            else:
+                                if 'reactions' in conversation:
+                                    fb.make_comment(post_name, choice(conversation['reactions']))
+                                else:
+                                    fb.make_comment(post_name, conversation['thread'][index]['text'])
+                            res[conv_id]['tmp_data'][post_name]['index'] += 1
+                            dt = datetime.datetime.fromtimestamp(post_tmp_values['next_comment_date'])
+                            dt += datetime.timedelta(minutes=randint(1, 20))
+                            res[conv_id]['tmp_data'][post_name]['next_comment_date'] += int(dt.timestamp())
+                            main_queue.put(QueuedTask(HandleConversation(read_json()), 'update_current_data', res))
 
             except Exception as ex:
                 print('WHILE THREAD: ', ex)

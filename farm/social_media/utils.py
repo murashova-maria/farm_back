@@ -16,6 +16,15 @@ class QueuedTask:
         self.args = args
 
     def __call__(self):
+        try:
+            if type(self.args) is dict:
+                for key, value in self.args.items():
+                    if value.get('type') != 'json':
+                        continue
+                    getattr(self.obj, self.method)(self.args)
+                    return
+        except Exception as ex:
+            pass
         if type(self.args) is dict:
             self.args = {key: (value if value else 'None') for key, value in self.args.items()}
             getattr(self.obj, self.method)(**self.args)

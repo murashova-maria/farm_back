@@ -55,6 +55,7 @@ class Twitter(Base):
         self.last_post = ''
         self.usr_id = None
         self.users_country = country
+        self.user_link = None
 
     def handle_correct_window(self):
         pass
@@ -147,6 +148,12 @@ class Twitter(Base):
                     next_btn.click()
             except WebDriverException as wde:
                 print('ERRORS:', wde)
+
+    def _get_users_link(self):
+        self._get_profile()
+        self.user_link = self.driver.current_url
+        main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': self.usr_id,
+                                                          'user_link': self.user_link}))
 
     def _get_profile(self):
         for _ in range(2):

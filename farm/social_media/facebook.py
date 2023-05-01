@@ -39,6 +39,7 @@ class Facebook(Base):
         self.last_tag = None
         self.usr_id = None
         self.name = None
+        self.user_link = None
 
     def _get_profiles_name(self):
         self._get_self_profile()
@@ -143,6 +144,11 @@ class Facebook(Base):
         self.driver.get(link)
         sleep(randint(8, 15))
         try:
+            try:
+                leave_a_comment = self.driver.find_element(By.XPATH, '//div[@aria-label="Leave a comment"]')
+                self.move_and_click(leave_a_comment)
+            except WebDriverException:
+                pass
             self.scroll_by(y=800)
             sleep(3)
             text_box = self.driver.find_element(By.XPATH, '//div[@aria-label="Write a comment"]')
@@ -226,6 +232,7 @@ class Facebook(Base):
                                                                                  'do you do for fun?"]')))
                 self.move_and_click(input_field)
                 input_field.clear()
+                sleep(1)
                 self.move_and_click(input_field, text=hobbie)
                 options = self.wait(3).until(ec.presence_of_all_elements_located((By.XPATH, '//li[@role="option"'
                                                                                             ' and @aria-selected="false"]')))
@@ -243,20 +250,20 @@ class Facebook(Base):
             print('ERR: ', err)
 
     def scroll_feed(self, minutes: float | int):
-        end_time = datetime.now() + timedelta(minutes=minutes)
+        end_time = datetime.datetime.now() + timedelta(minutes=minutes)
         article = self.wait(3).until(ec.presence_of_element_located((By.XPATH, '//div[@role="article"]')))
         self.move_and_click(element=article, to_click=False)
         while True:
             if self.driver.current_url != self.homepage:
                 self.open_homepage()
-            if datetime.now() >= end_time:
+            if datetime.datetime.now() >= end_time:
                 return
             direction = choice(['Down', 'Up'])
+            self.rs()
             if direction == 'Down':
-                timeout_ranges = [5, 20]
+                self.scroll_by(y=randint(200, 1300))
             else:
-                timeout_ranges = [2, 10]
-            self.scroll_down_by_hands(direction=direction, timeout=randint(*timeout_ranges))
+                self.scroll_by(y=randint(-1300, 200))
 
     def collect_posts(self, tag='News', amount=15):
         try:
@@ -398,6 +405,13 @@ class Facebook(Base):
                     pass
                 self._change_language()
                 self._get_profiles_name()
+                self.user_link = self.driver.current_url
+                try:
+                    for btn in self.driver.find_elements(By.TAG_NAME, 'div'):
+                        if 'You must confirm your password to edit your account settings.' in btn.text:
+                            return False
+                except Exception as ex:
+                    pass
                 return True
             except WebDriverException as wde:
                 print(wde)
@@ -501,46 +515,55 @@ class Facebook(Base):
                 pass
 
     def comments_chain(self, masters_name: str, text: str, link: str):
+        last_page_height = 0
         if self.driver.current_url != link:
             self.driver.get(link)
-        self.scroll_by(y=1200)
-        try:
-            lis = self.wait(5).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="article"]')))
-            # lis = self.wait(5).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'li')))
-            for li in lis:
-                if masters_name not in li.text:
-                    continue
-                self.scroll_into_view(li)
-                self.scroll_by(y=-300)
-                buttons = li.find_elements(By.XPATH, './/div[@role="button"]')
-                for btn in buttons:
-                    if btn.text == 'Reply':
-                        self.scroll_into_view(btn)
-                        self.move_and_click(btn, text)
-                        self.rs()
-                        submit_btn = li.find_element(By.XPATH, './/div[@id="focused-state-composer-submit"]')
-                        self.move_and_click(submit_btn)
-                        sleep(2)
-                        try:
-                            part_reviews = self.driver.find_element(By.XPATH,
-                                                                    '//*[contains(text(), "Participation review")]')
-                            self.move_and_click(part_reviews)
-                            self.chain.send_keys(Keys.ESCAPE).perform()
-                            self.chain.reset_actions()
-                        except WebDriverException:
-                            pass
+        while True:
+            self.scroll_by(y=1200)
             try:
                 buttons = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="button"]')))
                 for btn in buttons:
-                    if 'View more comments' in btn.text:
+                    if 'more comments' in btn.text:
                         self.scroll_into_view(btn)
                         self.move_and_click(btn)
                         sleep(2)
                         break
             except Exception as ex:
                 pass
-        except (WebDriverException, TimeoutException) as wde:
-            print(wde)
+            try:
+                lis = self.wait(5).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="article"]')))
+                for li in lis:
+                    if masters_name not in li.text:
+                        continue
+                    self.scroll_into_view(li)
+                    buttons = li.find_elements(By.XPATH, './/div[@role="button"]')
+                    for btn in buttons:
+                        if btn.text == 'Reply':
+                            self.scroll_into_view(btn)
+                            self.scroll_by(y=-400)
+                            sleep(3)
+                            self.move_and_click(btn)
+                            self.rs()
+                            reply_form = self.driver.find_element(By.XPATH, f'//div[@aria-label="Reply to {masters_name}"]')
+                            self.move_and_click(reply_form, text)
+                            sleep(2)
+                            submit_btn = self.driver.find_element(By.ID, 'focused-state-composer-submit')
+                            submit_btn.click()
+                            sleep(2)
+                            try:
+                                part_reviews = self.driver.find_element(By.XPATH,
+                                                                        '//*[contains(text(), "Participation review")]')
+                                self.move_and_click(part_reviews)
+                                self.chain.send_keys(Keys.ESCAPE).perform()
+                                self.chain.reset_actions()
+                            except WebDriverException:
+                                pass
+                            return True
+            except (WebDriverException, TimeoutException) as wde:
+                print(wde)
+            if last_page_height == int(self.driver.execute_script('return document.body.scrollHeight')):
+                return False
+            last_page_height = int(self.driver.execute_script('return document.body.scrollHeight'))
 
 
 if __name__ == '__main__':

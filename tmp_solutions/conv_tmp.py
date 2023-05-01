@@ -1,7 +1,4 @@
-import os
 import json
-
-# OTHER
 
 
 class HandleConversation:
@@ -14,7 +11,7 @@ class HandleConversation:
             json.dump({}, output)
             output.close()
 
-    def update_current_data(self, **data):
+    def update_current_data(self, data):
         with open(self.filename, 'w') as output:
             self.result.update(data)
             json.dump(self.result, output)

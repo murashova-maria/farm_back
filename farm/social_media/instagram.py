@@ -18,9 +18,11 @@ class Instagram(Base):
         try:
             self.client = instagrapi.Client()
             if proxy and proxy != 'None':
-                print(f'http://{proxy["username"]}:{proxy["password"]}@{proxy["ip"]}:{proxy["password"]}')
-                self.client.set_proxy(f'http://{proxy["username"]}:{proxy["password"]}@{proxy["ip"]}:'
-                                      f'{proxy["password"]}')
+                proxy_username = proxy.get('username')
+                proxy_password = proxy.get('password')
+                ip = proxy.get('ip')
+                port = proxy.get('port')
+                self.client.set_proxy(f'http://{proxy_username}:{proxy_password}@{ip}:{port}')
             self.client.login(username, password)
         except Exception:
             self.client = None
@@ -50,17 +52,12 @@ class Instagram(Base):
             likers = self.client.media_likers(media_pk)
             commenters = self.client.media_comments(media_pk)
             for comment in commenters:
-                # comments.append({'text': comment.text, 'date': comment.created_at_utc, 'likes': comment.like_count,
-                #                  'creator': comment.user.username})
                 comments.append([comment.text, comment.created_at_utc, comment.like_count, comment.user.username])
             for like in likers:
                 likes.append([like.username, str(like.profile_pic_url)])
             return {'comments': comments, 'likes': likes}
         except Exception as ex:
             pass
-            # if 'login_required' in str(ex).lower():
-            #     self.client.relogin()
-            #     sleep(3)
         return {'comments': [], 'likes': []}
 
     def _save_new_post_to_db(self, author_name, text, img_path, posts_link, date=None, likes_amount=None,

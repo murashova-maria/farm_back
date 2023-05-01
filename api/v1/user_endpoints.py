@@ -12,7 +12,7 @@ def start(username, password, phone_number, network, proxy=None):
         net.start_instagram()
 
 
-@app.get('/accounts/all/info/')
+@app.get('/bots/all/info/')
 async def get_all_users():
     users = UserDB.get_all()
     general_data = []
@@ -23,7 +23,7 @@ async def get_all_users():
     raise HTTPException(status_code=400, detail='Database is empy')
 
 
-@app.get('/accounts/all/profiles/')
+@app.get('/bots/all/profiles/')
 async def get_all_users_profiles():
     data = {
         'twitter': {},
@@ -44,7 +44,7 @@ async def get_all_users_profiles():
     raise HTTPException(status_code=400, detail='Database is empy')
 
 
-@app.get('/accounts/{user_id}/info/')
+@app.get('/bots/{user_id}/info/')
 async def read_account(user_id: str):
     usr = UserDB.filter_users(user_id=user_id)
     if usr is None:
@@ -72,7 +72,7 @@ async def read_account(user_id: str):
     return data
 
 
-@app.put("/accounts/{user_id}/info/")
+@app.put("/bots/{user_id}/info/")
 async def update_account(user_id: str, item: Dict[Any, Any]):
     usr = UserDB.filter_users(user_id=user_id)[0]
     if usr is None:
@@ -83,7 +83,7 @@ async def update_account(user_id: str, item: Dict[Any, Any]):
     return {'Success': 'Database updated successfully'}
 
 
-@app.put('/accounts/{user_id}/profile/')
+@app.put('/bots/{user_id}/profile/')
 async def update_profile(user_id: str, item: Dict[Any, Any]):
     item.update({'user_id': user_id})
     network = UserDB.filter_users(user_id=user_id)

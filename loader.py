@@ -13,8 +13,8 @@ from databases.utils import get_exact_date, get_randomized_date
 
 # logging.basicConfig(
 #     level=logging.DEBUG,
-#     format='%(asctime)s %(levelname) %(message)s',
-#     handlers=[logging.StreamHandler()]
+    # format='%(asctime)s %(levelname) %(message)s',
+    # handlers=[logging.StreamHandler()]
 # )
 
 
