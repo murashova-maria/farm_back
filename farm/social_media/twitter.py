@@ -60,6 +60,15 @@ class Twitter(Base):
     def handle_correct_window(self):
         pass
 
+    def _sheet_dialog(self):
+        xpath = '//div[@data-testid="sheetDialog"]'
+        try:
+            sheet_dialog_field = self.wait(3).until(ec.presence_of_element_located((By.XPATH, xpath)))
+            agree = sheet_dialog_field.find_element(By.XPATH, './/div[@role="button"]')
+            self.move_and_click(agree)
+        except (TimeoutException, WebDriverException):
+            pass
+
     def _close_notification(self):
         try:
             divs = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'div')))
@@ -304,6 +313,7 @@ class Twitter(Base):
                     self._get_users_link()
                 except Exception as ex:
                     pass
+                self._sheet_dialog()
                 return True
         except (WebDriverException, NoSuchWindowException) as wde:
             print('LOGIN:', wde)
