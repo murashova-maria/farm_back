@@ -23,7 +23,6 @@ async def get_keywords():
         # Добавляем каждое ключевое слово и связанные с ними профили пользователей в словарь
         for keyword in keywords:
             keyword_name = keyword['keyword']
-            keyword.pop('keyword')
             users = keyword.pop('users')
 
             # Создаем список профилей пользователей для каждой социальной сети
