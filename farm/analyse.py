@@ -9,7 +9,7 @@ from deep_translator import GoogleTranslator
 from deep_translator import single_detection
 
 
-debug = True
+debug = False
 
 if not debug:
     tokenizer = AutoTokenizer.from_pretrained("avichr/heBERT_sentiment_analysis")  # same as 'avichr/heBERT' tokenizer
