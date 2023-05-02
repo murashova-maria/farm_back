@@ -39,7 +39,7 @@ class Facebook(Base):
         self.name = None
         self.user_link = None
 
-    def _get_profiles_name(self):
+    def get_profiles_name(self):
         self._get_self_profile()
         try:
             sleep(2)
@@ -47,9 +47,10 @@ class Facebook(Base):
             for h1 in h1_tag:
                 if h1.text and len(h1.text) > 3:
                     self.name = h1.text
-                    return
+                    break
         except WebDriverException:
             pass
+        self.user_link = self.driver.current_url
 
     def get_friends_amount(self):
         try:
@@ -59,6 +60,7 @@ class Facebook(Base):
                     if 'sk=friends' in a.get_attribute('href'):
                         main_queue.put(QueuedTask(UserDB, 'update_user', {'amount_of_friends': a.text,
                                                                           'user_id': self.usr_id}))
+                        return
                 except Exception as ex:
                     pass
 
@@ -424,8 +426,6 @@ class Facebook(Base):
                 except WebDriverException:
                     pass
                 self._change_language()
-                self._get_profiles_name()
-                self.user_link = self.driver.current_url
                 try:
                     for btn in self.driver.find_elements(By.TAG_NAME, 'div'):
                         if 'You must confirm your password to edit your account settings.' in btn.text:

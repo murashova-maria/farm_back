@@ -97,13 +97,17 @@ async def update_keyword(keyword_id: str | int, params: Dict[Any, Any]):
                 continue
             if keyword['users'] is None:
                 for key, value in params.items():
-                    KeywordDB.add_keyword_to_user(keyword_obj['keyword'], value)
+                    main_queue.put(QueuedTask(KeywordDB, 'add_keyword_to_user', [keyword['keyword'], value]))
+                    # KeywordDB.add_keyword_to_user(keyword_obj['keyword'], value)
                 continue
             for user in keyword['users']:
                 if user['social_media'] in params:
                     if params[user['social_media']]:
-                        KeywordDB.unpin_word_from_user(user['user_id'], keyword_id)
-                    KeywordDB.add_keyword_to_user(keyword_obj['keyword'], params[user['social_media']])
+                        main_queue.put(QueuedTask(KeywordDB, 'unpin_word_from_user', [keyword['keyword'], keyword_id]))
+                        # KeywordDB.unpin_word_from_user(user['user_id'], keyword_id)
+                    main_queue.put(QueuedTask(KeywordDB, 'add_keyword_to_user', [keyword['keyword'],
+                                                                                 params[user['social_media']]]))
+                    # KeywordDB.add_keyword_to_user(keyword_obj['keyword'], params[user['social_media']])
 
         all_keywords = [*KeywordDB.get_all_keywords_with_users(), *KeywordDB.get_all_keywords()]
         for keyword in all_keywords:
@@ -116,7 +120,9 @@ async def update_keyword(keyword_id: str | int, params: Dict[Any, Any]):
                     for user in keyword['users']:
                         if user['social_media'] != key:
                             continue
-                        KeywordDB.unpin_word_from_user(user['user_id'], keyword['keyword_id'])
+                        main_queue.put(QueuedTask(KeywordDB, 'unpin_word_from_user', [user['user_id'],
+                                                                                      keyword['keyword_id']]))
+                        # KeywordDB.unpin_word_from_user(user['user_id'], keyword['keyword_id'])
         return {'Status': 'OK'}
     except ValueError as ve:
         print(ve)

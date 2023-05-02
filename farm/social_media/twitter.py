@@ -179,7 +179,6 @@ class Twitter(Base):
         self._get_profile()
         sleep(3)
         self.user_link = self.driver.current_url
-        main_queue.put(QueuedTask(UserDB, 'update_user', {'user_link': self.user_link, 'user_id': self.usr_id}))
 
     def _get_profile(self):
         for _ in range(2):

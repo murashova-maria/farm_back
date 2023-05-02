@@ -103,5 +103,30 @@ async def update_profile(user_id: str, item: Dict[Any, Any]):
         profile_object = InstagramProfileDB
     if not profile_object:
         raise HTTPException(status_code=404, detail='Invalid user')
+    social_media = UserDB.filter_users(user_id=user_id)[0]['social_media']
+    if 'avatar' in item:
+        image = item.get('avatar')
+        if image:
+            extension, image = image.split(',')
+            if 'jpg' in extension or 'jpeg' in extension:
+                filename = f'{user_id}_avatar_{randint(0, 10000)}.jpg'
+            else:
+                filename = f'{user_id}_avatar_{randint(0, 10000)}.png'
+            image = base64.b64decode(image)
+            with open(IMG_DIR + f'{social_media}/' + filename, 'wb') as output:
+                output.write(image)
+            item['avatar'] = filename
+    if 'cover' in item:
+        image = item.get('cover')
+        if image:
+            extension, image = image.split(',')
+            if 'jpg' in extension or 'jpeg' in extension:
+                filename = f'{user_id}_cover_{randint(0, 10000)}.jpg'
+            else:
+                filename = f'{user_id}_cover_{randint(0, 10000)}.png'
+            image = base64.b64decode(image)
+            with open(IMG_DIR + f'{social_media}/' + filename, 'wb') as output:
+                output.write(image)
+            item['cover'] = filename
     main_queue.put(QueuedTask(profile_object, 'update_profile', item))
     return {'Success': 'Database updated successfully'}

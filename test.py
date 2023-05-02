@@ -6,6 +6,8 @@ from loader import *
 
 
 if __name__ == '__main__':
+    for schedule in ScheduleDB.get_all_schedules():
+        print(schedule)
     # KeywordDB.unpin_word_from_user('f49701a5-52e0-45c4-90d3-3505f30f32df', 71104838)
     # for keyword in KeywordDB.get_all_keywords_with_users():
     #     print(keyword)

@@ -118,11 +118,6 @@ class Starter:
             return
         self._add_user('Active')
         sleep(10)
-        user_info = UserDB.filter_users(username=self.username, password=self.password,
-                                        phone_number=self.phone_number, social_media='facebook')[0]
-        task = QueuedTask(FacebookProfileDB, 'update_profile', {'name': str(fb.name),
-                                                                'user_id': user_info['user_id']})
-        main_queue.put(task)
         fb.get_friends_amount()
         while True:
             try:
@@ -131,6 +126,12 @@ class Starter:
                 user_info = UserDB.filter_users(username=self.username, password=self.password,
                                                 phone_number=self.phone_number, social_media='facebook')[0]
                 fb.usr_id = user_info['user_id']
+                if fb.name is None and fb.usr_id is not None:
+                    fb.get_profiles_name()
+                    task = QueuedTask(FacebookProfileDB, 'update_profile', {'name': str(fb.name),
+                                                                            'user_id': user_info['user_id']})
+                    main_queue.put(task)
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': fb.usr_id, 'user_link': fb.user_link}))
                 if user_info['activity'] == 'fill_profile':
                     try:
                         profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])
@@ -277,10 +278,6 @@ class Starter:
                                                           'user_link': tw.user_link}))
         tw.users_country = self.country
         while True:
-            if tw.user_link is None:
-                tw.get_users_link()
-                main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': tw.usr_id,
-                                                                  'user_link': tw.user_link}))
             try:
                 sleep(1)
                 # Get user's DB object.
@@ -288,6 +285,10 @@ class Starter:
                                                 phone_number=self.phone_number, social_media='twitter')
                 user_info = user_info[0]
                 tw.usr_id = user_info['user_id']
+                if tw.user_link is None and tw.usr_id is not None:
+                    tw.get_users_link()
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': tw.usr_id,
+                                                                      'user_link': tw.user_link}))
                 if not is_country_exist:
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': tw.usr_id, 'country': self.country}))
                     is_country_exist = True
