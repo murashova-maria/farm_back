@@ -13,7 +13,7 @@ from random import choice
 
 
 class Facebook(Base):
-    def __init__(self, username, password, phone_number=None, proxy=None):
+    def __init__(self, username, password, phone_number=None, proxy=None, gologin_id=None):
         self.xpaths = {
             'composer': "//span[contains(text(), \"What's in your mind\")]",
             'text_field': './/div[@role="button"]',
@@ -28,7 +28,7 @@ class Facebook(Base):
             'edit_hobbies': '//div[@aria-label="Edit hobbies" and @role="button"]',
         }
         self.homepage = 'https://www.facebook.com/'
-        super().__init__(self.homepage, proxy=proxy)
+        super().__init__(self.homepage, proxy=proxy, gologin_id=gologin_id)
         self.username = username
         self.password = password
         self.phone_number = phone_number
@@ -395,6 +395,12 @@ class Facebook(Base):
     def login(self) -> bool:
         self.open_homepage()
         self.accept_cookies()
+        try:
+            global_container = self.wait(3).until(ec.presence_of_element_located((By.ID, 'globalContainer')))
+            if 'Connect with friends and the world around you on Facebook.' not in global_container.text:
+                return True
+        except Exception as ex:
+            pass
         for _ in range(2):
             try:
                 email_field = self.wait(3).until(ec.presence_of_element_located((By.ID, 'email')))

@@ -17,6 +17,7 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
             filename = f'{user_id}_post_image_{randint(0, 10000)}.jpg'
             image_base64 = params.get('filename')
             if params.get('filename') is not None:
+                image_base64 = image_base64[22:]
                 image_data = base64.b64decode(image_base64)
                 # Save the binary data to a file using asyncio and aiofiles
                 async with aiofiles.open(IMG_DIR + f'{social_media}/' + filename, 'wb') as f:
@@ -44,6 +45,8 @@ async def create_self_post(user_id, params: Dict[Any, Any]):
         day = params.get('day')
         time_range = params.get('time_range')
         image = params.get('filename')
+        if image:
+            image = image[22:]
         social_media = UserDB.filter_users(user_id=user_id)[0]['social_media']
         filename = f'{user_id}_post_image_{randint(0, 10000)}.jpg'
         if image:

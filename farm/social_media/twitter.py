@@ -9,7 +9,7 @@ except ImportError as ie:
 
 
 class Twitter(Base):
-    def __init__(self, username, password, phone_number=None, proxy=None, country='None'):
+    def __init__(self, username, password, phone_number=None, proxy=None, country='None', gologin_id=None):
         # Dict with all xpath. It was created to avoid PEP808 attention number's E501
         self.xpaths = {
             'login': '//span[text()="Log in"]',
@@ -48,7 +48,7 @@ class Twitter(Base):
         self.password = password
         self.phone_number = phone_number
         self.homepage = 'https://twitter.com/'
-        super().__init__(self.homepage, proxy=proxy)
+        super().__init__(self.homepage, proxy=proxy, gologin_id=gologin_id)
         self.home = self.homepage + 'home'
         self.scroll_height = 0
         self.repetitions_counter = 0
@@ -286,6 +286,14 @@ class Twitter(Base):
 
     def login(self) -> bool:
         self.open_homepage()
+        try:
+            self.wait(3).until(ec.url_to_be(self.url + 'home'))
+            if self.driver.current_url == self.home:
+                self._close_notification()
+                self._sheet_dialog()
+                return True
+        except Exception as ex:
+            pass
         self._is_account_suspended()
         try:
             self._accept_cookies()

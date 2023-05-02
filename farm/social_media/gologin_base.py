@@ -1,4 +1,4 @@
-import requests
+import os
 try:
     from ..drivers.pygologin.gologin import GoLogin
 except ImportError:
@@ -6,11 +6,14 @@ except ImportError:
 
 
 class GoLoginBase:
-    def __init__(self, api_token):
+    def __init__(self, profile_id):
         self.gl = GoLogin({
-            'token': '',
-            'profile_id': ''
+            'token': os.getenv('GOLOGIN_API_TOKEN'),
+            'profile_id': profile_id
         })
+
+    def __call__(self, *args, **kwargs):
+        return self.gl.start()
 
     def _create_profile(self):
         pass

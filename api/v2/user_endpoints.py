@@ -2,8 +2,8 @@
 from api import *
 
 
-def start(username, password, phone_number, network, proxy=None, country='None'):
-    net = Starter(username, password, phone_number, network, proxy, country)
+def start(username, password, phone_number, network, proxy=None, country='None', gologin_profile_id=None):
+    net = Starter(username, password, phone_number, network, proxy, country, gologin_profile_id)
     if net.network == 'facebook':
         net.start_facebook()
     elif net.network == 'twitter':
@@ -69,11 +69,12 @@ async def create_account(item: Dict[Any, Any]):
     network = item.get('network')
     proxy = item.get('proxy')
     country = item.get('country')
+    gologin_profile = item.get('gologin_profile_id')
     if None in (username, password, phone_number, network):
         raise HTTPException(status_code=400, detail='Missing parameter(s)')
     if network not in ('twitter', 'facebook', 'instagram'):
         raise HTTPException(status_code=400, detail='Invalid network')
-    thread = Thread(target=start, args=(username, password, phone_number, network, proxy, country))
+    thread = Thread(target=start, args=(username, password, phone_number, network, proxy, country, gologin_profile))
     thread.start()
     return {'Success': 'User creation started'}
 

@@ -25,6 +25,7 @@ from selenium.common.exceptions import NoSuchWindowException, WebDriverException
 
 # LOCAL
 from loader import *
+from .gologin_base import GoLoginBase
 try:
     from .add_proxy import set_authenticated_proxy_through_plugin
     from .utils import *
@@ -36,7 +37,7 @@ WIN32_BASE_PATH = 'drivers/win32'
 
 
 class Base:
-    def __init__(self, homepage, proxy, driver_type='base'):
+    def __init__(self, homepage, proxy, driver_type='base', gologin_id=None):
         # MAIN VARS
         self.status = None
         self.url = homepage
@@ -45,31 +46,35 @@ class Base:
         cdriver_path = ''
         if 'win' in sys.platform.lower():
             cdriver_path = WIN32_BASE_PATH + 'chromedriver.exe'
-        self.opt = uc.ChromeOptions()
-        self.opt.add_argument('--mute-audio')
-        self.opt.add_argument('--disable-infobars')
-        self.opt.add_argument('--disable-notifications')
-        self.opt.add_argument('--disable-dev-shm-usage')
-        self.opt.add_argument('--no-sandbox')
-        self.opt.add_argument('--no-first-run --no-service-autorun --password-store=basic')
-        self.opt.add_argument("--lang=en")
-        self.caps = webdriver.DesiredCapabilities.CHROME
-        self.caps['acceptSslCerts'] = True
+        if not gologin_id:
+            self.opt = uc.ChromeOptions()
+            self.opt.add_argument('--mute-audio')
+            self.opt.add_argument('--disable-infobars')
+            self.opt.add_argument('--disable-notifications')
+            self.opt.add_argument('--disable-dev-shm-usage')
+            self.opt.add_argument('--no-sandbox')
+            self.opt.add_argument('--no-first-run --no-service-autorun --password-store=basic')
+            self.opt.add_argument("--lang=en")
+            self.caps = webdriver.DesiredCapabilities.CHROME
+            self.caps['acceptSslCerts'] = True
+            # Add proxies
+            if proxy:
+                proxy_file = set_authenticated_proxy_through_plugin(proxy)
+                with zipfile.ZipFile(proxy_file, 'r') as zip_obj:
+                    zip_obj.extractall(f'{proxy_file.replace(".zip", "")}')
+                    zip_obj.close()
+                self.opt.add_argument(f'--load-extension={os.getcwd()}/{proxy_file.replace(".zip", "")}')
+                try:
+                    os.remove(proxy_file)
+                except FileNotFoundError:
+                    pass
+            self.driver = uc.Chrome(options=self.opt, desired_capabilities=self.caps)
+        else:
+            gl = GoLoginBase(gologin_id)
+            self.opt = webdriver.ChromeOptions()
+            self.opt.add_experimental_option("debuggerAddress", gl())
+            self.driver = webdriver.Chrome(options=self.opt, executable_path='/usr/bin/chromedriver')
 
-        # Add proxies
-        if proxy:
-            proxy_file = set_authenticated_proxy_through_plugin(proxy)
-            with zipfile.ZipFile(proxy_file, 'r') as zip_obj:
-                zip_obj.extractall(f'{proxy_file.replace(".zip", "")}')
-                zip_obj.close()
-            self.opt.add_argument(f'--load-extension={os.getcwd()}/{proxy_file.replace(".zip", "")}')
-            try:
-                os.remove(proxy_file)
-            except FileNotFoundError:
-                pass
-
-        # START NAVIGATOR
-        self.driver = uc.Chrome(options=self.opt, desired_capabilities=self.caps)
         self.driver.implicitly_wait(10)
         self.wait = lambda x: WebDriverWait(self.driver, x)
         self.driver.maximize_window()

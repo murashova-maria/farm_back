@@ -87,6 +87,10 @@ async def update_account(user_id: str, item: Dict[Any, Any]):
 async def update_profile(user_id: str, item: Dict[Any, Any]):
     item.update({'user_id': user_id})
     network = UserDB.filter_users(user_id=user_id)
+    for key, value in item.items():
+        if key != 'filename':
+            continue
+
     if network:
         network = network[0]['social_media']
     else:

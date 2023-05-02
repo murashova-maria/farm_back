@@ -13,7 +13,7 @@ except ImportError:
 
 
 class Starter:
-    def __init__(self, username, password, phone_number, network, proxy=None, country='None'):
+    def __init__(self, username, password, phone_number, network, proxy=None, country='None', gologin_profile_id=None):
         self.username = username
         self.password = password
         self.phone_number = phone_number
@@ -24,6 +24,7 @@ class Starter:
             proxy = {'ip': proxy[0], 'port': proxy[1], 'username': proxy[2], 'password': proxy[3]}
         self.proxy = proxy
         self.country = country
+        self.gologin_profile_id = gologin_profile_id
 
     def _add_user(self, status: str = 'Success'):
         usr = UserDB.filter_users(username=self.username, password=self.password,
@@ -34,13 +35,23 @@ class Starter:
                                                     'reg_date': datetime.datetime.now().timestamp()})
             main_queue.put(st)
             return
-        st = QueuedTask(UserDB, 'create_user', [self.username, self.password, self.phone_number,
-                                                self.network, status, 'wait', datetime.datetime.now().timestamp(),
-                                                self.pure_proxy])
+        # st = QueuedTask(UserDB, 'create_user', [self.username, self.password, self.phone_number,
+        #                                         self.network, status, 'wait', datetime.datetime.now().timestamp(),
+        #                                         self.pure_proxy])
+        st = QueuedTask(UserDB, 'create_user', {
+            'username': self.username,
+            'password': self.password,
+            'phone_number': self.phone_number,
+            'social_media': self.network,
+            'status': status,
+            'reg_date': datetime.datetime.now().timestamp(),
+            'gologin_id': self.gologin_profile_id
+        })
         main_queue.put(st)
 
     def start_instagram(self):
-        inst = Instagram(self.username, self.password, self.phone_number, proxy=self.proxy)
+        inst = Instagram(self.username, self.password, self.phone_number, proxy=self.proxy,
+                         gologin_id=self.gologin_profile_id)
         login_status = inst.login()
         sleep(2)
         if not login_status:
@@ -97,7 +108,8 @@ class Starter:
                 print(ex)
 
     def start_facebook(self):
-        fb = Facebook(self.username, self.password, self.phone_number, proxy=self.proxy)
+        fb = Facebook(self.username, self.password, self.phone_number, proxy=self.proxy,
+                      gologin_id=self.gologin_profile_id)
         login_status = fb.login()
         sleep(2)
         if not login_status:
@@ -252,7 +264,8 @@ class Starter:
 
     def start_twitter(self):
         is_country_exist = False
-        tw = Twitter(self.username, self.password, self.phone_number, self.proxy, self.country)
+        tw = Twitter(self.username, self.password, self.phone_number, self.proxy, self.country,
+                     gologin_id=self.gologin_profile_id)
         login_status = tw.login()
         sleep(2)
         if not login_status:

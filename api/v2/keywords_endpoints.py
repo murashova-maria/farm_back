@@ -14,6 +14,7 @@ async def add_keywords(params: Dict[Any, Any]):
 @app.get('/keywords/')
 async def get_keywords():
     try:
+        all_keywords = KeywordDB.get_all_keywords()
         # Получаем все ключевые слова и связанные с ними профили пользователей
         keywords = KeywordDB.get_all_keywords_with_users()
 
@@ -49,13 +50,13 @@ async def get_keywords():
 
             # Добавляем ключевое слово и связанные с ним профили пользователей в словарь
             result[keyword_name] = keyword
-
-        # Возвращаем список ключевых слов и связанных с ними профилей пользователей
+        for keyw in all_keywords:
+            if keyw['keyword'] not in result:
+                result.update({keyw['keyword']: {key: value for key, value in keyw.items()}})
         return list(result.values())
     except Exception as ex:
         print(ex)
         raise HTTPException(status_code=400, detail={'Status': 'Incorrect keyword ID or user_id'})
-
 
 
 @app.delete('/bots/{user_id}/keywords/{keyword_id}/')
@@ -84,26 +85,42 @@ async def delete_keyword(keyword_id: str):
 
 @app.put('/keywords/{keyword_id}/')
 async def update_keyword(keyword_id: str | int, params: Dict[Any, Any]):
-    keyword_id = int(keyword_id)
-    to_delete = []
     try:
-        for keyword in KeywordDB.get_all_keywords_with_users():
-            if keyword_id != keyword['keyword_id']:
+        keyword_id = int(keyword_id)
+        keyword_obj = KeywordDB.filter_keywords(keyword_id=keyword_id)
+        if not keyword_obj:
+            return {'Status': 'WRONG KEYWORD ID'}
+        keyword_obj = keyword_obj[0]
+        all_keywords = [*KeywordDB.get_all_keywords_with_users(), *KeywordDB.get_all_keywords()]
+        for keyword in all_keywords:
+            if int(keyword['keyword_id']) != keyword_id:
                 continue
-            kw_value = keyword['keyword_value']
-            for user in keyword['users']:
+            if keyword['users'] is None:
                 for key, value in params.items():
-                    if key == user['social_media']:
-                        to_delete.append(user['user_id'])
-                    if value is not None:
-                        main_queue.put(QueuedTask(KeywordDB, 'update_keyword_for_user', {'keyword': kw_value,
-                                                                                         'social_media': key,
-                                                                                         'user_id': value}))
-        for to_be_deleted in to_delete:
-            main_queue.put(QueuedTask(KeywordDB, 'unpin_word_from_user', {'keyword_id': keyword_id,
-                                                                             'user_id': to_be_deleted}))
+                    KeywordDB.add_keyword_to_user(keyword_obj['keyword'], value)
+                continue
+            for user in keyword['users']:
+                if user['social_media'] in params:
+                    if params[user['social_media']]:
+                        KeywordDB.unpin_word_from_user(user['user_id'], keyword_id)
+                    KeywordDB.add_keyword_to_user(keyword_obj['keyword'], params[user['social_media']])
+
+        all_keywords = [*KeywordDB.get_all_keywords_with_users(), *KeywordDB.get_all_keywords()]
+        for keyword in all_keywords:
+            if int(keyword['keyword_id']) != keyword_id:
+                continue
+            for key, value in params.items():
+                if value is None:
+                    if keyword['users'] is None:
+                        continue
+                    for user in keyword['users']:
+                        if user['social_media'] != key:
+                            continue
+                        KeywordDB.unpin_word_from_user(user['user_id'], keyword['keyword_id'])
         return {'Status': 'OK'}
-    except ValueError:
+    except ValueError as ve:
+        print(ve)
         raise HTTPException(status_code=400, detail={'Status': 'Incorrect keyword ID or user_id'})
     except Exception as ex:
+        print(ex)
         raise HTTPException(status_code=400, detail={'Status': 'SERVER ERROR'})

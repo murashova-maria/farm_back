@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 
 class Instagram(Base):
-    def __init__(self, username, password, phone_number=None, proxy=None):
+    def __init__(self, username, password, phone_number=None, proxy=None, gologin_id=None):
         self.client = None
         try:
             self.client = instagrapi.Client()
@@ -34,7 +34,7 @@ class Instagram(Base):
                                             'image/heif,video/mp4,video/quicktime"]',
         }
         homepage = 'https://www.instagram.com'
-        super().__init__(homepage, proxy)
+        super().__init__(homepage, proxy, gologin_id=gologin_id)
         self.username = username
         self.password = password
         self.phone_number = phone_number

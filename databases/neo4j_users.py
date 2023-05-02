@@ -27,7 +27,7 @@ class User:
     def create_user(self, username, password, phone_number='None', social_media='None',
                     status='None', activity='None', reg_date='None', proxies='None', search_tag='None',
                     amount_of_friends=0, already_used_keywords: list = None, country='None', groups_used='None',
-                    user_link: str = 'None'):
+                    user_link: str = 'None', gologin_id='None'):
         if already_used_keywords is None:
             already_used_keywords = []
         if groups_used == 'None' or groups_used is None:
@@ -42,7 +42,7 @@ class User:
                          status=status, activity=activity, reg_date=reg_date,
                          proxies=proxies, search_tag=search_tag, amount_of_friends=amount_of_friends,
                          already_used_keywords=already_used_keywords, country=country,
-                         groups_used=groups_used, user_link=user_link)
+                         groups_used=groups_used, user_link=user_link, gologin_id=gologin_id)
         self.graph.create(user_node)
         self._attach_profile(user_id=user_id, network=social_media)
         return user_node
@@ -237,8 +237,7 @@ class Keyword:
                 keyword_node[key] = value
             self.graph.push(keyword_node)
             return keyword_node
-        else:
-            return None
+        return
 
 
 class TwitterProfile:
