@@ -12,7 +12,6 @@ from time import sleep
 from pyvirtualdisplay import Display
 
 
-print(os.getpid())
 # display = Display(visible=False, size=(1920, 1080))
 # display.start()
 

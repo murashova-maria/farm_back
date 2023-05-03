@@ -1,8 +1,8 @@
 import os
 try:
-    from ..drivers.gologin import GoLogin
+    from ..pygologin.gologin import GoLogin
 except ImportError:
-    from farm.drivers.gologin import GoLogin
+    from farm.pygologin.gologin import GoLogin
 
 
 class GoLoginBase:
