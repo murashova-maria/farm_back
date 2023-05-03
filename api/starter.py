@@ -292,7 +292,7 @@ class Starter:
                             dt = datetime.datetime.fromtimestamp(post_tmp_values['next_comment_date'])
                             dt += datetime.timedelta(minutes=randint(1, 5))
                             res[conv_id]['tmp_data'][post_name]['next_comment_date'] = dt
-                            main_queue.put(QueuedTask(HandleConversation(read_json()), 'update_current_data', res))
+                            main_queue.put(QueuedTask(HandleConversationTest, 'update_current_data', res))
             except NoSuchWindowException:
                 try:
                     fb.driver.quit()
