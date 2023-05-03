@@ -288,7 +288,7 @@ class Starter:
                                     fb.make_comment(post_name, conversation['thread'][index]['text'])
                             res[conv_id]['tmp_data'][post_name]['index'] += 1
                             dt = datetime.datetime.fromtimestamp(post_tmp_values['next_comment_date'])
-                            dt += datetime.timedelta(minutes=randint(1, 20))
+                            dt += datetime.timedelta(minutes=randint(1, 5))
                             res[conv_id]['tmp_data'][post_name]['next_comment_date'] += int(dt.timestamp())
                             main_queue.put(QueuedTask(HandleConversation(read_json()), 'update_current_data', res))
             except NoSuchWindowException:
