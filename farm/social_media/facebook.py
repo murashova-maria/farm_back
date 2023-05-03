@@ -398,11 +398,10 @@ class Facebook(Base):
         self.open_homepage()
         self.accept_cookies()
         try:
-            global_container = self.wait(3).until(ec.presence_of_element_located((By.ID, 'globalContainer')))
-            if 'Connect with friends and the world around you on Facebook.' not in global_container.text:
-                return True
+            self.wait(3).until(ec.presence_of_element_located((By.XPATH,
+                                                               '//button[@data-testid="royal_login_button"]')))
         except Exception as ex:
-            pass
+            return True
         for _ in range(2):
             try:
                 email_field = self.wait(3).until(ec.presence_of_element_located((By.ID, 'email')))
