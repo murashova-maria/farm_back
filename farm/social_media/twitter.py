@@ -61,13 +61,16 @@ class Twitter(Base):
         like = article.find_element(By.XPATH, './/[div@data-testid="like" and @role="button"]')
         retweet = article.find_element(By.XPATH, './/[div[@data-testid="retweet" and @role="button"]')
         if decision == 1:
+            self.scroll_into_view(like)
             self.move_and_click(like)
         elif decision == 2:
+            self.scroll_into_view(retweet)
             self.move_and_click(retweet)
             sleep(1)
             retweet_confirm = article.find_element(By.XPATH, './/div[@data-testid="retweetConfirm"]')
             self.move_and_click(retweet_confirm)
         else:
+            self.scroll_into_view(like)
             self.move_and_click(like)
             self.move_and_click(retweet)
             sleep(1)
@@ -459,6 +462,13 @@ class Twitter(Base):
                 retweets = article.find_element(By.XPATH, './/*[@data-testid="retweet"]').text
                 if 'k' in retweets.lower():
                     retweets = float(retweets[:retweets.find('K')])*1000
+                try:
+                    probability = randint(0, 10)
+                    if probability == 5:
+                        self.scroll_into_view(article)
+                        self._rate_publication(article, randint(1, 3))
+                except Exception as ex:
+                    pass
                 self._save_new_post_to_db(user_name, article_text, pic_link, posts_link, posts_date, likes,
                                           [],
                                           replies, [],

@@ -15,7 +15,7 @@ class GoLoginBase:
         })
 
     def __call__(self, *args, **kwargs):
-        return self.gl.start()
+        return self.gl
 
     def _create_profile(self):
         pass

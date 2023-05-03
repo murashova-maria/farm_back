@@ -45,7 +45,8 @@ class Starter:
             'social_media': self.network,
             'status': status,
             'reg_date': datetime.datetime.now().timestamp(),
-            'gologin_id': self.gologin_profile_id
+            'gologin_id': self.gologin_profile_id,
+            'country': self.country
         })
         main_queue.put(st)
 
@@ -56,7 +57,11 @@ class Starter:
         sleep(2)
         if not login_status:
             self._add_user('Banned')
-            inst.driver.close()
+            try:
+                inst.driver.quit()
+                inst.gl.stop()
+            except Exception as ex:
+                print(ex)
             return
         self._add_user('Active')
         while True:
@@ -103,7 +108,17 @@ class Starter:
                             'activity': 'wait'
                         }))
                         sleep(3)
-
+            except NoSuchWindowException:
+                try:
+                    inst.driver.quit()
+                except Exception as ex:
+                    pass
+                sleep(2)
+                try:
+                    inst.gl.stop()
+                except Exception as glex:
+                    print('GLEX: ', glex)
+                break
             except Exception as ex:
                 print(ex)
 
@@ -114,9 +129,14 @@ class Starter:
         sleep(2)
         if not login_status:
             self._add_user('Banned')
-            fb.driver.close()
+            try:
+                fb.driver.quit()
+                fb.gl.stop()
+            except Exception as ex:
+                print(ex)
             return
         self._add_user('Active')
+        fb.country = self.country
         sleep(10)
         fb.get_friends_amount()
         while True:
@@ -260,6 +280,17 @@ class Starter:
                             dt += datetime.timedelta(minutes=randint(1, 20))
                             res[conv_id]['tmp_data'][post_name]['next_comment_date'] += int(dt.timestamp())
                             main_queue.put(QueuedTask(HandleConversation(read_json()), 'update_current_data', res))
+            except NoSuchWindowException:
+                try:
+                    fb.driver.quit()
+                except Exception as ex:
+                    pass
+                sleep(2)
+                try:
+                    fb.gl.stop()
+                except Exception as glex:
+                    print('GLEX: ', glex)
+                break
             except Exception as ex:
                 print('WHILE THREAD: ', ex)
 
@@ -271,7 +302,11 @@ class Starter:
         sleep(2)
         if not login_status:
             self._add_user('Blocked')
-            tw.driver.close()
+            try:
+                tw.driver.quit()
+                tw.gl.stop()
+            except Exception as ex:
+                print(ex)
             return
         self._add_user('Created')
         main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': tw.usr_id,
@@ -349,6 +384,17 @@ class Starter:
                             'activity': 'wait'
                         }))
                         sleep(2)
+            except NoSuchWindowException:
+                try:
+                    tw.driver.quit()
+                except Exception as ex:
+                    pass
+                sleep(2)
+                try:
+                    tw.gl.stop()
+                except Exception as glex:
+                    print('GLEX: ', glex)
+                break
             except Exception as ex:
                 print(ex)
 

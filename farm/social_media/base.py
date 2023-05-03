@@ -70,9 +70,10 @@ class Base:
                     pass
             self.driver = uc.Chrome(options=self.opt, desired_capabilities=self.caps)
         else:
-            gl = GoLoginBase(gologin_id)
+            self.gl = GoLoginBase(gologin_id)()
             self.opt = webdriver.ChromeOptions()
-            self.opt.add_experimental_option("debuggerAddress", gl())
+            self.opt.binary_location = '/usr/bin/google-chrome'
+            self.opt.add_experimental_option("debuggerAddress", self.gl.start())
             self.driver = webdriver.Chrome(options=self.opt, executable_path='/usr/bin/chromedriver')
 
         self.driver.implicitly_wait(10)

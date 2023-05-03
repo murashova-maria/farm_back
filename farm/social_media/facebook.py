@@ -13,7 +13,7 @@ from random import choice
 
 
 class Facebook(Base):
-    def __init__(self, username, password, phone_number=None, proxy=None, gologin_id=None):
+    def __init__(self, username, password, phone_number=None, proxy=None, gologin_id=None, country=None):
         self.xpaths = {
             'composer': "//span[contains(text(), \"What's in your mind\")]",
             'text_field': './/div[@role="button"]',
@@ -38,6 +38,7 @@ class Facebook(Base):
         self.usr_id = None
         self.name = None
         self.user_link = None
+        self.country = country
 
     def get_profiles_name(self):
         self._get_self_profile()
@@ -74,7 +75,7 @@ class Facebook(Base):
                              authors_link=None, authors_pic_link=None):
         args = [self.usr_id, 'facebook', author_name, text, img_path, posts_link, 'None', date, likes_amount,
                 likes_accounts, comments_amount, comments_accounts, retweets_amount, text_names, noun_keywords,
-                label, sent_rate, lang, tag, authors_link, authors_pic_link]
+                label, sent_rate, lang, tag, self.country, authors_link, authors_pic_link]
         args = replace_none(args)
         feed = QueuedTask(FeedDB, 'create_post', args)
         main_queue.put(feed)
