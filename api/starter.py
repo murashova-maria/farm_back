@@ -120,7 +120,18 @@ class Starter:
                     print('GLEX: ', glex)
                 break
             except Exception as ex:
-                print(ex)
+                if 'chrome not reachable' in str(ex):
+                    try:
+                        inst.driver.quit()
+                    except Exception as ex:
+                        pass
+                    sleep(2)
+                    try:
+                        inst.gl.stop()
+                    except Exception as glex:
+                        print('GLEX: ', glex)
+                else:
+                    print(ex)
 
     def start_facebook(self):
         fb = Facebook(self.username, self.password, self.phone_number, proxy=self.proxy,
@@ -292,7 +303,18 @@ class Starter:
                     print('GLEX: ', glex)
                 break
             except Exception as ex:
-                print('WHILE THREAD: ', ex)
+                if 'chrome not reachable' in str(ex):
+                    try:
+                        fb.driver.quit()
+                    except Exception as ex:
+                        pass
+                    sleep(2)
+                    try:
+                        fb.gl.stop()
+                    except Exception as glex:
+                        print('GLEX: ', glex)
+                else:
+                    print('WHILE THREAD: ', ex)
 
     def start_twitter(self):
         is_country_exist = False
@@ -396,7 +418,18 @@ class Starter:
                     print('GLEX: ', glex)
                 break
             except Exception as ex:
-                print(ex)
+                if 'chrome not reachable' in str(ex):
+                    try:
+                        tw.driver.quit()
+                    except Exception as ex:
+                        pass
+                    sleep(2)
+                    try:
+                        tw.gl.stop()
+                    except Exception as glex:
+                        print('GLEX: ', glex)
+                else:
+                    print(ex)
 
 
 if __name__ == '__main__':
