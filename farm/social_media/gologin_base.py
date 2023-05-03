@@ -1,8 +1,18 @@
 import os
+import socket
+import random
 try:
     from ..spygologin.gologin import GoLogin
 except ImportError:
     from farm.spygologin.gologin import GoLogin
+
+
+def get_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('localhost', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        _, port = s.getsockname()
+    return port
 
 
 class GoLoginBase:
@@ -10,6 +20,7 @@ class GoLoginBase:
         self.gl = GoLogin({
             'token': os.getenv('GOLOGIN_API_TOKEN'),
             'profile_id': profile_id,
+            'port': get_free_port(),
             "uploadCookiesToServer": True,
             "extra_params": ["--disable-notifications", "--no-sandbox", "--start-maximized"],
         })
