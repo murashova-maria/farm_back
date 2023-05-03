@@ -9,7 +9,9 @@ class GoLoginBase:
     def __init__(self, profile_id):
         self.gl = GoLogin({
             'token': os.getenv('GOLOGIN_API_TOKEN'),
-            'profile_id': profile_id
+            'profile_id': profile_id,
+            "uploadCookiesToServer": True,
+            "extra_params": ["--disable-notifications", "--no-sandbox", "--start-maximized"],
         })
 
     def __call__(self, *args, **kwargs):
