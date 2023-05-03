@@ -568,8 +568,13 @@ class Facebook(Base):
                             reply_form = self.driver.find_element(By.XPATH, f'//div[@aria-label="Reply to {masters_name}"]')
                             self.move_and_click(reply_form, text)
                             sleep(2)
-                            submit_btn = self.driver.find_element(By.ID, 'focused-state-composer-submit')
-                            submit_btn.click()
+                            try:
+                                submit_btn = self.driver.find_element(By.ID, 'focused-state-composer-submit')
+                                submit_btn.click()
+                            except Exception as ex:
+                                self.chain.send_keys(Keys.ENTER)
+                                self.chain.perform()
+                                self.chain.reset_actions()
                             sleep(2)
                             try:
                                 part_reviews = self.driver.find_element(By.XPATH,
