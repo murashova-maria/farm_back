@@ -1,6 +1,8 @@
-# LOCAL
+# OTHER
 import datetime
+import traceback
 
+# LOCAL
 from loader import *
 from farm.social_media.twitter import *
 from farm.social_media.facebook import *
@@ -61,7 +63,7 @@ class Starter:
                 inst.driver.quit()
                 inst.gl.stop()
             except Exception as ex:
-                print(ex)
+                traceback.print_exc()
             return
         self._add_user('Active')
         while True:
@@ -131,7 +133,7 @@ class Starter:
                     except Exception as glex:
                         print('GLEX: ', glex)
                 else:
-                    print(ex)
+                    traceback.print_exc()
 
     def start_facebook(self):
         fb = Facebook(self.username, self.password, self.phone_number, proxy=self.proxy,
@@ -144,7 +146,7 @@ class Starter:
                 fb.driver.quit()
                 fb.gl.stop()
             except Exception as ex:
-                print(ex)
+                traceback.print_exc()
             return
         self._add_user('Active')
         fb.country = self.country
@@ -189,7 +191,7 @@ class Starter:
                             fb.change_pictures(avatar)
                         fb.add_bio(bio)
                     except Exception as ex:
-                        print(ex)
+                        traceback.print_exc()
                     task = QueuedTask(UserDB, 'update_user', {'activity': 'wait', 'status': 'done',
                                                               'user_id': user_info['user_id']})
                     main_queue.put(task)
@@ -328,7 +330,7 @@ class Starter:
                 tw.driver.quit()
                 tw.gl.stop()
             except Exception as ex:
-                print(ex)
+                traceback.print_exc()
             return
         self._add_user('Created')
         main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': tw.usr_id,
@@ -429,7 +431,7 @@ class Starter:
                     except Exception as glex:
                         print('GLEX: ', glex)
                 else:
-                    print(ex)
+                    traceback.print_exc()
 
 
 if __name__ == '__main__':
