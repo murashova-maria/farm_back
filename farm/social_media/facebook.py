@@ -317,7 +317,7 @@ class Facebook(Base):
             workplace = self.driver.find_element(By.XPATH, '//*[contains(text(), "Add a workplace")]')
             self.move_and_click(workplace)
 
-            fields = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//*[@role="combobox"]')))[:3]
+            fields = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//*[@role="combobox"]')))[1:4]
             textarea = self.driver.find_element(By.TAG_NAME, 'textarea')
             fields += [textarea]
             for index, field in enumerate(fields):
