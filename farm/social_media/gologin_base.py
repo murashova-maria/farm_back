@@ -1,8 +1,8 @@
 import os
 try:
-    from ..pygologin.gologin import GoLogin
+    from ..spygologin.gologin import GoLogin
 except ImportError:
-    from farm.pygologin.gologin import GoLogin
+    from farm.spygologin.gologin import GoLogin
 
 
 class GoLoginBase:
