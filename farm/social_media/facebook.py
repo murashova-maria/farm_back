@@ -402,6 +402,7 @@ class Facebook(Base):
             self.wait(3).until(ec.presence_of_element_located((By.XPATH,
                                                                '//button[@data-testid="royal_login_button"]')))
         except Exception as ex:
+            self._change_language()
             return True
         for _ in range(2):
             try:
