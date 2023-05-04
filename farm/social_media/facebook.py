@@ -42,6 +42,7 @@ class Facebook(Base):
 
     def get_profiles_name(self):
         self._get_self_profile()
+        self.scroll_to(y=0)
         try:
             sleep(2)
             h1_tag = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'h1')))

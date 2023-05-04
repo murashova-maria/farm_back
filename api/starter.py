@@ -166,6 +166,9 @@ class Starter:
                                                                             'user_id': user_info['user_id']})
                     main_queue.put(task)
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': fb.usr_id, 'user_link': fb.user_link}))
+                if fb.name.lower() == 'name':
+                    fb.get_profiles_name()
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {'name': fb.name, 'user_link': fb.user_link}))
                 if user_info['activity'] == 'fill_profile':
                     try:
                         profile = FacebookProfileDB.filter_profiles(user_id=user_info['user_id'])
