@@ -171,6 +171,8 @@ class Facebook(Base):
             text_box = self.driver.find_element(By.XPATH, '//div[@aria-label="Write a comment"]')
             self.move_and_click(text_box, comment_text)
             sleep(2)
+            self.chain.send_keys(Keys.ESCAPE).perform()
+            self.chain.reset_actions()
             try:
                 submit = self.driver.find_element(By.ID, 'focused-state-composer-submit')
                 self.move_and_click(submit)
@@ -573,6 +575,8 @@ class Facebook(Base):
                             reply_form = self.driver.find_element(By.XPATH, f'//div[@aria-label="Reply to {masters_name}"]')
                             self.move_and_click(reply_form, text)
                             sleep(2)
+                            self.chain.send_keys(Keys.ESCAPE).perform()
+                            self.chain.reset_actions()
                             try:
                                 submit_btn = self.driver.find_element(By.ID, 'focused-state-composer-submit')
                                 submit_btn.click()

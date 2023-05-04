@@ -1,6 +1,7 @@
 # OTHER
 import datetime
 import traceback
+from pprint import pprint
 
 # LOCAL
 from loader import *
@@ -186,7 +187,7 @@ class Starter:
                         if hobbies != 'None' and hobbies is not None:
                             fb.add_hobbies(hobbies)
                         fb.add_location(current_location, native_location)
-                        fb.add_work(company, position, city, description)
+                        # fb.add_work(company, position, city, description)
                         if avatar != 'None' and avatar:
                             fb.change_pictures(avatar)
                         fb.add_bio(bio)
@@ -293,13 +294,13 @@ class Starter:
                 #             conversation.tmp_data[post_name]['next_comment_date'] = dt.timestamp()
                 #             safe_commit(user_session)
                 #             sleep(5)
-                res = read_json()
+                res = read_json('conversations.json')
                 for conv_id, conversation in res.items():
                     for post_name, post_tmp_values in conversation['tmp_data'].items():
                         index = int(post_tmp_values['index'])
                         if index >= len(post_tmp_values['full_chain']):
                             continue
-                        if post_tmp_values['next_comment_date'] <= datetime.datetime.now().timestamp() \
+                        if float(post_tmp_values['next_comment_date']) <= datetime.datetime.now().timestamp() \
                                 and post_tmp_values['full_chain'][index] == fb.usr_id:
                             if fb.usr_id in conversation['meek_accs']:
                                 if 'reactions' in conversation:
@@ -321,8 +322,9 @@ class Starter:
                             res[conv_id]['tmp_data'][post_name]['index'] += 1
                             dt = datetime.datetime.fromtimestamp(post_tmp_values['next_comment_date'])
                             dt += datetime.timedelta(minutes=randint(1, 5))
-                            res[conv_id]['tmp_data'][post_name]['next_comment_date'] = dt
-                            main_queue.put(QueuedTask(HandleConversationTest, 'update_current_data', res))
+                            res[conv_id]['tmp_data'][post_name]['next_comment_date'] = dt.timestamp()
+                            pprint(res)
+                            JSONWriter('conversations.json').write_json(res)
             except NoSuchWindowException:
                 try:
                     fb.driver.quit()
@@ -335,6 +337,7 @@ class Starter:
                     print('GLEX: ', glex)
                 break
             except Exception as ex:
+                traceback.print_exc()
                 if 'chrome not reachable' in str(ex):
                     try:
                         fb.driver.quit()
