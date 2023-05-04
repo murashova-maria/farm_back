@@ -1,7 +1,7 @@
 from sqlalchemy.pool import QueuePool
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, TIMESTAMP
 
 engine = create_engine('sqlite:///bots_farm.db')
 BaseDB = declarative_base()
@@ -96,6 +96,20 @@ class SelfPosts(BaseDB):
     filename = Column(String)
     status = Column(String)
     date = Column(String)
+
+
+class ConversationsPostgres(BaseDB):
+    __tablename__ = 'conversations'
+
+    conversation_id = Column(Integer, primary_key=True)
+    conversation_name = Column(String)
+    post_links = Column(JSON)
+    master_accounts = Column(JSON)
+    meek_accounts = Column(JSON)
+    start_datetime = Column(TIMESTAMP)
+    thread = Column(JSON)
+    reactions = Column(JSON)
+    tmp_data = Column(JSON)
 
 
 if __name__ == "__main__":

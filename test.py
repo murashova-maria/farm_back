@@ -6,19 +6,22 @@ from loader import *
 
 
 if __name__ == '__main__':
-    local_graph.delete_all()
-    # KeywordDB.unpin_word_from_user('f49701a5-52e0-45c4-90d3-3505f30f32df', 71104838)
-    # for keyword in KeywordDB.get_all_keywords_with_users():
-    #     print(keyword)
-    #     local_graph.delete(keyword)
-        # if keyword['keyword'] != 'Nord-Kivu' and keyword['keyword'] != 'ΣΥΡΙΖΑ':
-
-    # conversations = ConversationDB.get_all()
-    # for conv in conversations:
-    #     print(conv)
-    # for profile in TwitterProfileDB.filter_profiles(user_id='c6d62287-9375-4aa8-b7ce-dae3127211c5'):
-    #     local_graph.delete()
-    # users = UserDB.filter_users(user_id="af2e3017-5be7-41d6-aea4-0767be11af33")
-    # for user in users:
-    #     local_graph.delete(user)
+    for conv in user_session.query(ConversationsPostgres).all():
+        conv.tmp_data['https://www.facebook.com/groups/2153777644688768/permalink/6249143518485473']['index'] += 1
+        print(conv.tmp_data)
+        # user_session.add(conv)
+        # user_session.commit()
+    # conversations = read_json()
+    # for key, conv in conversations.items():
+    #     new_conversation = ConversationsPostgres()
+    #     new_conversation.conversation_id = key
+    #     new_conversation.conversation_name = conv['campaign_name']
+    #     new_conversation.post_links = conv['post_links']
+    #     new_conversation.master_accounts = conv['master_accs']
+    #     new_conversation.meek_accounts = conv['meek_accs']
+    #     new_conversation.start_datetime = datetime.datetime.now()
+    #     new_conversation.tmp_data = conv['tmp_data']
+    #     new_conversation.thread = conv['thread']
+    #     user_session.add(new_conversation)
+    #     user_session.commit()
     pass

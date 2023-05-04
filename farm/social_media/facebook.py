@@ -171,8 +171,13 @@ class Facebook(Base):
             text_box = self.driver.find_element(By.XPATH, '//div[@aria-label="Write a comment"]')
             self.move_and_click(text_box, comment_text)
             sleep(2)
-            submit = self.driver.find_element(By.ID, 'focused-state-composer-submit')
-            self.move_and_click(submit)
+            try:
+                submit = self.driver.find_element(By.ID, 'focused-state-composer-submit')
+                self.move_and_click(submit)
+            except Exception as ex:
+                self.chain.send_keys(Keys.ENTER)
+                self.chain.perform()
+                self.chain.reset_actions()
             try:
                 self.wait(3).until(ec.alert_is_present())
                 alert = self.driver.switch_to.alert
