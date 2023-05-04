@@ -309,13 +309,16 @@ class Starter:
                                     master_exist = post_tmp_values['full_chain'][:index]
                                     masters_name = [UserDB.filter_users(user_id=user_id)
                                                     for user_id in conversation['master_accs']]
-                                    print(masters_name)
                                     for name in masters_name:
                                         if name[0]['user_id'] not in master_exist:
                                             try:
                                                 masters_name.remove(name[0]['user_id'])
                                             except Exception as ex:
+                                                print('MASTERS ACCOUNTS: ')
                                                 traceback.print_exc()
+                                    print("MASTERS NAMES", masters_name)
+                                    print('POST NAME: ', post_name)
+                                    print('ADD INFO: ', conversation['thread'][index]['text'])
                                     fb.comments_chain(choice(masters_name), post_name,
                                                       conversation['thread'][index]['text'])
                             else:
