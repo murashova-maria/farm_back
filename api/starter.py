@@ -281,8 +281,12 @@ class Starter:
                                     fb.make_comment(post_name, conversation['reactions'][index])
                                 else:
                                     master_exist = post_tmp_values['full_chain'][:index]
-                                    masters_name = [UserDB.filter_users(user_id=user_id)[0]
-                                                    for user_id in conversation['master_accs']]
+                                    masters_name = []
+                                    for user_id in conversation['master_accs']:
+                                        try:
+                                            masters_name.append(UserDB.filter_users(user_id=user_id)[0])
+                                        except Exception as ex:
+                                            pass
                                     for name in masters_name:
                                         try:
                                             if name['user_id'] not in master_exist:
