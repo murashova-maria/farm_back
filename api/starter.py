@@ -270,6 +270,10 @@ class Starter:
                         index = int(post_tmp_values['index'])
                         if index >= len(post_tmp_values['full_chain']):
                             continue
+                        print('MAIN DATA: ')
+                        print(post_tmp_values['next_comment_date'])
+                        print(float(post_tmp_values['next_comment_date']) <= datetime.datetime.now().timestamp())
+                        print(post_tmp_values['full_chain'][index] == fb.usr_id)
                         if float(post_tmp_values['next_comment_date']) <= datetime.datetime.now().timestamp() \
                                 and post_tmp_values['full_chain'][index] == fb.usr_id:
                             if fb.usr_id in conversation['meek_accs']:
