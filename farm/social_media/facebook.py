@@ -584,13 +584,13 @@ class Facebook(Base):
                     for btn in buttons:
                         if btn.text == 'Reply':
                             self.scroll_into_view(btn)
-                            self.scroll_by(y=-400)
                             sleep(3)
                             self.move_and_click(btn)
                             self.rs()
                             reply_form = self.driver.find_element(By.XPATH, f'//div[@aria-label="Reply to '
                                                                             f'{masters_name}"]')
                             print('REPLY FORM', reply_form)
+                            self.scroll_into_view(reply_form)
                             self.move_and_click(reply_form, text)
                             sleep(2)
                             self.chain.send_keys(Keys.ESCAPE).perform()
