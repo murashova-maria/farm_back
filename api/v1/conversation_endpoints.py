@@ -6,7 +6,7 @@ from random import choice, choices
 async def create_conversation(params: Dict[Any, Any]):
     try:
         temp_data = {'tmp_data': {}}
-        timestamp = datetime.datetime.fromtimestamp(params.get('start_datetime')/1000)
+        timestamp = params.get('start_date_time')
         new_conversation = ConversationsPostgres()
         new_conversation.conversation_id = randint(0, 2147483647)
         new_conversation.conversation_name = params.get('campaign_name')

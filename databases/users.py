@@ -1,7 +1,7 @@
 from sqlalchemy.pool import QueuePool
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, TIMESTAMP
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, TIMESTAMP, FLOAT
 
 engine = create_engine('sqlite:///bots_farm.db')
 BaseDB = declarative_base()
@@ -106,7 +106,7 @@ class ConversationsPostgres(BaseDB):
     post_links = Column(JSON)
     master_accounts = Column(JSON)
     meek_accounts = Column(JSON)
-    start_datetime = Column(TIMESTAMP)
+    start_datetime = Column(FLOAT)
     thread = Column(JSON)
     reactions = Column(JSON)
     tmp_data = Column(JSON)

@@ -288,8 +288,9 @@ class Starter:
                                 else:
                                     fb.make_comment(post_name, conversation.thread[index]['text'])
                             conversation.tmp_data[post_name]['index'] += 1
-                            dt = conversation.tmp_data[post_name]['next_comment_date']
+                            dt = datetime.datetime.fromtimestamp(conversation.tmp_data[post_name]['next_comment_date'])
                             dt += timedelta(minutes=randint(1, 5))
+                            conversation.tmp_data[post_name]['next_comment_date'] = dt.timestamp()
                             safe_commit(user_session)
                             sleep(5)
                 # res = read_json()
