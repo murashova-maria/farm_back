@@ -573,6 +573,7 @@ class Facebook(Base):
                 lis = self.wait(5).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="article"]')))
                 for li in lis:
                     try:
+                        print('LI TEXT: ', li.text)
                         if masters_name not in li.text:
                             continue
                     except TypeError:
