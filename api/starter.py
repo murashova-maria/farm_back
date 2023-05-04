@@ -263,66 +263,66 @@ class Starter:
                                       'https://www.facebook.com/groups/513282220488457/permalink/736594434823900/')
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                                       'activity': 'wait'}))
-                for conversation in user_session.query(ConversationsPostgres).all():
-                    for post_name, post_tmp_values in conversation.tmp_data.items():
-                        index = int(post_tmp_values['index'])
-                        if index >= len(post_tmp_values['full_chain']):
-                            continue
-                        if post_tmp_values['next_comment_date'] <= datetime.datetime.now().timestamp() \
-                                and post_tmp_values['full_chain'][index] == fb.usr_id:
-                            if fb.usr_id in conversation.meek_accounts:
-                                if conversation.reactions is not None:
-                                    fb.make_comment(post_name, conversation.reactions[index])
-                                else:
-                                    master_exist = post_tmp_values['full_chain'][:index]
-                                    masters_name = [UserDB.filter_users(user_id=user_id)
-                                                    for user_id in conversation.master_accounts]
-                                    for name in masters_name:
-                                        if name['user_id'] not in master_exist:
-                                            masters_name.remove(name['user_id'])
-                                    fb.comments_chain(choice(masters_name), post_name,
-                                                      conversation.thread[index]['text'])
-                            else:
-                                if conversation.reactions is not None:
-                                    fb.make_comment(post_name, choice(conversation.reactions))
-                                else:
-                                    fb.make_comment(post_name, conversation.thread[index]['text'])
-                            conversation.tmp_data[post_name]['index'] += 1
-                            dt = datetime.datetime.fromtimestamp(conversation.tmp_data[post_name]['next_comment_date'])
-                            dt += timedelta(minutes=randint(1, 5))
-                            conversation.tmp_data[post_name]['next_comment_date'] = dt.timestamp()
-                            safe_commit(user_session)
-                            sleep(5)
-                # res = read_json()
-                # for conv_id, conversation in res.items():
-                #     for post_name, post_tmp_values in conversation['tmp_data'].items():
+                # for conversation in user_session.query(ConversationsPostgres).all():
+                #     for post_name, post_tmp_values in conversation.tmp_data.items():
                 #         index = int(post_tmp_values['index'])
                 #         if index >= len(post_tmp_values['full_chain']):
                 #             continue
                 #         if post_tmp_values['next_comment_date'] <= datetime.datetime.now().timestamp() \
                 #                 and post_tmp_values['full_chain'][index] == fb.usr_id:
-                #             if fb.usr_id in conversation['meek_accs']:
-                #                 if 'reactions' in conversation:
-                #                     fb.make_comment(post_name, conversation['reactions'][index])
+                #             if fb.usr_id in conversation.meek_accounts:
+                #                 if conversation.reactions is not None:
+                #                     fb.make_comment(post_name, conversation.reactions[index])
                 #                 else:
                 #                     master_exist = post_tmp_values['full_chain'][:index]
                 #                     masters_name = [UserDB.filter_users(user_id=user_id)
-                #                                     for user_id in conversation['master_accs']]
+                #                                     for user_id in conversation.master_accounts]
                 #                     for name in masters_name:
                 #                         if name['user_id'] not in master_exist:
                 #                             masters_name.remove(name['user_id'])
                 #                     fb.comments_chain(choice(masters_name), post_name,
-                #                                       conversation['thread'][index]['text'])
+                #                                       conversation.thread[index]['text'])
                 #             else:
-                #                 if 'reactions' in conversation:
-                #                     fb.make_comment(post_name, choice(conversation['reactions']))
+                #                 if conversation.reactions is not None:
+                #                     fb.make_comment(post_name, choice(conversation.reactions))
                 #                 else:
-                #                     fb.make_comment(post_name, conversation['thread'][index]['text'])
-                #             res[conv_id]['tmp_data'][post_name]['index'] += 1
-                #             dt = datetime.datetime.fromtimestamp(post_tmp_values['next_comment_date'])
-                #             dt += datetime.timedelta(minutes=randint(1, 5))
-                #             res[conv_id]['tmp_data'][post_name]['next_comment_date'] = dt
-                #             main_queue.put(QueuedTask(HandleConversationTest, 'update_current_data', res))
+                #                     fb.make_comment(post_name, conversation.thread[index]['text'])
+                #             conversation.tmp_data[post_name]['index'] += 1
+                #             dt = datetime.datetime.fromtimestamp(conversation.tmp_data[post_name]['next_comment_date'])
+                #             dt += timedelta(minutes=randint(1, 5))
+                #             conversation.tmp_data[post_name]['next_comment_date'] = dt.timestamp()
+                #             safe_commit(user_session)
+                #             sleep(5)
+                res = read_json()
+                for conv_id, conversation in res.items():
+                    for post_name, post_tmp_values in conversation['tmp_data'].items():
+                        index = int(post_tmp_values['index'])
+                        if index >= len(post_tmp_values['full_chain']):
+                            continue
+                        if post_tmp_values['next_comment_date'] <= datetime.datetime.now().timestamp() \
+                                and post_tmp_values['full_chain'][index] == fb.usr_id:
+                            if fb.usr_id in conversation['meek_accs']:
+                                if 'reactions' in conversation:
+                                    fb.make_comment(post_name, conversation['reactions'][index])
+                                else:
+                                    master_exist = post_tmp_values['full_chain'][:index]
+                                    masters_name = [UserDB.filter_users(user_id=user_id)
+                                                    for user_id in conversation['master_accs']]
+                                    for name in masters_name:
+                                        if name['user_id'] not in master_exist:
+                                            masters_name.remove(name['user_id'])
+                                    fb.comments_chain(choice(masters_name), post_name,
+                                                      conversation['thread'][index]['text'])
+                            else:
+                                if 'reactions' in conversation:
+                                    fb.make_comment(post_name, choice(conversation['reactions']))
+                                else:
+                                    fb.make_comment(post_name, conversation['thread'][index]['text'])
+                            res[conv_id]['tmp_data'][post_name]['index'] += 1
+                            dt = datetime.datetime.fromtimestamp(post_tmp_values['next_comment_date'])
+                            dt += datetime.timedelta(minutes=randint(1, 5))
+                            res[conv_id]['tmp_data'][post_name]['next_comment_date'] = dt
+                            main_queue.put(QueuedTask(HandleConversationTest, 'update_current_data', res))
             except NoSuchWindowException:
                 try:
                     fb.driver.quit()
