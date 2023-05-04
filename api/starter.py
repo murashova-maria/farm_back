@@ -293,8 +293,8 @@ class Starter:
                                     print('POST NAME: ', post_name)
                                     print('ADD INFO: ', conversation['thread'][index]['text'])
                                     if masters_name:
-                                        fb.comments_chain(choice(masters_name), post_name,
-                                                          conversation['thread'][index]['text'])
+                                        fb.comments_chain(choice(masters_name),
+                                                          conversation['thread'][index]['text'], post_name)
                                     else:
                                         print('THERE IS NO AVAILABLE MASTERS')
                             else:
