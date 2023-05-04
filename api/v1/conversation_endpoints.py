@@ -6,7 +6,7 @@ from random import choice, choices
 async def create_conversation(params: Dict[Any, Any]):
     try:
         temp_data = {'tmp_data': {}}
-        timestamp = datetime.datetime.fromtimestamp(params.get('start_datetime'))
+        timestamp = datetime.datetime.fromtimestamp(params.get('start_datetime')/1000)
         new_conversation = ConversationsPostgres()
         new_conversation.conversation_id = randint(0, 2147483647)
         new_conversation.conversation_name = params.get('campaign_name')
@@ -20,7 +20,7 @@ async def create_conversation(params: Dict[Any, Any]):
             temp_data['tmp_data'].update({
                 f'{post}': {
                     'index': 0,
-                    'next_comment_date': params['start_datetime'],
+                    'next_comment_date': timestamp,
                     'full_chain': [choice(params['meek_accs']) if user['acc_type'] == 'meek'
                                    else choice(params['master_accs'])
                                    for user in params['thread']]
@@ -31,13 +31,13 @@ async def create_conversation(params: Dict[Any, Any]):
             temp_data['tmp_data'].update({
                 f'{post}': {
                     'index': 0,
-                    'next_comment_date': params['start_datetime'],
+                    'next_comment_date': timestamp,
                     'full_chain': choices([*params['meek_accs'], *params['master_accs']], k=len(params['reactions']))
                 } for post in params['post_links']
             })
         new_conversation.tmp_data = temp_data['tmp_data']
         user_session.add(new_conversation)
-        safe_commit(user_session)
+        user_session.commit()
         return {'Status': 'OK'}
     except Exception as ex:
         print(ex)
