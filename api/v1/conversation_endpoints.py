@@ -71,7 +71,9 @@ async def create_conversation(params: Dict[Any, Any]):
             })
         params.update(temp_data)
         params = {conversation_id: {**params, 'type': 'json'}, }
-        main_queue.put(QueuedTask(HandleConversation(read_json()), 'update_current_data', params))
+        res = read_json('conversations.json')
+        res.update(params)
+        JSONWriter('conversations.json').write_json(res)
         return {'Status': 'OK'}
     except Exception as ex:
         print(ex)

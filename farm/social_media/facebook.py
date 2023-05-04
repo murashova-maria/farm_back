@@ -443,6 +443,8 @@ class Facebook(Base):
                 return True
             except WebDriverException as wde:
                 print(wde)
+            except Exception as ex:
+                pass
         return False
 
     def get_exact_users_friends(self, profile_link: str = None, limit=100):
