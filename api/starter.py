@@ -260,8 +260,8 @@ class Starter:
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                                       'activity': 'wait'}))
                 elif user_info['activity'] == 'comments_chain':
-                    fb.comments_chain('Kevin James', 'Agree...',
-                                      'https://www.facebook.com/groups/513282220488457/permalink/736594434823900/')
+                    fb.comments_chain('Joe Pedro', 'Agree...',
+                                      'https://www.facebook.com/groups/diktyofilwntousyriza/permalink/2301069200099742/')
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                                       'activity': 'wait'}))
                 res = read_json('conversations.json')

@@ -574,6 +574,7 @@ class Facebook(Base):
                 for li in lis:
                     try:
                         print('LI TEXT: ', li.text)
+                        print('NAME IN TEXT: ', masters_name in li.text)
                         if masters_name not in li.text:
                             continue
                     except TypeError:
@@ -587,7 +588,9 @@ class Facebook(Base):
                             sleep(3)
                             self.move_and_click(btn)
                             self.rs()
-                            reply_form = self.driver.find_element(By.XPATH, f'//div[@aria-label="Reply to {masters_name}"]')
+                            reply_form = self.driver.find_element(By.XPATH, f'//div[@aria-label="Reply to '
+                                                                            f'{masters_name}"]')
+                            print('REPLY FORM', reply_form)
                             self.move_and_click(reply_form, text)
                             sleep(2)
                             self.chain.send_keys(Keys.ESCAPE).perform()
