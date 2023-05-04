@@ -548,6 +548,15 @@ class Facebook(Base):
         last_page_height = 0
         if self.driver.current_url != link:
             self.driver.get(link)
+        sleep(2)
+        try:
+            show_all_btn = self.wait(2).until(ec.presence_of_element_located((By.XPATH,
+                                                                              '//div[@aria-label="See All" '
+                                                                              'and @role="button"]')))
+            self.move_and_click(show_all_btn)
+        except Exception as ex:
+            pass
+        sleep(2)
         while True:
             self.scroll_by(y=1200)
             try:
@@ -563,7 +572,10 @@ class Facebook(Base):
             try:
                 lis = self.wait(5).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="article"]')))
                 for li in lis:
-                    if masters_name not in li.text:
+                    try:
+                        if masters_name not in li.text:
+                            continue
+                    except TypeError:
                         continue
                     self.scroll_into_view(li)
                     buttons = li.find_elements(By.XPATH, './/div[@role="button"]')
