@@ -312,7 +312,10 @@ class Starter:
                                     print(masters_name)
                                     for name in masters_name:
                                         if name[0]['user_id'] not in master_exist:
-                                            masters_name.remove(name[0]['user_id'])
+                                            try:
+                                                masters_name.remove(name[0]['user_id'])
+                                            except Exception as ex:
+                                                traceback.print_exc()
                                     fb.comments_chain(choice(masters_name), post_name,
                                                       conversation['thread'][index]['text'])
                             else:
