@@ -309,9 +309,10 @@ class Starter:
                                     master_exist = post_tmp_values['full_chain'][:index]
                                     masters_name = [UserDB.filter_users(user_id=user_id)
                                                     for user_id in conversation['master_accs']]
+                                    print(masters_name)
                                     for name in masters_name:
-                                        if name['user_id'] not in master_exist:
-                                            masters_name.remove(name['user_id'])
+                                        if name[0]['user_id'] not in master_exist:
+                                            masters_name.remove(name[0]['user_id'])
                                     fb.comments_chain(choice(masters_name), post_name,
                                                       conversation['thread'][index]['text'])
                             else:
