@@ -1,5 +1,6 @@
 from api import *
 from random import choice, choices
+import traceback
 
 
 @app.post('/conversation/create/')
@@ -40,7 +41,7 @@ async def create_conversation(params: Dict[Any, Any]):
         user_session.commit()
         return {'Status': 'OK'}
     except Exception as ex:
-        print(ex)
+        traceback.print_exc()
         return HTTPException(status_code=400, detail='Wrong data')
 
 
