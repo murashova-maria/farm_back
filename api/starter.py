@@ -273,6 +273,7 @@ class Starter:
                         print('MAIN DATA: ')
                         print(post_tmp_values['next_comment_date'])
                         print(float(post_tmp_values['next_comment_date']) <= datetime.datetime.now().timestamp())
+                        print(post_tmp_values['full_chain'][index], fb.usr_id)
                         print(post_tmp_values['full_chain'][index] == fb.usr_id)
                         if float(post_tmp_values['next_comment_date']) <= datetime.datetime.now().timestamp() \
                                 and post_tmp_values['full_chain'][index] == fb.usr_id:
