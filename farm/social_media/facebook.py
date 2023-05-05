@@ -576,12 +576,16 @@ class Facebook(Base):
                 articles = self.driver.find_elements(By.XPATH, '//div[@aria-label]')
                 for article in articles:
                     if f'Comment by {masters_name}' in article.get_attribute('aria-label'):
+                        print(article.get_attribute('aria-label'))
                         reply_button = article.find_element(By.XPATH, './/div[contains(text(), "Reply")]')
+                        print(reply_button.text)
                         try:
                             self.scroll_into_view(reply_button)
+                            self.scroll_by(y=-500)
                         except Exception as ex:
                             pass
-                        reply_button.click()
+                        self.move_and_click(reply_button)
+                        sleep(3)
                         self.chain.send_keys(text)
                         self.chain.perform()
                         self.chain.reset_actions()
@@ -590,7 +594,7 @@ class Facebook(Base):
                         self.chain.perform()
                         self.chain.reset_actions()
                         sleep(2)
-                        self.chain.send_keys(Keys.ESCAPE)
+                        self.chain.send_keys(Keys.ENTER)
                         self.chain.perform()
                         self.chain.reset_actions()
                         return True
