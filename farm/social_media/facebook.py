@@ -1,4 +1,6 @@
 # LOCAL
+import traceback
+
 try:
     from .base import *
     from .fb_utils import *
@@ -569,52 +571,34 @@ class Facebook(Base):
                         sleep(2)
                         break
             except Exception as ex:
-                pass
+                print(ex)
             try:
-                lis = self.wait(5).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="article"]')))
-                for li in lis:
-                    try:
-                        print('LI TEXT: ', li.text)
-                        print('NAME IN TEXT: ', masters_name in li.text)
-                        if masters_name not in li.text:
-                            continue
-                    except TypeError:
-                        continue
-                    self.scroll_into_view(li)
-                    buttons = li.find_elements(By.XPATH, './/div[@role="button"]')
-                    for btn in buttons:
-                        if btn.text == 'Reply':
-                            self.scroll_into_view(btn)
-                            sleep(3)
-                            self.move_and_click(btn)
-                            self.rs()
-                            reply_form = self.driver.find_element(By.XPATH, f'//div[@aria-label="Reply to '
-                                                                            f'{masters_name}"]')
-                            print('REPLY FORM', reply_form)
-                            self.scroll_into_view(reply_form)
-                            self.move_and_click(reply_form, text)
-                            sleep(2)
-                            self.chain.send_keys(Keys.ESCAPE).perform()
-                            self.chain.reset_actions()
-                            try:
-                                submit_btn = self.driver.find_element(By.ID, 'focused-state-composer-submit')
-                                submit_btn.click()
-                            except Exception as ex:
-                                self.chain.send_keys(Keys.ENTER)
-                                self.chain.perform()
-                                self.chain.reset_actions()
-                            sleep(2)
-                            try:
-                                part_reviews = self.driver.find_element(By.XPATH,
-                                                                        '//*[contains(text(), "Participation review")]')
-                                self.move_and_click(part_reviews)
-                                self.chain.send_keys(Keys.ESCAPE).perform()
-                                self.chain.reset_actions()
-                            except WebDriverException:
-                                pass
-                            return True
+                articles = self.driver.find_elements(By.XPATH, '//div[@aria-label]')
+                for article in articles:
+                    if f'Comment by {masters_name}' in article.get_attribute('aria-label'):
+                        reply_button = article.find_element(By.XPATH, './/div[contains(text(), "Reply")]')
+                        try:
+                            self.scroll_into_view(reply_button)
+                        except Exception as ex:
+                            pass
+                        reply_button.click()
+                        self.chain.send_keys(text)
+                        self.chain.perform()
+                        self.chain.reset_actions()
+                        sleep(3)
+                        self.chain.send_keys(Keys.ESCAPE)
+                        self.chain.perform()
+                        self.chain.reset_actions()
+                        sleep(2)
+                        self.chain.send_keys(Keys.ESCAPE)
+                        self.chain.perform()
+                        self.chain.reset_actions()
+                        return True
             except (WebDriverException, TimeoutException) as wde:
+                traceback.print_exc()
                 print(wde)
+            except Exception as ex:
+                traceback.print_exc()
             if last_page_height == int(self.driver.execute_script('return document.body.scrollHeight')):
                 return False
             last_page_height = int(self.driver.execute_script('return document.body.scrollHeight'))

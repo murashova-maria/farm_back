@@ -263,7 +263,7 @@ class Starter:
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                                       'activity': 'wait'}))
                 elif user_info['activity'] == 'comments_chain':
-                    fb.comments_chain('Joe Pedro', 'Agree...',
+                    fb.comments_chain('Mykyta Diakov', 'Agree...',
                                       'https://www.facebook.com/groups/diktyofilwntousyriza/permalink/2301069200099742/')
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                                       'activity': 'wait'}))
@@ -273,11 +273,11 @@ class Starter:
                         index = int(post_tmp_values['index'])
                         if index >= len(post_tmp_values['full_chain']):
                             continue
-                        print('MAIN DATA: ')
-                        print(post_tmp_values['next_comment_date'])
-                        print(float(post_tmp_values['next_comment_date']) <= datetime.datetime.now().timestamp())
-                        print(post_tmp_values['full_chain'][index], fb.usr_id)
-                        print(post_tmp_values['full_chain'][index] == fb.usr_id)
+                        # print('MAIN DATA: ')
+                        # print(post_tmp_values['next_comment_date'])
+                        # print(float(post_tmp_values['next_comment_date']) <= datetime.datetime.now().timestamp())
+                        # print(post_tmp_values['full_chain'][index], fb.usr_id)
+                        # print(post_tmp_values['full_chain'][index] == fb.usr_id)
                         if float(post_tmp_values['next_comment_date']) <= datetime.datetime.now().timestamp() \
                                 and post_tmp_values['full_chain'][index] == fb.usr_id:
                             if fb.usr_id in conversation['meek_accs']:
@@ -285,6 +285,7 @@ class Starter:
                                     fb.make_comment(post_name, conversation['reactions'][index])
                                 else:
                                     master_exist = post_tmp_values['full_chain'][:index]
+                                    print('FULL CHAIN: ', master_exist)
                                     masters_name = []
                                     for user_id in conversation['master_accs']:
                                         try:
@@ -301,7 +302,7 @@ class Starter:
                                     print('POST NAME: ', post_name)
                                     print('ADD INFO: ', conversation['thread'][index]['text'])
                                     if masters_name:
-                                        fb.comments_chain(choice(masters_name)['name'],
+                                        fb.comments_chain(FacebookProfileDB.filter_profiles(user_id=choice(masters_name)['user_id'])[0]['name'],
                                                           conversation['thread'][index]['text'], post_name)
                                     else:
                                         print('THERE IS NO AVAILABLE MASTERS')

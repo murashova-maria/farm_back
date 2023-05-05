@@ -120,7 +120,8 @@ class Base:
         # Simple way to click on the element 'by hands'.
         # Needs to make our actions more 'human'.
         self.chain.reset_actions()  # Reset ActionChains' moves from both sides just in case.
-        self.chain.move_to_element(element)
+        if element is not None:
+            self.chain.move_to_element(element)
         if y:
             self.scroll_by(y=y)
         if to_click:
