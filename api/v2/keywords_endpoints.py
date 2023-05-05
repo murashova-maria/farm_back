@@ -14,11 +14,11 @@ async def add_keywords(params: Dict[Any, Any]):
             if params.get(media) is None:
                 continue
             main_queue.put(QueuedTask(KeywordDB, 'add_keyword_to_user', {'user_id': params.get(media),
-                                                                         'keyword': params.get('keyword')}))
+                                                                         'keyword': params.get('keyword_value')}))
             sleep(0.3)
             was_add = True
         if not was_add:
-            main_queue.put(QueuedTask(KeywordDB, 'add_keyword_to_user', params))
+            main_queue.put(QueuedTask(KeywordDB, 'add_keyword_to_user', {'keyword': params.get('keyword_value')}))
         return {'Status': 'OK'}
     except Exception as ex:
         raise HTTPException(status_code=400, detail={'Status': 'Incorrect keyword ID or user_id'})
