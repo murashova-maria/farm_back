@@ -38,15 +38,16 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
                 'day': day,
                 'time_range': time_range,
                 'exact_time': exact_time,
-                'scroll_minutes': params.get('scroll_minutes')
             }
             main_queue.put(QueuedTask(SelfPostsDB, 'create_post', post_data))
+        data += ['None', params.get('scroll_minutes')]
         main_queue.put(QueuedTask(ScheduleDB, 'create_schedule', data))
         final_data = {'day': day, 'time_range': time_range, 'action': action}
         if post_data is not None:
             final_data.update({**post_data})
         return final_data
     except Exception as ex:
+        traceback.print_exc()
         print(ex)
         raise HTTPException(status_code=400, detail=[])
 
