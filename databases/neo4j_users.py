@@ -435,6 +435,14 @@ class SelfPosts:
     def get_all(self):
         return list(self.matcher.match('SelfPost'))
 
+    def delete_post(self, post_id):
+        post_node = self.matcher.match("SelfPost", post_id=post_id).first()
+        if post_node:
+            self.graph.delete(post_node)
+            return True
+        else:
+            return False
+
 
 class Conversation:
     def __init__(self, graph):
@@ -519,6 +527,14 @@ class Schedule:
         query = "MATCH (p:Schedule) RETURN p"
         result = self.graph.run(query)
         return [record["p"] for record in result]
+
+    def delete_post(self, schedule_id):
+        post_node = self.matcher.match("Schedule", schedule_id=schedule_id).first()
+        if post_node:
+            self.graph.delete(post_node)
+            return True
+        else:
+            return False
 
 
 if __name__ == '__main__':

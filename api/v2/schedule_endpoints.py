@@ -19,6 +19,10 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
         social_media = UserDB.filter_users(user_id=user_id)[0]['social_media']
         filename = f'{user_id}_post_image_{randint(0, 10000)}.jpg'
         if action == 'make_post' and params:
+            post_exist = SelfPostsDB.filter_posts(user_id=user_id, day=int(day),
+                                                  time_range=int(time_range))
+            if post_exist:
+                main_queue.put(QueuedTask(SelfPostsDB, 'delete_post', {'post_id': post_exist[0]['post_id']}))
             image_base64 = params.get('filename')
             if params.get('filename') is not None:
                 extension, image_base64 = image_base64.split(',')
@@ -100,10 +104,10 @@ async def bots_schedule(user_id: str):
         raise HTTPException(status_code=400, detail=[])
 
 
-@app.get('/bots/schedules/')
-async def get_schedules_by_params(day: int = None, time_range: int = None):
+@app.get('/bots/schedules/{user_id}/')
+async def get_schedules_by_params(user_id: str, day: int = None, time_range: int = None):
     try:
-        params = {}
+        params = {'user_id': user_id}
         if day:
             params.update({'day': day})
         if time_range:
@@ -130,3 +134,20 @@ async def get_schedules_by_params(day: int = None, time_range: int = None):
     except Exception as ex:
         print(ex)
         traceback.print_exc()
+
+
+@app.delete('/bots/schedules/{user_id}/delete/')
+async def delete_schedule_range(user_id: str, day: int = None, time_range: int = None):
+    try:
+        get_schedules = ScheduleDB.filter_schedules(user_id=user_id, day=day, time_range=time_range)
+        if not get_schedules:
+            return {'INFO': "Schedule doesn't exist."}
+        get_schedules = get_schedules[0]
+        if get_schedules['action'] == 'make_post':
+            get_post = SelfPostsDB.filter_posts(user_id=user_id, day=day, time_range=time_range)
+            if get_post:
+                main_queue.put(QueuedTask(SelfPostsDB, 'delete_post', {'post_id': get_post['post_id']}))
+        main_queue.put(QueuedTask(ScheduleDB, 'delete_post', {'schedule_id': get_schedules['schedule_id']}))
+        return {'STATUS': "OK"}
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail='WRONG DATA')
