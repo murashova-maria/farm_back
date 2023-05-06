@@ -1,4 +1,6 @@
 # LOCAL
+import traceback
+
 from api import *
 
 
@@ -96,3 +98,18 @@ async def return_users_avatar(user_id: str):
     file_path = f'{IMG_DIR}{sm}/{profile["avatar"]}'
     print(file_path)
     return FileResponse(file_path, media_type='application/octet-stream', filename=profile['avatar'])
+
+
+@app.get('/attachment/')
+async def get_files(user_id: str, day: int, time_range: int):
+    try:
+        users_object = UserDB.filter_users(user_id=user_id)
+        if not users_object or users_object is None:
+            return {'Error': 'Wrong user_id'}
+        sm = users_object[0]['social_media']
+        publication = SelfPostsDB.filter_posts(user_id=user_id, day=day, time_range=time_range)[0]
+        file_path = f'{IMG_DIR}{sm}/{publication["filename"]}'
+        return FileResponse(file_path, media_type='application/octet-stream', filename=file_path)
+    except Exception as ex:
+        traceback.print_exc()
+        return HTTPException(status_code=400, detail='Invalid data')

@@ -486,7 +486,7 @@ class Schedule:
         self.graph.push(existing_schedule)
         return existing_schedule
 
-    def create_schedule(self, user_id, action, day, time_range, exact_time, status='None'):
+    def create_schedule(self, user_id, action, day, time_range, exact_time, status='None', scroll_minutes='None'):
         test_node = self.filter_schedules(user_id=user_id, day=day, time_range=time_range)
         if len(test_node) > 0:
             params = {}
@@ -499,7 +499,8 @@ class Schedule:
             return self.update_schedule(schedule_id, **params)
         schedule_id = randint(0, 2147483647)
         post_node = Node("Schedule", schedule_id=schedule_id, user_id=user_id, action=action,
-                         day=day, time_range=time_range, exact_time=exact_time, status=status)
+                         day=day, time_range=time_range, exact_time=exact_time, status=status,
+                         scroll_minutes=scroll_minutes)
         self.graph.create(post_node)
         return post_node
 

@@ -6,7 +6,7 @@ from loader import *
 
 
 if __name__ == '__main__':
-    for user in FacebookProfileDB.get_all():
-        print(user)
-        print()
+    print(ScheduleDB.filter_schedules(day=1))
     # local_graph.delete_all()
+    pass
+

@@ -6,7 +6,7 @@ from api.starter import Starter
 import aiofiles
 from typing import Optional, Annotated
 from fastapi.responses import FileResponse
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 # OTHER
