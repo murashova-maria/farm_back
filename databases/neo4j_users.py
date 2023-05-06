@@ -495,7 +495,10 @@ class Schedule:
         return existing_schedule
 
     def create_schedule(self, user_id, action, day, time_range, exact_time, status='None', scroll_minutes='None'):
-
+        if day and day != 'None':
+            day = int(day)
+        if time_range and time_range != 'None':
+            time_range = int(time_range)
         test_node = self.filter_schedules(user_id=user_id, day=day, time_range=time_range)
         if len(test_node) > 0:
             params = {}
@@ -505,6 +508,7 @@ class Schedule:
                 params.update({'exact_time': exact_time})
             params.update({'status': status})
             schedule_id = test_node[0]['schedule_id']
+            print(schedule_id, params)
             return self.update_schedule(schedule_id, **params)
         schedule_id = randint(0, 2147483647)
         post_node = Node("Schedule", schedule_id=schedule_id, user_id=user_id, action=action,
@@ -528,7 +532,7 @@ class Schedule:
         result = self.graph.run(query)
         return [record["p"] for record in result]
 
-    def delete_post(self, schedule_id):
+    def delete_schedule(self, schedule_id):
         post_node = self.matcher.match("Schedule", schedule_id=schedule_id).first()
         if post_node:
             self.graph.delete(post_node)

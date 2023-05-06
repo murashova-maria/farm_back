@@ -13,7 +13,7 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
         day = params.get('day')
         time_range = params.get('time_range')
         exact_time = datetime.now()
-        if day and time_range:
+        if day is not None and time_range is not None:
             exact_time = get_randomized_date(int(day), RANGES[int(time_range)])
         data = [user_id, action, day, time_range, exact_time]
         social_media = UserDB.filter_users(user_id=user_id)[0]['social_media']
@@ -108,19 +108,23 @@ async def bots_schedule(user_id: str):
 async def get_schedules_by_params(user_id: str, day: int = None, time_range: int = None):
     try:
         params = {'user_id': user_id}
-        if day:
+        if day is not None:
             params.update({'day': day})
-        if time_range:
+        if time_range is not None:
             params.update({'time_range': time_range})
+        print(params)
         schedules = ScheduleDB.filter_schedules(**params)
         data = []
         for schedule in schedules:
+            if schedule['action'] == 'None' or schedule['action'] is None:
+                main_queue.put(QueuedTask(ScheduleDB, 'delete_schedule', {'schedule_id': schedule['schedule_id']}))
+                continue
             tmp_data = {}
             if schedule['action'] == 'make_post':
                 tmp_params = {}
-                if time_range:
+                if time_range is not None:
                     tmp_params.update({'time_range': time_range})
-                if day:
+                if day is not None:
                     tmp_params.update({'day': day})
                 publication = SelfPostsDB.filter_posts(user_id=schedule['user_id'], **tmp_params)
                 if publication:
@@ -147,7 +151,7 @@ async def delete_schedule_range(user_id: str, day: int = None, time_range: int =
             get_post = SelfPostsDB.filter_posts(user_id=user_id, day=day, time_range=time_range)
             if get_post:
                 main_queue.put(QueuedTask(SelfPostsDB, 'delete_post', {'post_id': get_post['post_id']}))
-        main_queue.put(QueuedTask(ScheduleDB, 'delete_post', {'schedule_id': get_schedules['schedule_id']}))
+        main_queue.put(QueuedTask(ScheduleDB, 'delete_schedule', {'schedule_id': get_schedules['schedule_id']}))
         return {'STATUS': "OK"}
     except Exception as ex:
         raise HTTPException(status_code=400, detail='WRONG DATA')
