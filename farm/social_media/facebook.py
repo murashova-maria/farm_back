@@ -326,7 +326,7 @@ class Facebook(Base):
         try:
             workplace = self.driver.find_element(By.XPATH, '//*[contains(text(), "Add a workplace")]')
             self.move_and_click(workplace)
-
+            sleep(2)
             fields = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//*[@role="combobox"]')))[1:4]
             textarea = self.driver.find_element(By.TAG_NAME, 'textarea')
             fields += [textarea]
@@ -348,6 +348,7 @@ class Facebook(Base):
                 try:
                     add_bio_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH,
                                                                                      f'//div[@aria-label="{btn}"]')))
+                    self.scroll_into_view(add_bio_btn)
                     self.move_and_click(add_bio_btn)
                 except TimeoutException:
                     pass
@@ -357,6 +358,7 @@ class Facebook(Base):
                     self.move_and_click(textarea, text)
                     # self.driver.execute_script("var ele=arguments[0]; ele.innerHTML = 'Google';", textarea)
             save_btn = self.driver.find_element(By.XPATH, '//span[contains(text(), "Save")]')
+            self.scroll_into_view(save_btn)
             self.move_and_click(save_btn)
             sleep(3)
             try:
@@ -531,7 +533,7 @@ class Facebook(Base):
         pass
 
     def join_groups_by_interests(self, tag: str, *args):
-        max_amount_of_groups = randint(3,7)
+        max_amount_of_groups = randint(3, 7)
         self.driver.get('https://www.facebook.com/groups/feed/')
         sleep(3)
         self._search(tag, tab='groups')

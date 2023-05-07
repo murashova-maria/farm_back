@@ -508,7 +508,6 @@ class Schedule:
                 params.update({'exact_time': exact_time})
             params.update({'status': status})
             schedule_id = test_node[0]['schedule_id']
-            print(schedule_id, params)
             return self.update_schedule(schedule_id, **params)
         schedule_id = randint(0, 2147483647)
         post_node = Node("Schedule", schedule_id=schedule_id, user_id=user_id, action=action,

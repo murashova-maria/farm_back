@@ -190,7 +190,7 @@ class Starter:
                         if hobbies != 'None' and hobbies is not None:
                             fb.add_hobbies(hobbies)
                         fb.add_location(current_location, native_location)
-                        # fb.add_work(company, position, city, description)
+                        fb.add_work(company, position, city, description)
                         if avatar != 'None' and avatar:
                             fb.change_pictures(avatar)
                         fb.add_bio(bio)
@@ -260,11 +260,6 @@ class Starter:
                     }))
                 elif user_info['activity'] == 'scroll_feed':
                     fb.scroll_feed(randint(1, 10))
-                    main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
-                                                                      'activity': 'wait'}))
-                elif user_info['activity'] == 'comments_chain':
-                    fb.comments_chain('Leo Amar', 'Agree...',
-                                      'https://www.facebook.com/groups/diktyofilwntousyriza/permalink/2301069200099742/')
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                                       'activity': 'wait'}))
                 res = read_json('conversations.json')

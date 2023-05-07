@@ -19,11 +19,20 @@ class User(BaseDB):
     activity = Column(String)
     reg_date = Column(DateTime)
     proxies = Column(String)
+    amount_of_friends = Column(Integer)
+    already_used_keywords = Column(JSON)
+    country = Column(String)
+    groups_used = Column(JSON)
+    user_link = Column(String)
+    gologin_id = Column(String)
 
 
 class Keyword(BaseDB):
     __tablename__ = 'keywords'
     keyword_id = Column(Integer, primary_key=True)
+    keyword = Column(String)
+    social_media = Column(String)
+    user_id = Column(String)
 
 
 class Schedule(BaseDB):
