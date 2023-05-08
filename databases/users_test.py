@@ -76,7 +76,7 @@ class UserBase(BaseDB):
                     for usr in session.query(cls).filter_by(**kwargs)]
         except Exception as ex:
             traceback.print_exc()
-            return None
+            return []
 
     @classmethod
     def get_all(cls):
@@ -129,7 +129,7 @@ class FacebookProfileBase(BaseDB):
                     for usr in session.query(cls).filter_by(**kwargs)]
         except Exception as ex:
             traceback.print_exc()
-            return None
+            return []
 
     @classmethod
     def get_all(cls):
@@ -177,7 +177,7 @@ class TwitterProfileBase(BaseDB):
                     for usr in session.query(cls).filter_by(**kwargs)]
         except Exception as ex:
             traceback.print_exc()
-            return None
+            return []
 
     @classmethod
     def get_all(cls):
@@ -224,7 +224,7 @@ class InstagramProfileBase(BaseDB):
                     for usr in session.query(cls).filter_by(**kwargs)]
         except Exception as ex:
             traceback.print_exc()
-            return None
+            return []
 
     @classmethod
     def get_all(cls):
@@ -276,7 +276,7 @@ class SelfPostsBase(BaseDB):
                     for usr in session.query(cls).filter_by(**kwargs)]
         except Exception as ex:
             traceback.print_exc()
-            return None
+            return []
 
     @classmethod
     def get_all(cls):
