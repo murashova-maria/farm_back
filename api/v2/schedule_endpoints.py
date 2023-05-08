@@ -15,7 +15,14 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
         exact_time = datetime.now()
         if day is not None and time_range is not None:
             exact_time = get_randomized_date(int(day), RANGES[int(time_range)])
-        data = [user_id, action, day, time_range, exact_time]
+        # data = [user_id, action, day, time_range, exact_time]
+        data = {
+            'user_id': user_id,
+            'action': action,
+            'day': day,
+            'time_range': time_range,
+            'exact_time': exact_time
+        }
         social_media = UserDB.filter_users(user_id=user_id)[0]['social_media']
         filename = f'{user_id}_post_image_{randint(0, 10000)}.jpg'
         if action == 'make_post' and params:
@@ -44,7 +51,8 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
                 'exact_time': exact_time,
             }
             main_queue.put(QueuedTask(SelfPostsDB, 'create_post', post_data))
-        data += ['None', params.get('scroll_minutes')]
+        # data += ['None', params.get('scroll_minutes')]
+        data.update({'status': 'None', 'scroll_minutes': params.get('scroll_minutes')})
         main_queue.put(QueuedTask(ScheduleDB, 'create_schedule', data))
         final_data = {'day': day, 'time_range': time_range, 'action': action}
         if post_data is not None:
@@ -112,7 +120,6 @@ async def get_schedules_by_params(user_id: str, day: int = None, time_range: int
             params.update({'day': day})
         if time_range is not None:
             params.update({'time_range': time_range})
-        print(params)
         schedules = ScheduleDB.filter_schedules(**params)
         data = []
         for schedule in schedules:

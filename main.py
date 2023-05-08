@@ -34,17 +34,12 @@ def check_schedule():
     while True:
         sleep(4)
         try:
-            for schedule in ScheduleDB.filter_schedules(status=None):
-                # print(schedule)
+            for schedule in ScheduleDB.filter_schedules(status='None'):
                 if ready_to_post(schedule['exact_time']):
                     main_queue.put(QueuedTask(ScheduleDB, 'update_schedule', {
-                        # 'day': schedule['day'],
-                        # 'time_range': schedule['time_range'],
-                        # 'user_id': schedule['user_id'],
                         'status': 'done',
                         'action': schedule['action'],
                         'schedule_id': schedule['schedule_id'],
-                        # 'exact_time': schedule['exact_time']
                     }))
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'activity': schedule['action'],
                                                                       'status': 'gardering',

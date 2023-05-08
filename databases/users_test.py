@@ -382,6 +382,7 @@ class ScheduleBase(BaseDB):
 
     @classmethod
     def create_schedule(cls, user_id, **kwargs):
+        kwargs.update({'user_id': user_id})
         day = int(kwargs.get('day'))
         time_range = int(kwargs.get('time_range'))
         test_node = session.query(cls).filter_by(day=day, time_range=time_range, user_id=user_id).first()
