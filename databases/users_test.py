@@ -407,7 +407,7 @@ class ScheduleBase(BaseDB):
     def filter_schedules(cls, **kwargs):
         try:
             return [{key: value for key, value in usr.__dict__.items() if '_sa_instance_state' not in key}
-                    for usr in session.query(cls).filter_by(**kwargs)]
+                    for usr in session.query(cls).filter_by(**kwargs) if usr]
         except Exception as ex:
             traceback.print_exc()
             return None
