@@ -19,7 +19,7 @@ from pyvirtualdisplay import Display
 def make_post():
     while True:
         sleep(2)
-        for post in SelfPostsDB.filter_posts(status='None'):
+        for post in SelfPostsDB.filter_posts(status=None):
             try:
                 if ready_to_post(post['exact_time']):
                     main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'do_post',
@@ -34,7 +34,7 @@ def check_schedule():
     while True:
         sleep(4)
         try:
-            for schedule in ScheduleDB.filter_schedules(status='None'):
+            for schedule in ScheduleDB.filter_schedules(status=None):
                 # print(schedule)
                 if ready_to_post(schedule['exact_time']):
                     main_queue.put(QueuedTask(ScheduleDB, 'update_schedule', {

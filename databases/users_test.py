@@ -238,7 +238,7 @@ class SelfPostsBase(BaseDB):
     user_id = Column(String(32))
     text = Column(String)
     filename = Column(String)
-    status = Column(String)
+    status = Column(String, default=None)
     day = Column(Integer, default=None)
     time_range = Column(Integer, default=None)
     exact_time = Column(String)
@@ -409,8 +409,9 @@ class ScheduleBase(BaseDB):
             return [{key: value for key, value in usr.__dict__.items() if '_sa_instance_state' not in key}
                     for usr in session.query(cls).filter_by(**kwargs) if usr]
         except Exception as ex:
+            print("HERE IT IS TRACEBACK: ")
             traceback.print_exc()
-            return None
+            return []
 
     @classmethod
     def get_all_schedules(cls):
