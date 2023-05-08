@@ -7,6 +7,7 @@ from databases.neo4j_users import *
 from databases.users_test import *
 
 
+print('Config был импортирован')
 RANGES = {index: f'{num}:00-{num+2}:00' if len(str(num)) == 2 else f'0{num}:00-{num+2}:00'
           for index, num in enumerate(range(6, 22, 2))}
 RANGES.update({
