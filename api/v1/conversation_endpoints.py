@@ -1,6 +1,6 @@
+import traceback
 from api import *
 from random import choice, choices
-import traceback
 
 
 @app.post('/conversation/create/')

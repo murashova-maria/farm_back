@@ -9,14 +9,14 @@ from time import sleep
 async def add_keywords(params: Dict[Any, Any]):
     try:
         additional_params = {}
-        keyword = params.get('keyword_value')
-        if keyword.get('twitter'):
-            additional_params.update({'twitter_user': keyword.get('twitter')})
-        if keyword.get('facebook'):
-            additional_params.update({'facebook_user': keyword.get('facebook')})
-        if keyword.get('instagram'):
-            additional_params.update({'instagram_user': keyword.get('instagram')})
-        main_queue.put(QueuedTask(KeywordDB, 'create_keyword', {'keyword': keyword, **additional_params}))
+        keyword_value = params.get('keyword_value')
+        if params.get('twitter'):
+            additional_params.update({'twitter_user': params.get('twitter')})
+        if params.get('facebook'):
+            additional_params.update({'facebook_user': params.get('facebook')})
+        if params.get('instagram'):
+            additional_params.update({'instagram_user': params.get('instagram')})
+        main_queue.put(QueuedTask(KeywordDB, 'create_keyword', {'keyword': keyword_value, **additional_params}))
         return {'Status': 'OK'}
     except Exception as ex:
         raise HTTPException(status_code=400, detail={'Status': 'Incorrect keyword ID or user_id'})

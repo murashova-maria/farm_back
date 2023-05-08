@@ -1,6 +1,5 @@
 # LOCAL
-from loader import *
-from api.starter import Starter
+from api.starter import *
 
 # API
 import aiofiles

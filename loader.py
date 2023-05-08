@@ -15,8 +15,6 @@ from databases.users import ConversationsPostgres, BaseDB, engine, sessionmaker
 # OTHER
 from sqlalchemy.exc import SQLAlchemyError
 
-print('loader был импортирован. ')
-
 
 def read_json(filename):
     with open(filename, 'r') as f:
