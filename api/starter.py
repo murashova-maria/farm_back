@@ -31,16 +31,13 @@ class Starter:
 
     def _add_user(self, status: str = 'Success'):
         usr = UserDB.filter_users(username=self.username, password=self.password,
-                                  phone_number=self.phone_number, network=self.network)
+                                  phone_number=self.phone_number, social_media=self.network)
         if usr:
-            st = QueuedTask(UserDB, 'update_user', {'user_id': usr['user_id'], 'status': status, 'activity': 'wait',
+            st = QueuedTask(UserDB, 'update_user', {'user_id': usr[0]['user_id'], 'status': status, 'activity': 'wait',
                                                     'proxy': self.pure_proxy,
                                                     'reg_date': datetime.datetime.now().timestamp()})
             main_queue.put(st)
             return
-        # st = QueuedTask(UserDB, 'create_user', [self.username, self.password, self.phone_number,
-        #                                         self.network, status, 'wait', datetime.datetime.now().timestamp(),
-        #                                         self.pure_proxy])
         st = QueuedTask(UserDB, 'create_user', {
             'username': self.username,
             'password': self.password,

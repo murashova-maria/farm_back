@@ -76,25 +76,6 @@ class Keyword:
         self.graph = graph
         self.matcher = NodeMatcher(self.graph)
 
-    def update_keyword_for_user(self, keyword, social_media, user_id=None):
-        if user_id is None:
-            # Unlink the keyword from all users of the given social media
-            query = """
-                    MATCH (u:User)-[r:HAS_KEYWORD]->(k:Keyword)
-                    WHERE u.social_media = $social_media AND k.keyword = $keyword
-                    DELETE r
-                    """
-            self.graph.run(query, keyword=keyword, social_media=social_media)
-        else:
-            # Unlink the keyword from the given user and social media
-            query = """
-                    MATCH (u:User)-[r:HAS_KEYWORD]->(k:Keyword)
-                    WHERE u.user_id = $user_id AND u.social_media = $social_media AND k.keyword = $keyword
-                    DELETE r
-                    """
-            self.graph.run(query, user_id=user_id, keyword=keyword, social_media=social_media)
-            self.add_keyword_to_user(keyword, user_id)
-
     def add_keyword_to_user(self, keyword, user_id=None, amount=15, status='wait'):
         keyword_node = self.matcher.match('Keyword', keyword=keyword).first()
         if keyword_node is None:
@@ -107,21 +88,6 @@ class Keyword:
             if user_node is not None:
                 rel = Relationship(user_node, 'HAS_KEYWORD', keyword_node)
                 self.graph.create(rel)
-        # if user_id:
-        #     user_node = self.graph.nodes.match('User', user_id=user_id).first()
-        #     keyword_node = self.matcher.match('Keyword', keyword=keyword).first()
-        #     if keyword_node is None:
-        #         keyword_node = Node('Keyword', keyword_id=randint(0, 2147483647), keyword=keyword, status=status,
-        #                             amount=amount)
-        #         self.graph.create(keyword_node)
-        #     rel = Relationship(user_node, 'HAS_KEYWORD', keyword_node)
-        #     self.graph.create(rel)
-        # else:
-        #     keyword_node = self.matcher.match('Keyword', keyword=keyword).first()
-        #     if keyword_node is None:
-        #         keyword_node = Node('Keyword', keyword_id=randint(0, 2147483647), keyword=keyword,
-        #                             status=status, amount=amount)
-        #         self.graph.create(keyword_node)
 
     def filter_keywords(self, **kwargs):
         query = "MATCH (u:Keyword) WHERE "

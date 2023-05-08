@@ -4,6 +4,7 @@ import datetime
 
 # LOCAL
 from databases.neo4j_users import *
+from databases.users_test import *
 
 
 RANGES = {index: f'{num}:00-{num+2}:00' if len(str(num)) == 2 else f'0{num}:00-{num+2}:00'
@@ -18,12 +19,21 @@ db_username = os.getenv('LOGIN_NEO4J')
 db_password = os.getenv('PASSWORD_NEO4J')
 local_graph = Graph(uri, auth=(db_username, db_password))
 
-UserDB = User(local_graph)
+# NEO4J
 FeedDB = Feed(local_graph)
-KeywordDB = Keyword(local_graph)
-ScheduleDB = Schedule(local_graph)
-SelfPostsDB = SelfPosts(local_graph)
-ConversationDB = Conversation(local_graph)
-TwitterProfileDB = TwitterProfile(local_graph)
-FacebookProfileDB = FacebookProfile(local_graph)
-InstagramProfileDB = InstagramProfile(local_graph)
+
+# SQLALCHEMY
+UserDB = UserBase()
+KeywordDB = KeywordBase()
+ScheduleDB = ScheduleBase()
+SelfPostsDB = SelfPostsBase()
+TwitterProfileDB = TwitterProfileBase()
+FacebookProfileDB = FacebookProfileBase()
+InstagramProfileDB = InstagramProfileBase()
+# UserDB = User(local_graph)
+# ScheduleDB = Schedule(local_graph)
+# KeywordDB = Keyword(local_graph)
+# SelfPostsDB = SelfPosts(local_graph)
+# TwitterProfileDB = TwitterProfile(local_graph)
+# FacebookProfileDB = FacebookProfile(local_graph)
+# InstagramProfileDB = InstagramProfile(local_graph)
