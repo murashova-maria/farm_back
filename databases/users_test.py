@@ -14,7 +14,7 @@ BaseDB = declarative_base()
 
 class UserBase(BaseDB):
     __tablename__ = 'users'
-    user_id = Column(String(32), primary_key=True, default=uuid.uuid4().hex)
+    user_id = Column(String(32), primary_key=True, default=lambda: uuid.uuid4().hex)
     username = Column(String)
     password = Column(String)
     phone_number = Column(String)
@@ -234,7 +234,7 @@ class InstagramProfileBase(BaseDB):
 
 class SelfPostsBase(BaseDB):
     __tablename__ = 'self_posts'
-    post_id = Column(String(32), default=uuid.uuid4().hex, primary_key=True)
+    post_id = Column(String(32), default=lambda: uuid.uuid4().hex, primary_key=True)
     user_id = Column(String(32))
     text = Column(String)
     filename = Column(String)
@@ -368,7 +368,7 @@ class KeywordBase(BaseDB):
 
 class ScheduleBase(BaseDB):
     __tablename__ = 'schedules'
-    schedule_id = Column(String(32), primary_key=True, default=uuid.uuid4().hex)
+    schedule_id = Column(String(32), primary_key=True, default=lambda: uuid.uuid4().hex)
     user_id = Column(String)
     action = Column(String)
     day = Column(Integer)
