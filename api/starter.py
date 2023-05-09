@@ -369,7 +369,6 @@ class Starter:
                 # Get user's DB object.
                 user_info = UserDB.filter_users(username=self.username, password=self.password,
                                                 phone_number=self.phone_number, social_media='twitter')
-                print('USER INFO: ', user_info)
                 if not user_info:
                     get_user_tries += 1
                     if get_user_tries == 10:

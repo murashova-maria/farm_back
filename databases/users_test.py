@@ -4,12 +4,13 @@ import traceback
 import uuid
 
 # DATABASE
+from sqlalchemy.pool import QueuePool
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, FLOAT
+from sqlalchemy import create_engine, Column, Integer, String, JSON, FLOAT, MetaData
 
-engine = create_engine('sqlite:///bots_farm.db', connect_args={'check_same_thread': False})
-# engine = create_engine('postgresql://postgres:6nvj8nMm@65.109.34.120:8080', connect_args={'check_same_thread': False})
+# engine = create_engine('sqlite:///bots_farm.db', connect_args={'check_same_thread': False})
+engine = create_engine('postgresql://postgres:6nvj8nMm@65.109.34.120:5432', poolclass=QueuePool)
 BaseDB = declarative_base()
 
 
@@ -25,7 +26,7 @@ class UserBase(BaseDB):
     activity = Column(String, default='wait')
     reg_date = Column(FLOAT)
     proxies = Column(String, default=None)
-    amount_of_friends = Column(Integer, default=0)
+    amount_of_friends = Column(String, default='0')
     already_used_keywords = Column(JSON, default=[])
     country = Column(String)
     groups_used = Column(JSON, default=[])
@@ -437,8 +438,16 @@ class ScheduleBase(BaseDB):
             session.commit()
 
 
-if 'bots_farm.db' not in os.listdir():
-    BaseDB.metadata.create_all(engine)
+# if 'bots_farm.db' not in os.listdir():
+#     BaseDB.metadata.create_all(engine)
+# UserBase.__table__.drop(engine)
+# FacebookProfileBase.__table__.drop(engine)
+# TwitterProfileBase.__table__.drop(engine)
+# InstagramProfileBase.__table__.drop(engine)
+# SelfPostsBase.__table__.drop(engine)
+# KeywordBase.__table__.drop(engine)
+# ScheduleBase.__table__.drop(engine)
+BaseDB.metadata.create_all(engine)
 user_session = sessionmaker(bind=engine)
 session = user_session()
 

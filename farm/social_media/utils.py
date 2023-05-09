@@ -1,4 +1,6 @@
 # TWITTER API
+import threading
+
 import tweepy
 
 # LOCAL
@@ -16,22 +18,23 @@ class QueuedTask:
         self.args = args
 
     def __call__(self):
-        try:
+        with threading.Lock():
+            try:
+                if type(self.args) is dict:
+                    for key, value in self.args.items():
+                        if value.get('type') != 'json':
+                            continue
+                        getattr(self.obj, self.method)(self.args)
+                        return
+            except Exception as ex:
+                pass
             if type(self.args) is dict:
-                for key, value in self.args.items():
-                    if value.get('type') != 'json':
-                        continue
-                    getattr(self.obj, self.method)(self.args)
-                    return
-        except Exception as ex:
-            pass
-        if type(self.args) is dict:
-            self.args = {key: (value if value is not None else 'None') for key, value in self.args.items()}
-            getattr(self.obj, self.method)(**self.args)
-        else:
-            self.args = [arg if arg is not None else 'None' for arg in self.args]
-            getattr(self.obj, self.method)(*self.args)
-        time.sleep(0.5)
+                self.args = {key: (value if value is not None else 'None') for key, value in self.args.items()}
+                getattr(self.obj, self.method)(**self.args)
+            else:
+                self.args = [arg if arg is not None else 'None' for arg in self.args]
+                getattr(self.obj, self.method)(*self.args)
+            time.sleep(0.5)
 
 
 def get_users_liked(api_id, api_hash, post_id: int):
