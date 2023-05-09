@@ -42,14 +42,24 @@ async def get_bots_info(social_media: str = None, country: str = None):
             for index, user in enumerate(users):
                 # amount_of_posts = len(SelfPostsDB.filter_posts(user_id=user['user_id']))
                 if user['social_media'] == 'twitter':
-                    name = TwitterProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
+                    prf = TwitterProfileDB.filter_profiles(user_id=user['user_id'])[0]
+                    name = prf['name']
+                    avatar = prf['avatar']
                 elif user['social_media'] == 'facebook':
-                    name = FacebookProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
+                    prf = FacebookProfileDB.filter_profiles(user_id=user['user_id'])[0]
+                    name = prf['name']
+                    avatar = prf['avatar']
                 else:
-                    name = InstagramProfileDB.filter_profiles(user_id=user['user_id'])[0]['name']
+                    prf = InstagramProfileDB.filter_profiles(user_id=user['user_id'])[0]
+                    name = prf['name']
+                    avatar = prf['avatar']
                 # users[index].update({'amount_of_posts': amount_of_posts})
                 if name != 'None' and name is not None:
                     users[index].update({'username': name})
+                if avatar is not None:
+                    users[index].update({'avatar': True})
+                else:
+                    users[index].update({'avatar': False})
             return users
     except Exception as ex:
         traceback.print_exc()
