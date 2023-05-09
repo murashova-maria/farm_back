@@ -330,7 +330,10 @@ class Facebook(Base):
             workplace = self.driver.find_element(By.XPATH, '//*[contains(text(), "Add a workplace")]')
             self.move_and_click(workplace)
             sleep(2)
-            fields = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//*[@role="combobox"]')))[1:4]
+            fields = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//*[@role="combobox"]')))
+            for index, field in fields:
+                if field.get_attribute('aria-label') == 'Company':
+                    fields = fields[index:]
             textarea = self.driver.find_element(By.TAG_NAME, 'textarea')
             fields += [textarea]
             for index, field in enumerate(fields):
