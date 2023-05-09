@@ -20,7 +20,6 @@ def make_post():
     while True:
         sleep(2)
         for post in SelfPostsDB.filter_posts(status='None'):
-            print(post)
             try:
                 if ready_to_post(post['exact_time']):
                     print('ready')
