@@ -303,6 +303,15 @@ class KeywordBase(BaseDB):
     instagram_user = Column(Integer, default=None)
 
     @classmethod
+    def filter_keywords(cls, **kwargs):
+        try:
+            return [{key: value for key, value in usr.__dict__.items() if '_sa_instance_state' not in key}
+                    for usr in session.query(cls).filter_by(**kwargs)]
+        except Exception as ex:
+            traceback.print_exc()
+            return []
+
+    @classmethod
     def create_keyword(cls, **kwargs):
         keyword_exist = session.query(cls).filter_by(keyword=kwargs.get('keyword')).first()
         if keyword_exist:
