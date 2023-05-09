@@ -150,12 +150,24 @@ class Starter:
         fb.country = self.country
         sleep(10)
         fb.get_friends_amount()
+        get_user_tries = 0
         while True:
             try:
                 sleep(2)
                 # Get user's DB object.
                 user_info = UserDB.filter_users(username=self.username, password=self.password,
-                                                phone_number=self.phone_number, social_media='facebook')[0]
+                                                phone_number=self.phone_number, social_media='facebook')
+                if not user_info:
+                    get_user_tries += 1
+                    if get_user_tries == 10:
+                        self._add_user('Banned')
+                        try:
+                            fb.driver.quit()
+                            fb.gl.stop()
+                        except Exception as ex:
+                            traceback.print_exc()
+                        break
+                    continue
                 fb.usr_id = user_info['user_id']
                 if fb.name is None and fb.usr_id is not None:
                     fb.get_profiles_name()
