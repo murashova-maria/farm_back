@@ -198,7 +198,9 @@ class Starter:
                     main_queue.put(task)
                     sleep(3)
                 elif user_info['activity'] == 'add_friends':
-                    fb.add_friends(max_value=randint(3, 25))
+                    fb.add_friends(max_value=randint(3, 10))
+                    main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
+                                                                      'activity': 'wait'}))
                 elif user_info['activity'] == 'search_groups':
                     for search_tag in KeywordDB.get_keywords_by_user_id(user_id=user_info['user_id'], only_kw=False):
                         if search_tag['keyword'] in user_info['groups_used']:

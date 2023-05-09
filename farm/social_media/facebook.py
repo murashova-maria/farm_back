@@ -300,17 +300,20 @@ class Facebook(Base):
                 'error_number': 0
             })
             for res in result:
-                text = res.get('text')
-                user = res.get('account')
-                user_link = res.get('account_link')
-                posts_pubdate = res.get('date')
-                likes_amount = res.get('likes')
-                comments_amount = res.get('comments')
-                shares_amount = res.get('shares')
-                users_profile_pic = res.get('link')
-                self._save_new_post_to_db(user, text, None, user_link, posts_pubdate, likes_amount, [],
-                                          comments_amount, [], shares_amount, *return_data_flair(text)[1:], tag,
-                                          user_link, users_profile_pic)
+                try:
+                    text = res.get('text')
+                    user = res.get('account')
+                    user_link = res.get('account_link')
+                    posts_pubdate = res.get('date')
+                    likes_amount = res.get('likes')
+                    comments_amount = res.get('comments')
+                    shares_amount = res.get('shares')
+                    users_profile_pic = res.get('link')
+                    self._save_new_post_to_db(user, text, None, user_link, posts_pubdate, likes_amount, [],
+                                              comments_amount, [], shares_amount, *return_data_flair(text)[1:], tag,
+                                              user_link, users_profile_pic)
+                except Exception as ex:
+                    pass
         except Exception as ex:
             print('EX: ' * 50, ex)
 
@@ -475,28 +478,41 @@ class Facebook(Base):
         tmp_url = 'https://www.facebook.com/friends/suggestions'
         self.driver.get(tmp_url)
         sleep(3)
-        while self.friends_counter <= max_value:
+        friends_counter = 0
+        while friends_counter <= max_value:
             self.rs()
-            body = self.driver.find_element(By.TAG_NAME, 'body')
-            if "When you have friend requests or suggestions, you'll see them here." in body.text:
-                break
-            try:
-                add_friend_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH,
-                                                                                    '//*[contains(text(), '
-                                                                                    '"Add Friend")]')))
-            except WebDriverException as wde:
-                self.driver.refresh()
-                continue
-            try:
-                self.scroll_into_view(add_friend_btn)
-            except StaleElementReferenceException as sere:
-                print('SERE:', sere)
-            self.rs()
-            try:
-                self.move_and_click(add_friend_btn)
-            except WebDriverException as wde:
-                print(wde)
-                self.driver.refresh()
+            add_friend_btns = self.wait(3).until(ec.presence_of_all_elements_located((By.XPATH,
+                                                                                      '//*[contains(text(), '
+                                                                                      '"Add Friend")]')))
+            for add_friend_btn in add_friend_btns:
+                try:
+                    self.scroll_into_view(add_friend_btn)
+                    self.move_and_click(add_friend_btn)
+                except Exception as ex:
+                    pass
+                friends_counter += 1
+            # self.rs()
+            # body = self.driver.find_element(By.TAG_NAME, 'body')
+            # if "When you have friend requests or suggestions, you'll see them here." in body.text:
+            #     break
+            # try:
+            #     add_friend_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH,
+            #                                                                         '//*[contains(text(), '
+            #                                                                         '"Add Friend")]')))
+            # except WebDriverException as wde:
+            #     self.driver.refresh()
+            #     continue
+            # try:
+            #     self.scroll_into_view(add_friend_btn)
+            # except StaleElementReferenceException as sere:
+            #     print('SERE:', sere)
+            # self.rs()
+            # try:
+            #     self.move_and_click(add_friend_btn)
+            #     self.friends_counter += 1
+            # except WebDriverException as wde:
+            #     print(wde)
+            #     self.driver.refresh()
 
     def make_post(self, text=None, filename=None):
         self._get_self_profile()

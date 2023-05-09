@@ -24,7 +24,7 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
             'exact_time': exact_time
         }
         social_media = UserDB.filter_users(user_id=user_id)[0]['social_media']
-        filename = f'{user_id}_post_image_{randint(0, 10000)}.jpg'
+        filename = None
         if action == 'make_post' and params:
             post_exist = SelfPostsDB.filter_posts(user_id=user_id, day=int(day),
                                                   time_range=int(time_range))

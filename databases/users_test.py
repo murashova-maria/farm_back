@@ -339,7 +339,7 @@ class KeywordBase(BaseDB):
     @classmethod
     def get_keywords_by_user_id(cls, user_id, only_kw=False):
         return [keyword for keyword in cls.get_all_keywords() if keyword['twitter_user'] == user_id or
-                keyword['facebook_user'] == user_id if keyword['instagram_user'] == user_id]
+                keyword['facebook_user'] == user_id or keyword['instagram_user'] == user_id]
 
     @classmethod
     def get_all_keywords(cls):
@@ -395,6 +395,8 @@ class ScheduleBase(BaseDB):
 
     @classmethod
     def update_schedule(cls, schedule_id, **kwargs):
+        print('UPDATE SCHEDULE: ', schedule_id)
+        print('ARGS: ', kwargs)
         schedule_node = session.query(cls).get(schedule_id)
         if schedule_node:
             for key, value in kwargs.items():

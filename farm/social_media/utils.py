@@ -31,6 +31,7 @@ class QueuedTask:
         else:
             self.args = [arg if arg is not None else 'None' for arg in self.args]
             getattr(self.obj, self.method)(*self.args)
+        time.sleep(0.5)
 
 
 def get_users_liked(api_id, api_hash, post_id: int):
