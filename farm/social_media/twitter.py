@@ -289,8 +289,10 @@ class Twitter(Base):
     def login(self) -> bool:
         self.open_homepage()
         try:
-            self.wait(7).until(ec.url_to_be(self.url + 'home'))
+            self.wait(3).until(ec.url_to_be(self.url + 'home'))
+            sleep(2)
             if self.driver.current_url == self.home:
+                print('TWITTERS HOME URL: ', self.driver.current_url == self.home)
                 self._close_notification()
                 self._sheet_dialog()
                 return True

@@ -447,6 +447,8 @@ class Starter:
                         }))
                         sleep(2)
             except NoSuchWindowException:
+                print('TWITTER ERROR: ')
+                traceback.print_exc()
                 try:
                     tw.driver.quit()
                 except Exception as ex:
@@ -458,6 +460,7 @@ class Starter:
                     print('GLEX: ', glex)
                 break
             except Exception as ex:
+                traceback.print_exc()
                 if 'chrome not reachable' in str(ex):
                     try:
                         tw.driver.quit()
