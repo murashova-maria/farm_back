@@ -156,8 +156,7 @@ class Starter:
                 sleep(2)
                 # Get user's DB object.
                 user_info = UserDB.filter_users(username=self.username, password=self.password,
-                                                phone_number=self.phone_number, social_media='facebook')[0]
-                print(user_info)
+                                                phone_number=self.phone_number, social_media='facebook')
                 if not user_info:
                     get_user_tries += 1
                     if get_user_tries == 10:
@@ -169,6 +168,7 @@ class Starter:
                             traceback.print_exc()
                         break
                     continue
+                user_info = user_info[0]
                 fb.usr_id = user_info['user_id']
                 if fb.name is None and fb.usr_id is not None:
                     fb.get_profiles_name()
@@ -368,12 +368,24 @@ class Starter:
         main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': tw.usr_id,
                                                           'user_link': tw.user_link}))
         tw.users_country = self.country
+        get_user_tries = 0
         while True:
             try:
                 sleep(1)
                 # Get user's DB object.
                 user_info = UserDB.filter_users(username=self.username, password=self.password,
                                                 phone_number=self.phone_number, social_media='twitter')
+                if not user_info:
+                    get_user_tries += 1
+                    if get_user_tries == 10:
+                        self._add_user('Banned')
+                        try:
+                            tw.driver.quit()
+                            tw.gl.stop()
+                        except Exception as ex:
+                            traceback.print_exc()
+                        break
+                    continue
                 user_info = user_info[0]
                 tw.usr_id = user_info['user_id']
                 if tw.user_link is None and tw.usr_id is not None:
