@@ -386,7 +386,7 @@ class ScheduleBase(BaseDB):
     time_range = Column(Integer)
     exact_time = Column(String)
     status = Column(String, default=None)
-    scroll_minutes = Column(Integer, default=0)
+    scroll_minutes = Column(String, default='0')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
