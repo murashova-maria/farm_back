@@ -328,6 +328,7 @@ class Starter:
                     fb.gl.stop()
                 except Exception as glex:
                     print('GLEX: ', glex)
+                self._add_user('Disconnected')
                 break
             except Exception as ex:
                 traceback.print_exc()
@@ -341,6 +342,7 @@ class Starter:
                         fb.gl.stop()
                     except Exception as glex:
                         print('GLEX: ', glex)
+                    self._add_user('Disconnected')
                 else:
                     print('WHILE THREAD: ', ex)
 

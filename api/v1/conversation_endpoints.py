@@ -14,7 +14,7 @@ async def create_conversation(params: Dict[Any, Any]):
             for user in params['thread']:
                 acc_type = user['acc_type']
                 for _ in range(3):
-                    r_usr = choice(params[acc_type])
+                    r_usr = choice(params[acc_type + '_accs'])
                     if r_usr not in chain:
                         chain.append(r_usr)
                         break
