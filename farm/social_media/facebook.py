@@ -46,7 +46,7 @@ class Facebook(Base):
         self._get_self_profile()
         self.scroll_to(y=0)
         try:
-            sleep(2)
+            sleep(5)
             h1_tag = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'h1')))
             for h1 in h1_tag:
                 if h1.text and len(h1.text) > 3 and h1.text != 'Home':
