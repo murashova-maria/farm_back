@@ -284,6 +284,9 @@ class Starter:
                                 and post_tmp_values['full_chain'][index] == fb.usr_id:
                             if fb.usr_id in conversation['meek_accs']:
                                 if 'reactions' in conversation:
+                                    main_queue.put(QueuedTask(UserDB, 'update_user',
+                                                              {'user_id': user_info['user_id'], 'status': 'in process',
+                                                               'activity': 'reactions'}))
                                     fb.make_comment(post_name, conversation['reactions'][index])
                                 else:
                                     master_exist = post_tmp_values['full_chain'][:index]
@@ -303,14 +306,24 @@ class Starter:
                                     print('POST NAME: ', post_name)
                                     print('ADD INFO: ', conversation['thread'][index]['text'])
                                     if masters_name:
+                                        main_queue.put(QueuedTask(UserDB, 'update_user',
+                                                                  {'user_id': user_info['user_id'],
+                                                                   'status': 'in process',
+                                                                   'activity': 'comments chain'}))
                                         fb.comments_chain(FacebookProfileDB.filter_profiles(user_id=choice(masters_name)['user_id'])[0]['name'],
                                                           conversation['thread'][index]['text'], post_name)
                                     else:
                                         print('THERE IS NO AVAILABLE MASTERS')
                             else:
                                 if 'reactions' in conversation:
+                                    main_queue.put(QueuedTask(UserDB, 'update_user',
+                                                              {'user_id': user_info['user_id'], 'status': 'in process',
+                                                               'activity': 'reactions'}))
                                     fb.make_comment(post_name, choice(conversation['reactions']))
                                 else:
+                                    main_queue.put(QueuedTask(UserDB, 'update_user',
+                                                              {'user_id': user_info['user_id'], 'status': 'in process',
+                                                               'activity': 'comments chain'}))
                                     fb.make_comment(post_name, conversation['thread'][index]['text'])
                             res[conv_id]['tmp_data'][post_name]['index'] += 1
                             dt = datetime.datetime.fromtimestamp(post_tmp_values['next_comment_date'])
@@ -318,6 +331,9 @@ class Starter:
                             res[conv_id]['tmp_data'][post_name]['next_comment_date'] = dt.timestamp()
                             pprint(res)
                             JSONWriter('conversations.json').write_json(res)
+                            main_queue.put(QueuedTask(UserDB, 'update_user',
+                                                      {'user_id': user_info['user_id'], 'status': 'active',
+                                                       'activity': 'wait'}))
             except NoSuchWindowException:
                 try:
                     fb.driver.quit()
