@@ -46,7 +46,7 @@ class Facebook(Base):
         self._get_self_profile()
         self.scroll_to(y=0)
         try:
-            sleep(5)
+            sleep(10)
             h1_tag = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'h1')))
             for h1 in h1_tag:
                 if h1.text and len(h1.text) > 3 and h1.text != 'Home':
@@ -494,59 +494,39 @@ class Facebook(Base):
                 except Exception as ex:
                     pass
                 friends_counter += 1
-            # self.rs()
-            # body = self.driver.find_element(By.TAG_NAME, 'body')
-            # if "When you have friend requests or suggestions, you'll see them here." in body.text:
-            #     break
-            # try:
-            #     add_friend_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH,
-            #                                                                         '//*[contains(text(), '
-            #                                                                         '"Add Friend")]')))
-            # except WebDriverException as wde:
-            #     self.driver.refresh()
-            #     continue
-            # try:
-            #     self.scroll_into_view(add_friend_btn)
-            # except StaleElementReferenceException as sere:
-            #     print('SERE:', sere)
-            # self.rs()
-            # try:
-            #     self.move_and_click(add_friend_btn)
-            #     self.friends_counter += 1
-            # except WebDriverException as wde:
-            #     print(wde)
-            #     self.driver.refresh()
 
     def make_post(self, text=None, filename=None):
-        self._get_self_profile()
-        self.wait_until_profile_loads(5, 2, 'profile.php')
-        sleep(4)
-        try:
-            spans = self.driver.find_elements(By.TAG_NAME, 'span')
-            for span in spans:
-                print(span.text)
-                if "What's on your mind?" in span.text:
-                    self.move_and_click(span)
-                    sleep(4)
-            self.rs()
-            self._select_audience()
-            sleep(3)
-            textbox = self.driver.find_element(By.XPATH, self.xpaths['profile_text_box'])
-            self.move_and_click(textbox, text)
-            if filename and filename != 'None':
-                photo_video = self.driver.find_element(By.XPATH, '//div[@aria-label="Photo/video"]')
-                self.move_and_click(photo_video)
-                sleep(1)
-                get_form = self.wait(2).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'input')))
-                for form in get_form:
-                    if str(form.get_attribute('accept')) == \
-                            'image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv':
-                        form.send_keys(IMG_DIR + 'facebook/' + filename)
-            sleep(7)
-            post = self.driver.find_element(By.XPATH, '//div[@aria-label="Post"]')
-            post.click()
-        except WebDriverException as wde:
-            print('MAKE POST WDE: ', wde)
+        for _ in range(2):
+            self.open_homepage()
+            self._get_self_profile()
+            self.wait_until_profile_loads(5, 2, 'profile.php')
+            sleep(4)
+            try:
+                spans = self.driver.find_elements(By.TAG_NAME, 'span')
+                for span in spans:
+                    if "What's on your mind?" in span.text:
+                        self.move_and_click(span)
+                        sleep(4)
+                self.rs()
+                self._select_audience()
+                sleep(3)
+                textbox = self.driver.find_element(By.XPATH, self.xpaths['profile_text_box'])
+                self.move_and_click(textbox, text)
+                if filename and filename != 'None':
+                    photo_video = self.driver.find_element(By.XPATH, '//div[@aria-label="Photo/video"]')
+                    self.move_and_click(photo_video)
+                    sleep(1)
+                    get_form = self.wait(2).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'input')))
+                    for form in get_form:
+                        if str(form.get_attribute('accept')) == \
+                                'image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv':
+                            form.send_keys(IMG_DIR + 'facebook/' + filename)
+                sleep(7)
+                post = self.driver.find_element(By.XPATH, '//div[@aria-label="Post"]')
+                post.click()
+                return True
+            except WebDriverException as wde:
+                print('MAKE POST WDE: ', wde)
 
     def explore_platform(self):
         pass

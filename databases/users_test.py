@@ -453,4 +453,4 @@ session = user_session()
 
 
 if __name__ == '__main__':
-    pass
+    print(ScheduleBase().filter_schedules(status='None'))
