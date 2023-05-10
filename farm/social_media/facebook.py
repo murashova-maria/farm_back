@@ -49,7 +49,7 @@ class Facebook(Base):
             sleep(2)
             h1_tag = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'h1')))
             for h1 in h1_tag:
-                if h1.text and len(h1.text) > 3:
+                if h1.text and len(h1.text) > 3 and h1.text != 'Home':
                     self.name = h1.text
                     break
         except WebDriverException:
