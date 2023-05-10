@@ -496,6 +496,7 @@ class Facebook(Base):
                 friends_counter += 1
 
     def make_post(self, text=None, filename=None):
+        clicked = False
         for _ in range(2):
             self.open_homepage()
             self._get_self_profile()
@@ -506,7 +507,10 @@ class Facebook(Base):
                 for span in spans:
                     if "What's on your mind?" in span.text:
                         self.move_and_click(span)
+                        clicked = True
                         sleep(4)
+                if not clicked:
+                    continue
                 self.rs()
                 self._select_audience()
                 sleep(3)
