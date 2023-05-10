@@ -1,14 +1,6 @@
 import traceback
 from api import *
-from random import choice, choices, shuffle
-
-
-def unique_random_sublist(input_list, n):
-    unique_elements = list(set(input_list))
-    shuffle(unique_elements)
-    if n > len(unique_elements):
-        return unique_elements
-    return unique_elements[:n]
+from random import choice
 
 
 @app.post('/conversation/create/')
