@@ -300,9 +300,9 @@ class KeywordBase(BaseDB):
     keyword = Column(String)
     amount = Column(Integer, default=20)
     status = Column(String, default='wait')
-    twitter_user = Column(Integer, default=None)
-    facebook_user = Column(Integer, default=None)
-    instagram_user = Column(Integer, default=None)
+    twitter_user = Column(String, default=None)
+    facebook_user = Column(String, default=None)
+    instagram_user = Column(String, default=None)
 
     @classmethod
     def filter_keywords(cls, **kwargs):
