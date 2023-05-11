@@ -123,7 +123,7 @@ async def get_schedules_by_params(user_id: str, day: int = None, time_range: int
         schedules = ScheduleDB.filter_schedules(**params)
         data = []
         for schedule in schedules:
-            if schedule['action'] == 'None' or schedule['action'] is None:
+            if schedule['action'] == 'None' or schedule['action'] is None or schedule['action'] == '':
                 main_queue.put(QueuedTask(ScheduleDB, 'delete_schedule', {'schedule_id': schedule['schedule_id']}))
                 continue
             tmp_data = {}
