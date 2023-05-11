@@ -1,4 +1,6 @@
 # LOCAL
+import traceback
+
 from api import *
 
 # OTHER
@@ -28,16 +30,19 @@ async def get_keywords():
         result = []
         all_keywords = KeywordBase().get_all_keywords()
         for keyword in all_keywords:
-            if keyword['facebook_user']:
-                fb_user = UserBase.filter_users(user_id=keyword['facebook_user'])[0]
-                keyword.update({'facebook': fb_user})
-            if keyword['instagram_user']:
-                inst_user = UserBase.filter_users(user_id=keyword['instagram_user'])[0]
-                keyword.update({'instagram': inst_user})
-            if keyword['twitter_user']:
-                tw_user = UserBase.filter_users(user_id=keyword['twitter_user'])[0]
-                keyword.update({'twitter': tw_user})
-            result.append(keyword)
+            try:
+                if keyword['facebook_user'] and keyword['facebook_user'] != 'None':
+                    fb_user = UserBase.filter_users(user_id=keyword['facebook_user'])[0]
+                    keyword.update({'facebook': fb_user})
+                if keyword['instagram_user'] and keyword['instagram_user'] != 'None':
+                    inst_user = UserBase.filter_users(user_id=keyword['instagram_user'])[0]
+                    keyword.update({'instagram': inst_user})
+                if keyword['twitter_user'] and keyword['instagram_user'] != 'None':
+                    tw_user = UserBase.filter_users(user_id=keyword['twitter_user'])[0]
+                    keyword.update({'twitter': tw_user})
+                result.append(keyword)
+            except Exception as ex:
+                traceback.print_exc()
         return result
     except Exception as ex:
         print(ex)
