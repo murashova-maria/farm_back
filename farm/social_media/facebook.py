@@ -515,7 +515,20 @@ class Facebook(Base):
                 self._select_audience()
                 sleep(3)
                 textbox = self.driver.find_element(By.XPATH, self.xpaths['profile_text_box'])
-                self.move_and_click(textbox, text)
+                if text and text != 'None':
+                    # TEST <-------------->
+                    sleep(1)
+                    self.chain.move_to_element(textbox)
+                    self.chain.click()
+                    sleep(3)
+                    for _ in range(2):
+                        for _ in range(len(text)):
+                            self.chain.send_keys(Keys.BACKSPACE)
+                        self.chain.send_keys(text)
+                    self.chain.perform()
+                    self.chain.reset_actions()
+                    # self.move_and_click(textbox, text)
+                    # TEST <-------------->
                 if filename and filename != 'None':
                     photo_video = self.driver.find_element(By.XPATH, '//div[@aria-label="Photo/video"]')
                     self.move_and_click(photo_video)

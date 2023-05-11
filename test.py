@@ -6,6 +6,4 @@ from loader import *
 
 
 if __name__ == '__main__':
-    all_keywords = KeywordBase().get_all_keywords()
-    for word in all_keywords:
-        KeywordBase().delete_keyword(word['keyword_id'])
+    pass

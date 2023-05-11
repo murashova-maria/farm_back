@@ -36,6 +36,12 @@ class UserBase(BaseDB):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    @classmethod
+    def delete_user(cls, user_id):
+        user = session.query(cls).filter_by(user_id=user_id).first()
+        session.delete(user)
+        session.commit()
+
     @staticmethod
     def _attach_profile(user_id, network):
         if network == 'twitter':
