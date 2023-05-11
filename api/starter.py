@@ -410,7 +410,8 @@ class Starter:
                 if user_info['activity'] == 'fill_profile':
                     main_queue.put(QueuedTask(UserDB, 'update_user', {
                         'user_id': tw.usr_id,
-                        'status': 'gardering'
+                        'status': 'gardering',
+                        'activity': user_info['activity']
                     }))
                     profile = TwitterProfileDB.filter_profiles(user_id=user_info['user_id'])[0]
                     avatar = profile['avatar']
@@ -427,7 +428,8 @@ class Starter:
                 elif user_info['activity'] == 'check_feed':
                     main_queue.put(QueuedTask(UserDB, 'update_user', {
                         'user_id': tw.usr_id,
-                        'status': 'gardering'
+                        'status': 'gardering',
+                        'activity': user_info['activity'],
                     }))
                     amount_of_tweets = 0
                     for search_tag in KeywordDB.get_keywords_by_user_id(user_id=user_info['user_id'], only_kw=False):
