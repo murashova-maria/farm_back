@@ -76,7 +76,6 @@ async def delete_keyword(keyword_id: str):
         keyword_id = int(keyword_id)
         main_queue.put(QueuedTask(KeywordDB, 'delete_keyword',
                                   {'keyword_id': keyword_id}))
-        KeywordDB.delete_keyword(keyword_id)
         return {'Status': 'OK'}
     except ValueError:
         raise HTTPException(status_code=400, detail={'Status': 'Incorrect keyword ID or user_id'})
