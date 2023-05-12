@@ -146,6 +146,14 @@ class Starter:
             except Exception as ex:
                 traceback.print_exc()
             return
+        if fb.check_checkpoint():
+            self._add_user('Auth required')
+            try:
+                fb.driver.quit()
+                fb.gl.stop()
+            except Exception as ex:
+                traceback.print_exc()
+            return
         self._add_user('Active')
         fb.country = self.country
         sleep(10)

@@ -163,17 +163,6 @@ class Facebook(Base):
     def make_comment(self, link, comment_text):
         self.driver.get(link)
         sleep(randint(8, 15))
-        # # TEST -------------->
-        # try:
-        #     top_comments_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH,
-        #                                                                           '//span[contains(text(), '
-        #                                                                           '"Top comments")]')))
-        #     self.move_and_click(top_comments_btn)
-        #     menu_items = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="menuitem"]')))
-        #     self.move_and_click(menu_items[-1])
-        # except (WebDriverException, TimeoutException):
-        #     pass
-        # # TEST -------------->
         try:
             try:
                 leave_a_comment = self.driver.find_element(By.XPATH, '//div[@aria-label="Leave a comment"]')
@@ -201,8 +190,11 @@ class Facebook(Base):
             except (UnexpectedAlertPresentException, NoAlertPresentException):
                 pass
             try:
-                close_btn = self.driver.find_element(By.XPATH, '//div[@aria-label="Close"]')
-                self.move_and_click(close_btn)
+                self.chain.send_keys(Keys.ESCAPE).perform()
+                self.chain.reset_actions()
+                # close_btn = self.wait(3).until(ec.presence_of_all_elements_located((By.XPATH,
+                #                                                                     '//div[@aria-label="Close"]')))
+                # self.move_and_click(close_btn)
             except Exception as ex:
                 pass
             self.open_homepage()
@@ -408,7 +400,9 @@ class Facebook(Base):
 
             self.rs()
             dialog = self.wait(5).until(ec.presence_of_element_located((By.XPATH, '//div[@aria-label="Update profile picture" and @role="dialog"]')))
-            input_field = dialog.find_element(By.XPATH, './/*[@type="file"]')
+            input_field = dialog.find_element(By.XPATH,
+                                              './/input[@type="file" and @accept="image/*,image/heif,image/heic"]')
+            print('ACCEPT: ', input_field.get_attribute('accept'))
             input_field.send_keys(IMG_DIR + 'facebook/' + avatar)
             sleep(10)
             # upload_photo_text = self.driver.find_element(By.XPATH, '//span[contains(text(), "Upload photo")]')
@@ -440,6 +434,11 @@ class Facebook(Base):
             self.move_and_click(btn)
         except WebDriverException as wde:
             print(wde)
+
+    def check_checkpoint(self):
+        if 'checkpoint' in self.driver.current_url:
+            return True
+        return False
 
     def login(self) -> bool:
         self.open_homepage()
