@@ -331,18 +331,28 @@ class Facebook(Base):
             self.move_and_click(workplace)
             sleep(2)
             fields = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//*[@role="combobox"]')))
-            for index, field in fields:
+            for index, field in enumerate(fields):
                 if field.get_attribute('aria-label') == 'Company':
                     fields = fields[index:]
             textarea = self.driver.find_element(By.TAG_NAME, 'textarea')
             fields += [textarea]
             for index, field in enumerate(fields):
+                if index >= len(work_info):
+                    break
                 if work_info[index]:
                     self.chain.send_keys(Keys.ESCAPE).perform()
                     self.chain.reset_actions()
                     self.move_and_click(field, work_info[index])
         except (TimeoutException, WebDriverException) as exception:
             print(exception)
+        try:
+            labels = self.driver.find_elements(By.TAG_NAME, 'label')
+            for label in labels:
+                if label.get_attribute('aria-label') == 'Description':
+                    if work_info[-1] is not None:
+                        self.move_and_click(label, work_info[-1])
+        except Exception as ex:
+            pass
         submit = self.wait(1).until(ec.presence_of_element_located((By.XPATH, '//*[contains(text(), "Save")]')))
         self.move_and_click(submit)
 
@@ -378,33 +388,40 @@ class Facebook(Base):
             return False
 
     def change_pictures(self, avatar: str = None):
-        if not avatar or avatar == 'None':
-            return
-        self._get_self_profile()
-        profile_logo = self.wait(5).until(ec.presence_of_element_located((By.XPATH, self.xpaths['profile_svg'])))
-        self.move_and_click(profile_logo)
-
-        self.rs()
-        upload_photo_text = self.driver.find_element(By.XPATH, '//span[contains(text(), "Upload photo")]')
-        inp = upload_photo_text.find_element(By.XPATH, '..')
-        for _ in range(10):
-            try:
-                inp_field = inp.find_element(By.XPATH, './/input[@type="file"]')
-                inp_field.send_keys(IMG_DIR + 'facebook/' + avatar)
-                sleep(1)
-                break
-            except WebDriverException as wde:
-                print('PROFILE PIC WDE')
-                inp = inp.find_element(By.XPATH, '..')
-        sleep(10)
         try:
-            close = self.wait(4).until(ec.presence_of_element_located((By.XPATH, '//span[contains(text(), "Close")]')))
-            self.move_and_click(close)
-        except (WebDriverException, TimeoutException):
-            pass
-        save = self.wait(4).until(ec.presence_of_element_located((By.XPATH, '//*[contains(text(), "Save")]')))
-        self.move_and_click(save)
-        sleep(7)
+            if not avatar or avatar == 'None':
+                return
+            self._get_self_profile()
+            profile_logo = self.wait(5).until(ec.presence_of_element_located((By.XPATH, self.xpaths['profile_svg'])))
+            self.move_and_click(profile_logo)
+
+            self.rs()
+            dialog = self.wait(5).until(ec.presence_of_element_located((By.XPATH, '//div[@aria-label="Update profile picture" and @role="dialog"]')))
+            input_field = dialog.find_element(By.XPATH, './/*[@type="file"]')
+            input_field.send_keys(IMG_DIR + 'facebook/' + avatar)
+            sleep(10)
+            # upload_photo_text = self.driver.find_element(By.XPATH, '//span[contains(text(), "Upload photo")]')
+            # inp = upload_photo_text.find_element(By.XPATH, '..')
+            # for _ in range(10):
+            #     try:
+            #         inp_field = inp.find_element(By.XPATH, './/input[@type="file"]')
+            #         inp_field.send_keys(IMG_DIR + 'facebook/' + avatar)
+            #         sleep(1)
+            #         break
+            #     except WebDriverException as wde:
+            #         print('PROFILE PIC WDE')
+            #         inp = inp.find_element(By.XPATH, '..')
+            # sleep(10)
+            try:
+                close = self.wait(4).until(ec.presence_of_element_located((By.XPATH, '//span[contains(text(), "Close")]')))
+                self.move_and_click(close)
+            except (WebDriverException, TimeoutException):
+                pass
+            save = self.wait(4).until(ec.presence_of_element_located((By.XPATH, '//*[contains(text(), "Save")]')))
+            self.move_and_click(save)
+            sleep(7)
+        except Exception as ex:
+            traceback.print_exc()
 
     def accept_cookies(self):
         try:
