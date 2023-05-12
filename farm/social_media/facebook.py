@@ -163,6 +163,17 @@ class Facebook(Base):
     def make_comment(self, link, comment_text):
         self.driver.get(link)
         sleep(randint(8, 15))
+        # TEST -------------->
+        try:
+            top_comments_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH,
+                                                                                  '//span[contains(text(), '
+                                                                                  '"Top comments")]')))
+            self.move_and_click(top_comments_btn)
+            menu_items = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="menuitem"]')))
+            self.move_and_click(menu_items[-1])
+        except (WebDriverException, TimeoutException):
+            pass
+        # TEST -------------->
         try:
             try:
                 leave_a_comment = self.driver.find_element(By.XPATH, '//div[@aria-label="Leave a comment"]')
@@ -595,6 +606,15 @@ class Facebook(Base):
         except Exception as ex:
             pass
         sleep(2)
+        try:
+            top_comments_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH,
+                                                                                  '//span[contains(text(), '
+                                                                                  '"Top comments")]')))
+            self.move_and_click(top_comments_btn)
+            menu_items = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="menuitem"]')))
+            self.move_and_click(menu_items[-1])
+        except (WebDriverException, TimeoutException):
+            pass
         while True:
             self.scroll_by(y=1200)
             try:
