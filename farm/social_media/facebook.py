@@ -466,6 +466,8 @@ class Facebook(Base):
                 login_btn = self.driver.find_element(By.NAME, 'login')
                 self.move_and_click(login_btn)
                 sleep(2)
+                if self.check_checkpoint():
+                    return False
                 try:
                     divs = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'div')))
                     for div in divs:
