@@ -379,7 +379,7 @@ class Starter:
             except Exception as ex:
                 traceback.print_exc()
             return
-        self._add_user('Created')
+        self._add_user('Active')
         main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': tw.usr_id,
                                                           'user_link': tw.user_link}))
         tw.users_country = self.country
