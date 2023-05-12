@@ -41,6 +41,7 @@ class Facebook(Base):
         self.name = None
         self.user_link = None
         self.country = country
+        self.auth_required = False
 
     def get_profiles_name(self):
         self._get_self_profile()
@@ -437,12 +438,15 @@ class Facebook(Base):
 
     def check_checkpoint(self):
         if 'checkpoint' in self.driver.current_url:
+            self.auth_required = True
             return True
         return False
 
     def login(self) -> bool:
         self.open_homepage()
         self.accept_cookies()
+        if self.check_checkpoint():
+            return False
         try:
             self.wait(3).until(ec.presence_of_element_located((By.XPATH,
                                                                '//button[@data-testid="royal_login_button"]')))

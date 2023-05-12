@@ -139,15 +139,10 @@ class Starter:
         login_status = fb.login()
         sleep(2)
         if not login_status:
-            self._add_user('Banned')
-            try:
-                fb.driver.quit()
-                fb.gl.stop()
-            except Exception as ex:
-                traceback.print_exc()
-            return
-        if fb.check_checkpoint():
-            self._add_user('Auth required')
+            if fb.auth_required:
+                self._add_user('Auth required')
+            else:
+                self._add_user('Banned')
             try:
                 fb.driver.quit()
                 fb.gl.stop()
