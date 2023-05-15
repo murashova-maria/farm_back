@@ -23,9 +23,6 @@ async def create_conversation(params: Dict[Any, Any]):
                     'index': 0,
                     'next_comment_date': params['start_datetime'],
                     'full_chain': chain
-                    # 'full_chain': [choice(params['meek_accs']) if user['acc_type'] == 'meek'
-                    #                else choice(params['master_accs'])
-                    #                for user in params['thread']]
                 } for post in params['post_links']
             })
         else:
@@ -41,7 +38,6 @@ async def create_conversation(params: Dict[Any, Any]):
                 f'{post}': {
                     'index': 0,
                     'next_comment_date': params['start_datetime'],
-                    # 'full_chain': choices([*params['meek_accs'], *params['master_accs']], k=len(params['reactions']))
                     'full_chain': chain
                 } for post in params['post_links']
             })

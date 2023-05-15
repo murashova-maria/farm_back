@@ -161,9 +161,9 @@ class Facebook(Base):
         except WebDriverException:
             pass
 
-    def make_comment(self, link, comment_text):
+    def make_comment(self, link: str, comment_text: str) -> bool:
         self.driver.get(link)
-        sleep(randint(8, 15))
+        sleep(randint(8, 15))  # Wait until page completely load.
         try:
             try:
                 leave_a_comment = self.driver.find_element(By.XPATH, '//div[@aria-label="Leave a comment"]')
@@ -174,6 +174,9 @@ class Facebook(Base):
             sleep(3)
             text_box = self.driver.find_element(By.XPATH, '//div[@aria-label="Write a comment"]')
             self.move_and_click(text_box, comment_text)
+
+            # HERE
+
             sleep(2)
             self.chain.send_keys(Keys.ESCAPE).perform()
             self.chain.reset_actions()
@@ -193,9 +196,6 @@ class Facebook(Base):
             try:
                 self.chain.send_keys(Keys.ESCAPE).perform()
                 self.chain.reset_actions()
-                # close_btn = self.wait(3).until(ec.presence_of_all_elements_located((By.XPATH,
-                #                                                                     '//div[@aria-label="Close"]')))
-                # self.move_and_click(close_btn)
             except Exception as ex:
                 pass
             self.open_homepage()
@@ -515,18 +515,24 @@ class Facebook(Base):
         self.driver.get(tmp_url)
         sleep(3)
         friends_counter = 0
+        retries = 0
         while friends_counter <= max_value:
-            self.rs()
-            add_friend_btns = self.wait(3).until(ec.presence_of_all_elements_located((By.XPATH,
-                                                                                      '//*[contains(text(), '
-                                                                                      '"Add Friend")]')))
-            for add_friend_btn in add_friend_btns:
-                try:
-                    self.scroll_into_view(add_friend_btn)
-                    self.move_and_click(add_friend_btn)
-                except Exception as ex:
-                    pass
-                friends_counter += 1
+            try:
+                if retries == 5:
+                    return True
+                self.rs()
+                add_friend_btns = self.wait(3).until(ec.presence_of_all_elements_located((By.XPATH,
+                                                                                          '//*[contains(text(), '
+                                                                                          '"Add Friend")]')))
+                for add_friend_btn in add_friend_btns:
+                    try:
+                        self.scroll_into_view(add_friend_btn)
+                        self.move_and_click(add_friend_btn)
+                    except Exception as ex:
+                        pass
+                    friends_counter += 1
+            except Exception as ex:
+                retries += 1
 
     def make_post(self, text=None, filename=None):
         clicked = False
@@ -600,9 +606,11 @@ class Facebook(Base):
 
     def comments_chain(self, masters_name: str, text: str, link: str):
         last_page_height = 0
+        # Get post's link.
         if self.driver.current_url != link:
             self.driver.get(link)
         sleep(2)
+        # Show all comments under the publication
         try:
             show_all_btn = self.wait(2).until(ec.presence_of_element_located((By.XPATH,
                                                                               '//div[@aria-label="See All" '
@@ -611,6 +619,7 @@ class Facebook(Base):
         except Exception as ex:
             pass
         sleep(2)
+        # Select 'all comments' from the dropdown field.
         try:
             top_comments_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH,
                                                                                   '//span[contains(text(), '
@@ -635,6 +644,8 @@ class Facebook(Base):
             try:
                 articles = self.driver.find_elements(By.XPATH, '//div[@aria-label]')
                 for article in articles:
+                    # Search comment with master's name by its aria-label value.
+                    # The name we parse from profile's link.
                     if f'Comment by {masters_name}' in article.get_attribute('aria-label'):
                         print(article.get_attribute('aria-label'))
                         reply_button = article.find_element(By.XPATH, './/div[contains(text(), "Reply")]')
@@ -650,6 +661,8 @@ class Facebook(Base):
                         self.chain.perform()
                         self.chain.reset_actions()
                         sleep(3)
+
+                        # Avoid any extra notifications
                         self.chain.send_keys(Keys.ESCAPE)
                         self.chain.perform()
                         self.chain.reset_actions()

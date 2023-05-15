@@ -17,7 +17,7 @@ RANGES.update({
 uri = os.getenv('SERVER_NEO4J')
 db_username = os.getenv('LOGIN_NEO4J')
 db_password = os.getenv('PASSWORD_NEO4J')
-local_graph = Graph(uri, auth=(db_username, db_password))
+local_graph = Graph(uri, auth=(db_username, db_password), secure=True)
 
 # NEO4J
 FeedDB = Feed(local_graph)

@@ -265,14 +265,6 @@ class Starter:
                             'status': 'active',
                             'activity': 'wait'
                         }))
-                elif user_info['activity'] == 'leave_comment':
-                    fb.make_comment('https://www.facebook.com/groups/241680586186052/permalink/1898152053872222/',
-                                    'Awesome!')
-                    main_queue.put(QueuedTask(UserDB, 'update_user', {
-                        'user_id': fb.usr_id,
-                        'activity': 'wait',
-                        'status': 'active',
-                    }))
                 elif user_info['activity'] == 'scroll_feed':
                     fb.scroll_feed(randint(1, 10))
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
