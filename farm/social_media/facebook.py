@@ -281,6 +281,7 @@ class Facebook(Base):
             print('ERR: ', err)
 
     def scroll_feed(self, minutes: float | int):
+        self.open_homepage()
         end_time = datetime.datetime.now() + timedelta(minutes=minutes)
         article = self.wait(3).until(ec.presence_of_element_located((By.XPATH, '//div[@role="article"]')))
         self.move_and_click(element=article, to_click=False)
