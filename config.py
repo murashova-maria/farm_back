@@ -1,6 +1,7 @@
 # BUILT-IN
 import os
 import datetime
+from decouple import config
 
 # LOCAL
 from databases.neo4j_users import *
@@ -14,9 +15,9 @@ RANGES.update({
     9: '00:00-02:00',
     10: '02:00-04:00'
 })
-uri = os.getenv('SERVER_NEO4J')
-db_username = os.getenv('LOGIN_NEO4J')
-db_password = os.getenv('PASSWORD_NEO4J')
+uri = config('SERVER_NEO4J')
+db_username = config('LOGIN_NEO4J')
+db_password = config('PASSWORD_NEO4J')
 local_graph = Graph(uri, auth=(db_username, db_password), secure=True)
 
 # NEO4J
