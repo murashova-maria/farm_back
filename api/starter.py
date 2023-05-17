@@ -364,7 +364,7 @@ class Starter:
         login_status = tw.login()
         sleep(2)
         if not login_status:
-            self._add_user('Blocked')
+            self._add_user('Banned')
             try:
                 tw.driver.quit()
                 tw.gl.stop()
