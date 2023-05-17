@@ -6,5 +6,6 @@ from loader import *
 
 
 if __name__ == '__main__':
-    # UserBase().delete_user('e8847964cb074860b0d344533ffbb44d')
+    for usr in UserBase().get_all():
+        print(usr if usr.get('phone_number').startswith('lidiyarod586@mail.ru') else None)
     pass

@@ -16,6 +16,17 @@ from pyvirtualdisplay import Display
 # display.start()
 
 
+def check_neo4j_connection():
+    while True:
+        try:
+            sleep(120)
+            fd = FeedDB.filter_posts(social_media='twitter')
+            if fd:
+                print('TEST_CONNECTIONw', fd[0])
+        except Exception as ex:
+            pass
+
+
 def make_post():
     while True:
         sleep(2)
@@ -68,6 +79,8 @@ t2.start()
 t3 = threading.Thread(target=check_schedule)
 t3.daemon = True
 t3.start()
+t4 = threading.Thread(target=check_neo4j_connection)
+t4.start()
 
 
 if __name__ == '__main__':
