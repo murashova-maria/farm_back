@@ -41,16 +41,15 @@ class Facebook(Base):
         self.name = None
         self.user_link = None
         self.country = country
-        self.auth_required = False
 
     def get_profiles_name(self):
         self._get_self_profile()
         self.scroll_to(y=0)
         try:
-            sleep(10)
+            sleep(2)
             h1_tag = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'h1')))
             for h1 in h1_tag:
-                if h1.text and len(h1.text) > 3 and h1.text != 'Home':
+                if h1.text and len(h1.text) > 3:
                     self.name = h1.text
                     break
         except WebDriverException:
@@ -161,9 +160,9 @@ class Facebook(Base):
         except WebDriverException:
             pass
 
-    def make_comment(self, link: str, comment_text: str) -> bool:
+    def make_comment(self, link, comment_text, image_path=None):
         self.driver.get(link)
-        sleep(randint(8, 15))  # Wait until page completely load.
+        sleep(randint(8, 15))
         try:
             try:
                 leave_a_comment = self.driver.find_element(By.XPATH, '//div[@aria-label="Leave a comment"]')
@@ -174,12 +173,19 @@ class Facebook(Base):
             sleep(3)
             text_box = self.driver.find_element(By.XPATH, '//div[@aria-label="Write a comment"]')
             self.move_and_click(text_box, comment_text)
-
-            # HERE
-
             sleep(2)
             self.chain.send_keys(Keys.ESCAPE).perform()
             self.chain.reset_actions()
+
+            if image_path is not None:
+                try:
+                    comment_buttons_block = self.driver.find_element(By.ID, "focused-state-actions-list")
+                    print(comment_buttons_block)
+                    upload_image = comment_buttons_block.find_element(By.CLASS_NAME, 'x1s85apg')
+                    upload_image.send_keys(image_path)
+                    sleep(3)
+                except Exception as ex:
+                    print(ex)
             try:
                 submit = self.driver.find_element(By.ID, 'focused-state-composer-submit')
                 self.move_and_click(submit)
@@ -194,8 +200,8 @@ class Facebook(Base):
             except (UnexpectedAlertPresentException, NoAlertPresentException):
                 pass
             try:
-                self.chain.send_keys(Keys.ESCAPE).perform()
-                self.chain.reset_actions()
+                close_btn = self.driver.find_element(By.XPATH, '//div[@aria-label="Close"]')
+                self.move_and_click(close_btn)
             except Exception as ex:
                 pass
             self.open_homepage()
@@ -281,7 +287,6 @@ class Facebook(Base):
             print('ERR: ', err)
 
     def scroll_feed(self, minutes: float | int):
-        self.open_homepage()
         end_time = datetime.datetime.now() + timedelta(minutes=minutes)
         article = self.wait(3).until(ec.presence_of_element_located((By.XPATH, '//div[@role="article"]')))
         self.move_and_click(element=article, to_click=False)
@@ -305,20 +310,17 @@ class Facebook(Base):
                 'error_number': 0
             })
             for res in result:
-                try:
-                    text = res.get('text')
-                    user = res.get('account')
-                    user_link = res.get('account_link')
-                    posts_pubdate = res.get('date')
-                    likes_amount = res.get('likes')
-                    comments_amount = res.get('comments')
-                    shares_amount = res.get('shares')
-                    users_profile_pic = res.get('link')
-                    self._save_new_post_to_db(user, text, None, user_link, posts_pubdate, likes_amount, [],
-                                              comments_amount, [], shares_amount, *return_data_flair(text)[1:], tag,
-                                              user_link, users_profile_pic)
-                except Exception as ex:
-                    pass
+                text = res.get('text')
+                user = res.get('account')
+                user_link = res.get('account_link')
+                posts_pubdate = res.get('date')
+                likes_amount = res.get('likes')
+                comments_amount = res.get('comments')
+                shares_amount = res.get('shares')
+                users_profile_pic = res.get('link')
+                self._save_new_post_to_db(user, text, None, user_link, posts_pubdate, likes_amount, [],
+                                          comments_amount, [], shares_amount, *return_data_flair(text)[1:], tag,
+                                          user_link, users_profile_pic)
         except Exception as ex:
             print('EX: ' * 50, ex)
 
@@ -335,29 +337,16 @@ class Facebook(Base):
             workplace = self.driver.find_element(By.XPATH, '//*[contains(text(), "Add a workplace")]')
             self.move_and_click(workplace)
             sleep(2)
-            fields = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//*[@role="combobox"]')))
-            for index, field in enumerate(fields):
-                if field.get_attribute('aria-label') == 'Company':
-                    fields = fields[index:]
+            fields = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//*[@role="combobox"]')))[1:4]
             textarea = self.driver.find_element(By.TAG_NAME, 'textarea')
             fields += [textarea]
             for index, field in enumerate(fields):
-                if index >= len(work_info):
-                    break
                 if work_info[index]:
                     self.chain.send_keys(Keys.ESCAPE).perform()
                     self.chain.reset_actions()
                     self.move_and_click(field, work_info[index])
         except (TimeoutException, WebDriverException) as exception:
             print(exception)
-        try:
-            labels = self.driver.find_elements(By.TAG_NAME, 'label')
-            for label in labels:
-                if label.get_attribute('aria-label') == 'Description':
-                    if work_info[-1] is not None:
-                        self.move_and_click(label, work_info[-1])
-        except Exception as ex:
-            pass
         submit = self.wait(1).until(ec.presence_of_element_located((By.XPATH, '//*[contains(text(), "Save")]')))
         self.move_and_click(submit)
 
@@ -393,42 +382,33 @@ class Facebook(Base):
             return False
 
     def change_pictures(self, avatar: str = None):
-        try:
-            if not avatar or avatar == 'None':
-                return
-            self._get_self_profile()
-            profile_logo = self.wait(5).until(ec.presence_of_element_located((By.XPATH, self.xpaths['profile_svg'])))
-            self.move_and_click(profile_logo)
+        if not avatar or avatar == 'None':
+            return
+        self._get_self_profile()
+        profile_logo = self.wait(5).until(ec.presence_of_element_located((By.XPATH, self.xpaths['profile_svg'])))
+        self.move_and_click(profile_logo)
 
-            self.rs()
-            dialog = self.wait(5).until(ec.presence_of_element_located((By.XPATH, '//div[@aria-label="Update profile picture" and @role="dialog"]')))
-            input_field = dialog.find_element(By.XPATH,
-                                              './/input[@type="file" and @accept="image/*,image/heif,image/heic"]')
-            print('ACCEPT: ', input_field.get_attribute('accept'))
-            input_field.send_keys(IMG_DIR + 'facebook/' + avatar)
-            sleep(10)
-            # upload_photo_text = self.driver.find_element(By.XPATH, '//span[contains(text(), "Upload photo")]')
-            # inp = upload_photo_text.find_element(By.XPATH, '..')
-            # for _ in range(10):
-            #     try:
-            #         inp_field = inp.find_element(By.XPATH, './/input[@type="file"]')
-            #         inp_field.send_keys(IMG_DIR + 'facebook/' + avatar)
-            #         sleep(1)
-            #         break
-            #     except WebDriverException as wde:
-            #         print('PROFILE PIC WDE')
-            #         inp = inp.find_element(By.XPATH, '..')
-            # sleep(10)
+        self.rs()
+        upload_photo_text = self.driver.find_element(By.XPATH, '//span[contains(text(), "Upload photo")]')
+        inp = upload_photo_text.find_element(By.XPATH, '..')
+        for _ in range(10):
             try:
-                close = self.wait(4).until(ec.presence_of_element_located((By.XPATH, '//span[contains(text(), "Close")]')))
-                self.move_and_click(close)
-            except (WebDriverException, TimeoutException):
-                pass
-            save = self.wait(4).until(ec.presence_of_element_located((By.XPATH, '//*[contains(text(), "Save")]')))
-            self.move_and_click(save)
-            sleep(7)
-        except Exception as ex:
-            traceback.print_exc()
+                inp_field = inp.find_element(By.XPATH, './/input[@type="file"]')
+                inp_field.send_keys(IMG_DIR + 'facebook/' + avatar)
+                sleep(1)
+                break
+            except WebDriverException as wde:
+                print('PROFILE PIC WDE')
+                inp = inp.find_element(By.XPATH, '..')
+        sleep(10)
+        try:
+            close = self.wait(4).until(ec.presence_of_element_located((By.XPATH, '//span[contains(text(), "Close")]')))
+            self.move_and_click(close)
+        except (WebDriverException, TimeoutException):
+            pass
+        save = self.wait(4).until(ec.presence_of_element_located((By.XPATH, '//*[contains(text(), "Save")]')))
+        self.move_and_click(save)
+        sleep(7)
 
     def accept_cookies(self):
         try:
@@ -437,17 +417,9 @@ class Facebook(Base):
         except WebDriverException as wde:
             print(wde)
 
-    def check_checkpoint(self):
-        if 'checkpoint' in self.driver.current_url:
-            self.auth_required = True
-            return True
-        return False
-
     def login(self) -> bool:
         self.open_homepage()
         self.accept_cookies()
-        if self.check_checkpoint():
-            return False
         try:
             self.wait(3).until(ec.presence_of_element_located((By.XPATH,
                                                                '//button[@data-testid="royal_login_button"]')))
@@ -467,8 +439,6 @@ class Facebook(Base):
                 login_btn = self.driver.find_element(By.NAME, 'login')
                 self.move_and_click(login_btn)
                 sleep(2)
-                if self.check_checkpoint():
-                    return False
                 try:
                     divs = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'div')))
                     for div in divs:
@@ -515,75 +485,59 @@ class Facebook(Base):
         tmp_url = 'https://www.facebook.com/friends/suggestions'
         self.driver.get(tmp_url)
         sleep(3)
-        friends_counter = 0
-        retries = 0
-        while friends_counter <= max_value:
+        while self.friends_counter <= max_value:
+            self.rs()
+            body = self.driver.find_element(By.TAG_NAME, 'body')
+            if "When you have friend requests or suggestions, you'll see them here." in body.text:
+                break
             try:
-                if retries == 5:
-                    return True
-                self.rs()
-                add_friend_btns = self.wait(3).until(ec.presence_of_all_elements_located((By.XPATH,
-                                                                                          '//*[contains(text(), '
-                                                                                          '"Add Friend")]')))
-                for add_friend_btn in add_friend_btns:
-                    try:
-                        self.scroll_into_view(add_friend_btn)
-                        self.move_and_click(add_friend_btn)
-                    except Exception as ex:
-                        pass
-                    friends_counter += 1
-            except Exception as ex:
-                retries += 1
+                add_friend_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH,
+                                                                                    '//*[contains(text(), '
+                                                                                    '"Add Friend")]')))
+            except WebDriverException as wde:
+                self.driver.refresh()
+                continue
+            try:
+                self.scroll_into_view(add_friend_btn)
+            except StaleElementReferenceException as sere:
+                print('SERE:', sere)
+            self.rs()
+            try:
+                self.move_and_click(add_friend_btn)
+            except WebDriverException as wde:
+                print(wde)
+                self.driver.refresh()
 
     def make_post(self, text=None, filename=None):
-        clicked = False
-        for _ in range(2):
-            self.open_homepage()
-            self._get_self_profile()
-            self.wait_until_profile_loads(5, 2, 'profile.php')
-            sleep(4)
-            try:
-                spans = self.driver.find_elements(By.TAG_NAME, 'span')
-                for span in spans:
-                    if "What's on your mind?" in span.text:
-                        self.move_and_click(span)
-                        clicked = True
-                        sleep(4)
-                if not clicked:
-                    continue
-                self.rs()
-                self._select_audience()
-                sleep(3)
-                textbox = self.driver.find_element(By.XPATH, self.xpaths['profile_text_box'])
-                if text and text != 'None':
-                    # TEST <-------------->
-                    sleep(1)
-                    self.chain.move_to_element(textbox)
-                    self.chain.click()
-                    sleep(3)
-                    for _ in range(2):
-                        for _ in range(len(text)):
-                            self.chain.send_keys(Keys.BACKSPACE)
-                        self.chain.send_keys(text)
-                    self.chain.perform()
-                    self.chain.reset_actions()
-                    # self.move_and_click(textbox, text)
-                    # TEST <-------------->
-                if filename and filename != 'None':
-                    photo_video = self.driver.find_element(By.XPATH, '//div[@aria-label="Photo/video"]')
-                    self.move_and_click(photo_video)
-                    sleep(1)
-                    get_form = self.wait(2).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'input')))
-                    for form in get_form:
-                        if str(form.get_attribute('accept')) == \
-                                'image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv':
-                            form.send_keys(IMG_DIR + 'facebook/' + filename)
-                sleep(7)
-                post = self.driver.find_element(By.XPATH, '//div[@aria-label="Post"]')
-                post.click()
-                return True
-            except WebDriverException as wde:
-                print('MAKE POST WDE: ', wde)
+        self._get_self_profile()
+        self.wait_until_profile_loads(5, 2, 'profile.php')
+        sleep(4)
+        try:
+            spans = self.driver.find_elements(By.TAG_NAME, 'span')
+            for span in spans:
+                print(span.text)
+                if "What's on your mind?" in span.text:
+                    self.move_and_click(span)
+                    sleep(4)
+            self.rs()
+            self._select_audience()
+            sleep(3)
+            textbox = self.driver.find_element(By.XPATH, self.xpaths['profile_text_box'])
+            self.move_and_click(textbox, text)
+            if filename and filename != 'None':
+                photo_video = self.driver.find_element(By.XPATH, '//div[@aria-label="Photo/video"]')
+                self.move_and_click(photo_video)
+                sleep(1)
+                get_form = self.wait(2).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'input')))
+                for form in get_form:
+                    if str(form.get_attribute('accept')) == \
+                            'image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv':
+                        form.send_keys(IMG_DIR + 'facebook/' + filename)
+            sleep(7)
+            post = self.driver.find_element(By.XPATH, '//div[@aria-label="Post"]')
+            post.click()
+        except WebDriverException as wde:
+            print('MAKE POST WDE: ', wde)
 
     def explore_platform(self):
         pass
@@ -605,13 +559,11 @@ class Facebook(Base):
             except (TimeoutException, WebDriverException):
                 pass
 
-    def comments_chain(self, masters_name: str, text: str, link: str):
+    def comments_chain(self, masters_name: str, text: str, link: str, image_path=None):
         last_page_height = 0
-        # Get post's link.
         if self.driver.current_url != link:
             self.driver.get(link)
         sleep(2)
-        # Show all comments under the publication
         try:
             show_all_btn = self.wait(2).until(ec.presence_of_element_located((By.XPATH,
                                                                               '//div[@aria-label="See All" '
@@ -620,16 +572,6 @@ class Facebook(Base):
         except Exception as ex:
             pass
         sleep(2)
-        # Select 'all comments' from the dropdown field.
-        try:
-            top_comments_btn = self.wait(3).until(ec.presence_of_element_located((By.XPATH,
-                                                                                  '//span[contains(text(), '
-                                                                                  '"Top comments")]')))
-            self.move_and_click(top_comments_btn)
-            menu_items = self.wait(2).until(ec.presence_of_all_elements_located((By.XPATH, '//div[@role="menuitem"]')))
-            self.move_and_click(menu_items[-1])
-        except (WebDriverException, TimeoutException):
-            pass
         while True:
             self.scroll_by(y=1200)
             try:
@@ -645,8 +587,6 @@ class Facebook(Base):
             try:
                 articles = self.driver.find_elements(By.XPATH, '//div[@aria-label]')
                 for article in articles:
-                    # Search comment with master's name by its aria-label value.
-                    # The name we parse from profile's link.
                     if f'Comment by {masters_name}' in article.get_attribute('aria-label'):
                         print(article.get_attribute('aria-label'))
                         reply_button = article.find_element(By.XPATH, './/div[contains(text(), "Reply")]')
@@ -662,8 +602,15 @@ class Facebook(Base):
                         self.chain.perform()
                         self.chain.reset_actions()
                         sleep(3)
-
-                        # Avoid any extra notifications
+                        if image_path is not None:
+                            try:
+                                comment_buttons_block = self.driver.find_element(By.ID, "focused-state-actions-list")
+                                print(comment_buttons_block)
+                                upload_image = comment_buttons_block.find_element(By.CLASS_NAME, 'x1s85apg')
+                                upload_image.send_keys(image_path)
+                                sleep(3)
+                            except Exception as ex:
+                                print(ex)
                         self.chain.send_keys(Keys.ESCAPE)
                         self.chain.perform()
                         self.chain.reset_actions()
@@ -685,5 +632,6 @@ class Facebook(Base):
 if __name__ == '__main__':
     f = Facebook('+33783473178', 'cBtue9fa5uTtZpx')
     f.login()
-    f.add_hobbies(['games', 'music'])
+    f.make_comment("https://www.facebook.com/photo/?fbid=801408048011779&set=a.370165894469332", "teST", "C:/Users/admin/Desktop/farm_back-main/завантаження.jpg")
+    f.comments_chain("Василий Паук", "teST", "https://www.facebook.com/photo/?fbid=801408048011779&set=a.370165894469332", "C:/Users/admin/Desktop/farm_back-main/завантаження.jpg")
     # f.make_post("Just test text.", '/home/penguin_nube/Pictures/Screenshot_20230313_020220.png')

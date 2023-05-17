@@ -306,7 +306,8 @@ class Starter:
                                                                    'status': 'in process',
                                                                    'activity': 'comments chain'}))
                                         fb.comments_chain(FacebookProfileDB.filter_profiles(user_id=choice(masters_name)['user_id'])[0]['name'],
-                                                          conversation['thread'][index]['text'], post_name)
+                                                          conversation['thread'][index]['text'], post_name,
+                                                          conversation['thread'][index].get('image'))
                                     else:
                                         print('THERE IS NO AVAILABLE MASTERS')
                             else:

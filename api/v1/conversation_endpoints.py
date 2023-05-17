@@ -1,6 +1,7 @@
 import traceback
 from api import *
 from random import choice
+from api.utils import save_base64_file
 
 
 @app.post('/conversation/create/')
@@ -18,6 +19,9 @@ async def create_conversation(params: Dict[Any, Any]):
                     if r_usr not in chain:
                         chain.append(r_usr)
                         break
+                base_image = user.get('image')
+                if base_image:
+                    user['image'] = save_base64_file(base_image)
             temp_data['tmp_data'].update({
                 f'{post}': {
                     'index': 0,
@@ -33,7 +37,6 @@ async def create_conversation(params: Dict[Any, Any]):
                     if r_usr not in chain:
                         chain.append(r_usr)
                         break
-
             temp_data['tmp_data'].update({
                 f'{post}': {
                     'index': 0,
