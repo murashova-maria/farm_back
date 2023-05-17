@@ -5,6 +5,7 @@ from loader import DATE_FORMAT, IMG_DIR
 from datetime import datetime
 
 import base64
+import os
 from random import randint
 
 
@@ -19,10 +20,10 @@ def save_base64_file(image):
     
     extension, image = image.split(',')
     filename = f'comment_image_{randint(0, 10000)}.jpg'
-    image = base64.b64decode(image)
-    with open(IMG_DIR + f'comment_images/' + filename, 'wb') as output:
+    file_path = os.path.join(IMG_DIR, f'comment_images/', filename)    
+    with open(file_path, 'wb') as output:
         output.write(image)
-    return filename
+    return file_path
 
 
 if __name__ == '__main__':
