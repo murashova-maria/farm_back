@@ -1,6 +1,7 @@
 import os
 import socket
 import random
+from decouple import config
 try:
     from ..spygologin.gologin import GoLogin
 except ImportError:
@@ -18,7 +19,7 @@ def get_free_port():
 class GoLoginBase:
     def __init__(self, profile_id):
         self.gl = GoLogin({
-            'token': os.getenv('GOLOGIN_API_TOKEN'),
+            'token': config('GOLOGIN_API_TOKEN'),
             'profile_id': profile_id,
             'port': get_free_port(),
             "uploadCookiesToServer": True,

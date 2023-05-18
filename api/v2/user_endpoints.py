@@ -90,6 +90,7 @@ async def create_account(item: Dict[Any, Any]):
     username = item.get('username')
     password = item.get('password')
     phone_number = item.get('phone_number')
+    auth_code = item.get('auth_code')
     if not phone_number:
         phone_number = item.get('email')
     network = item.get('network')
