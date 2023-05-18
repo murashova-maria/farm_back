@@ -4,8 +4,8 @@ import traceback
 from api import *
 
 
-def start(username, password, phone_number, network, proxy=None, country='None', gologin_profile_id=None):
-    net = Starter(username, password, phone_number, network, proxy, country, gologin_profile_id)
+def start(username, password, phone_number, network, proxy=None, country='None', gologin_profile_id=None, auth_code=None):
+    net = Starter(username, password, phone_number, network, proxy, country, gologin_profile_id, auth_code)
     if net.network == 'facebook':
         net.start_facebook()
     elif net.network == 'twitter':
@@ -101,7 +101,7 @@ async def create_account(item: Dict[Any, Any]):
         raise HTTPException(status_code=400, detail='Missing parameter(s)')
     if network not in ('twitter', 'facebook', 'instagram'):
         raise HTTPException(status_code=400, detail='Invalid network')
-    thread = Thread(target=start, args=(username, password, phone_number, network, proxy, country, gologin_profile))
+    thread = Thread(target=start, args=(username, password, phone_number, network, proxy, country, gologin_profile, auth_code))
     thread.start()
     return {'Success': 'User creation started'}
 

@@ -16,7 +16,7 @@ except ImportError:
 
 
 class Starter:
-    def __init__(self, username, password, phone_number, network, proxy=None, country='None', gologin_profile_id=None):
+    def __init__(self, username, password, phone_number, network, proxy=None, country='None', gologin_profile_id=None, auth_code=None):
         self.username = username
         self.password = password
         self.phone_number = phone_number
@@ -28,6 +28,7 @@ class Starter:
         self.proxy = proxy
         self.country = country
         self.gologin_profile_id = gologin_profile_id
+        self.auth_code = auth_code
 
     def _add_user(self, status: str = 'Success'):
         usr = UserDB.filter_users(username=self.username, password=self.password,
@@ -46,7 +47,8 @@ class Starter:
             'status': status,
             'reg_date': datetime.datetime.now().timestamp(),
             'gologin_id': self.gologin_profile_id,
-            'country': self.country
+            'country': self.country,
+            'auth_code': self.auth_code,
         })
         main_queue.put(st)
 

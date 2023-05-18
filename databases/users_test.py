@@ -32,6 +32,7 @@ class UserBase(BaseDB):
     groups_used = Column(JSON, default=[])
     user_link = Column(String)
     gologin_id = Column(String)
+    auth_code = Column(String)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
