@@ -25,7 +25,7 @@ from selenium.common.exceptions import NoSuchWindowException, WebDriverException
 
 # LOCAL
 from loader import *
-from .gologin_base import GoLoginBase
+from farm.social_media.gologin_base import GoLoginBase
 try:
     from .add_proxy import set_authenticated_proxy_through_plugin
     from .utils import *

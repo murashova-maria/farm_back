@@ -1,5 +1,7 @@
 # LOCAL
 import traceback
+import sys
+sys.path.append('/var/www/farm_back/')
 
 try:
     from .base import *
@@ -539,6 +541,32 @@ class Facebook(Base):
         except WebDriverException as wde:
             print('MAKE POST WDE: ', wde)
 
+
+    def make_group_post(self, link_to_group:str, text:str=None, file_path:str=None)->None:
+        self.driver.get(link_to_group)
+        sleep(2)
+        spans = self.driver.find_elements(By.TAG_NAME, 'span')
+        for span in spans:
+            if "Write something" in span.text:
+                self.move_and_click(span)
+                sleep(4)
+        self.rs()
+        textbox = self.driver.find_element(By.XPATH, self.xpaths['profile_text_box'])
+        self.move_and_click(textbox, text)
+        if file_path:
+            photo_video = self.driver.find_element(By.XPATH, '//div[@aria-label="Photo/video"]')
+            self.move_and_click(photo_video)
+            sleep(1)
+            get_form = self.wait(2).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'input')))
+            for form in get_form:
+                if str(form.get_attribute('accept')) == \
+                        'image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv':
+                    form.send_keys(file_path)
+        sleep(7)
+        post = self.driver.find_element(By.XPATH, '//div[@aria-label="Post"]')
+        post.click()
+
+
     def explore_platform(self):
         pass
 
@@ -630,8 +658,9 @@ class Facebook(Base):
 
 
 if __name__ == '__main__':
-    f = Facebook('+33783473178', 'cBtue9fa5uTtZpx')
+    f = Facebook('aleksandr.d@zapchasti-darom.ru', 'onepeace89')
     f.login()
-    f.make_comment("https://www.facebook.com/photo/?fbid=801408048011779&set=a.370165894469332", "teST", "C:/Users/admin/Desktop/farm_back-main/завантаження.jpg")
-    f.comments_chain("Василий Паук", "teST", "https://www.facebook.com/photo/?fbid=801408048011779&set=a.370165894469332", "C:/Users/admin/Desktop/farm_back-main/завантаження.jpg")
+    # f.make_comment("https://www.facebook.com/photo/?fbid=801408048011779&set=a.370165894469332", "teST", "C:/Users/admin/Desktop/farm_back-main/завантаження.jpg")
+    # f.comments_chain("Василий Паук", "teST", "https://www.facebook.com/photo/?fbid=801408048011779&set=a.370165894469332", "C:/Users/admin/Desktop/farm_back-main/завантаження.jpg")
+    f.make_group_post('https://www.facebook.com/groups/3164396367122354', "test")
     # f.make_post("Just test text.", '/home/penguin_nube/Pictures/Screenshot_20230313_020220.png')
