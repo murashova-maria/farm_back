@@ -85,7 +85,7 @@ t4.start()
 
 if config('BOT_AUTO_START', default=False, cast=bool):
     for usr in UserBase().get_all():
-        thread = Thread(
+        thread = threading.Thread(
             target=start, 
             args=(
                 usr.get('username'), usr.get('password'), usr.get('phone_number'), 
