@@ -10,6 +10,7 @@ import threading
 # OTHER
 from time import sleep
 from pyvirtualdisplay import Display
+from decouple import config
 
 
 display = Display(visible=False, size=(1920, 1080))
@@ -81,6 +82,19 @@ t3.daemon = True
 t3.start()
 t4 = threading.Thread(target=check_neo4j_connection)
 t4.start()
+
+if config('BOT_AUTO_START', default=False, cast=bool):
+    for usr in UserBase().get_all():
+        thread = Thread(
+            target=start, 
+            args=(
+                usr.get('username'), usr.get('password'), usr.get('phone_number'), 
+                usr.get('social_media'), 
+                None, 'None', usr.get('gologin_id'), usr.get('auth_code')
+            ),
+            daemon=True
+        )
+        thread.start()
 
 
 if __name__ == '__main__':
