@@ -469,15 +469,19 @@ class Facebook(Base):
                 sleep(2)
                 if self.check_checkpoint():
                     return False
-                try:
-                    divs = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'div')))
-                    for div in divs:
-                        if 'access denied' in div.text.lower():
-                            return False
-                        if 'mobile number' in div.text.lower():
-                            return False
-                except WebDriverException:
-                    pass
+                for _ in range(2):
+                    sleep(3)
+                    try:
+                        divs = self.wait(3).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'div')))
+                        for div in divs:
+                            if 'access denied' in div.text.lower():
+                                return False
+                            if 'mobile number' in div.text.lower():
+                                return False
+                            if "you're temporarily blocked" in div.text.lower():
+                                return False
+                    except WebDriverException:
+                        pass
                 self._change_language()
                 try:
                     for btn in self.driver.find_elements(By.TAG_NAME, 'div'):
