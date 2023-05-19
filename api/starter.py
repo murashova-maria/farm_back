@@ -439,8 +439,8 @@ class Starter:
                         user_info['already_used_keywords'].append(search_tag['keyword'])
                     main_queue.put(QueuedTask(UserDB, 'update_user', {
                         'user_id': tw.usr_id,
-                        'activity': 'wait',
                         'status': 'active',
+                        'activity': 'wait',
                         'already_used_keywords': user_info['already_used_keywords'],
                     }))
                     sleep(5)
