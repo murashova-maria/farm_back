@@ -35,7 +35,7 @@ def add_old_bots():
 
 
 if __name__ == '__main__':
-    a = int(input('Add old bots - 0, clean database - 1'))
+    a = int(input('Add old bots - 1, clean database - 0: '))
     if a:
         add_old_bots()
     else:
