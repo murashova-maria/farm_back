@@ -48,7 +48,6 @@ async def get_bots_info(social_media: str = None, country: str = None):
             return users
         else:
             users = [{key: value for key, value in user.items()} for user in UserDB.get_all()]
-            print(users)
             for index, user in enumerate(users):
                 # amount_of_posts = len(SelfPostsDB.filter_posts(user_id=user['user_id']))
                 if user['social_media'] == 'twitter':
