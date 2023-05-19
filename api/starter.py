@@ -284,7 +284,7 @@ class Starter:
                                     main_queue.put(QueuedTask(UserDB, 'update_user',
                                                               {'user_id': user_info['user_id'], 'status': 'in process',
                                                                'activity': 'reactions'}))
-                                    fb.make_comment(post_name, conversation['reactions'][index])
+                                    fb.make_comment(post_name, conversation['reactions'][index]['text'], conversation['reactions'][index].get('image'))
                                 else:
                                     master_exist = post_tmp_values['full_chain'][:index]
                                     masters_name = []

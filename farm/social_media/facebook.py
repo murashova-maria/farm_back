@@ -658,6 +658,11 @@ class Facebook(Base):
 
 
 if __name__ == '__main__':
+    from pyvirtualdisplay import Display
+
+
+    display = Display(visible=False, size=(1920, 1080))
+    display.start()
     f = Facebook('aleksandr.d@zapchasti-darom.ru', 'onepeace89')
     f.login()
     # f.make_comment("https://www.facebook.com/photo/?fbid=801408048011779&set=a.370165894469332", "teST", "C:/Users/admin/Desktop/farm_back-main/завантаження.jpg")

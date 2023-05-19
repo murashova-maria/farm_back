@@ -124,6 +124,7 @@ venv.bak/
 *.pem
 *.key
 *.ini
+*.pyc
 user_pics/
 signatures/
 pending_files/

@@ -31,12 +31,14 @@ async def create_conversation(params: Dict[Any, Any]):
             })
         else:
             chain = []
-            for _ in params['reactions']:
+            for reaction in params['reactions']:
                 for _ in range(3):
                     r_usr = choice([*params['meek_accs'], *params['master_accs']])
                     if r_usr not in chain:
                         chain.append(r_usr)
                         break
+                if reaction.get('image'):
+                    reaction['image'] = save_base64_file(reaction['image'])
             temp_data['tmp_data'].update({
                 f'{post}': {
                     'index': 0,
