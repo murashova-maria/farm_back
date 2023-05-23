@@ -6,6 +6,7 @@ from random import choice
 @app.post('/conversation/create/')
 async def create_conversation(params: Dict[Any, Any]):
     temp_data = {'tmp_data': {}}
+    del params['start_date_time']
     params.update({'start_datetime': datetime.now().timestamp()})
     conversation_id = randint(0, 2147483647)
     try:
@@ -42,10 +43,14 @@ async def create_conversation(params: Dict[Any, Any]):
                 } for post in params['post_links']
             })
         params.update(temp_data)
-        params = {conversation_id: {**params, 'type': 'json'}, }
-        res = read_json('conversations.json')
-        res.update(params)
-        JSONWriter('conversations.json').write_json(res)
+        params.update({'conversation_id': conversation_id})
+        new_conv = ConversationDB.create_conversation(**params)
+        for key, value in new_conv.__dict__.items():
+            print({key: value})
+        # params = {conversation_id: {**params, 'type': 'json'}}
+        # res = read_json('conversations.json')
+        # res.update(params)
+        # JSONWriter('conversations.json').write_json(res)
         return {'Status': 'OK'}
     except Exception as ex:
         print(ex)

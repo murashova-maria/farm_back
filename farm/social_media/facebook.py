@@ -407,18 +407,6 @@ class Facebook(Base):
             print('ACCEPT: ', input_field.get_attribute('accept'))
             input_field.send_keys(IMG_DIR + 'facebook/' + avatar)
             sleep(10)
-            # upload_photo_text = self.driver.find_element(By.XPATH, '//span[contains(text(), "Upload photo")]')
-            # inp = upload_photo_text.find_element(By.XPATH, '..')
-            # for _ in range(10):
-            #     try:
-            #         inp_field = inp.find_element(By.XPATH, './/input[@type="file"]')
-            #         inp_field.send_keys(IMG_DIR + 'facebook/' + avatar)
-            #         sleep(1)
-            #         break
-            #     except WebDriverException as wde:
-            #         print('PROFILE PIC WDE')
-            #         inp = inp.find_element(By.XPATH, '..')
-            # sleep(10)
             try:
                 close = self.wait(4).until(ec.presence_of_element_located((By.XPATH, '//span[contains(text(), "Close")]')))
                 self.move_and_click(close)
@@ -547,6 +535,7 @@ class Facebook(Base):
             self.wait_until_profile_loads(5, 2, 'profile.php')
             sleep(4)
             try:
+                self.scroll_by(y=500)
                 spans = self.driver.find_elements(By.TAG_NAME, 'span')
                 for span in spans:
                     if "What's on your mind?" in span.text:

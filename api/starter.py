@@ -269,7 +269,8 @@ class Starter:
                     fb.scroll_feed(randint(1, 10))
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                                       'activity': 'wait'}))
-                res = read_json('conversations.json')
+                # res = read_json('conversations.json')
+                res = ConversationDB.get_all_conversations()
                 for conv_id, conversation in res.items():
                     for post_name, post_tmp_values in conversation['tmp_data'].items():
                         index = int(post_tmp_values['index'])
@@ -324,8 +325,10 @@ class Starter:
                             dt = datetime.datetime.fromtimestamp(post_tmp_values['next_comment_date'])
                             dt += datetime.timedelta(minutes=randint(1, 5))
                             res[conv_id]['tmp_data'][post_name]['next_comment_date'] = dt.timestamp()
-                            pprint(res)
-                            JSONWriter('conversations.json').write_json(res)
+                            new_res = {'conversation_id': conv_id, **res[conv_id]}
+                            main_queue.put(QueuedTask(ConversationDB, 'update_conversation',
+                                                      {**new_res}))
+                            # JSONWriter('conversations.json').write_json(res)
                             main_queue.put(QueuedTask(UserDB, 'update_user',
                                                       {'user_id': user_info['user_id'], 'status': 'active',
                                                        'activity': 'wait'}))
