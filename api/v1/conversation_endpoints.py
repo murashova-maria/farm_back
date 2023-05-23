@@ -7,6 +7,8 @@ from random import choice
 async def create_conversation(params: Dict[Any, Any]):
     temp_data = {'tmp_data': {}}
     del params['start_date_time']
+    conv_name = params.pop('campaign_name')
+    params.update({'conversation_name': conv_name})
     params.update({'start_datetime': datetime.now().timestamp()})
     conversation_id = randint(0, 2147483647)
     try:
