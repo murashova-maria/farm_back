@@ -47,8 +47,6 @@ async def create_conversation(params: Dict[Any, Any]):
         params.update(temp_data)
         params.update({'conversation_id': conversation_id})
         new_conv = ConversationDB.create_conversation(**params)
-        for key, value in new_conv.__dict__.items():
-            print({key: value})
         # params = {conversation_id: {**params, 'type': 'json'}}
         # res = read_json('conversations.json')
         # res.update(params)

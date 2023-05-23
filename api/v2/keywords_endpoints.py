@@ -33,21 +33,27 @@ async def get_keywords():
             try:
                 if keyword['facebook_user'] and keyword['facebook_user'] != 'None':
                     fb_user = UserBase.filter_users(user_id=keyword['facebook_user'])[0]
+                    fb_profile = FacebookProfileDB.filter_profiles(user_id=keyword['facebook_user'])[0]
+                    fb_user.update({'avatar': fb_profile['avatar']})
                     keyword.update({'facebook': fb_user})
             except Exception as ex:
-                pass
+                traceback.print_exc()
             try:
                 if keyword['instagram_user'] and keyword['instagram_user'] != 'None':
                     inst_user = UserBase.filter_users(user_id=keyword['instagram_user'])[0]
+                    inst_profile = InstagramProfileDB.filter_profiles(user_id=keyword['instagram_user'])[0]
+                    inst_user.update({'avatar': inst_profile['avatar']})
                     keyword.update({'instagram': inst_user})
             except Exception as ex:
-                pass
+                traceback.print_exc()
             try:
                 if keyword['twitter_user'] and keyword['instagram_user'] != 'None':
                     tw_user = UserBase.filter_users(user_id=keyword['twitter_user'])[0]
+                    tw_profile = TwitterProfileDB.filter_profiles(user_id=keyword['twitter_user'])[0]
+                    tw_user.update({'avatar': tw_profile['avatar']})
                     keyword.update({'twitter': tw_user})
             except Exception as ex:
-                pass
+                traceback.print_exc()
             result.append(keyword)
         return result
     except Exception as ex:
