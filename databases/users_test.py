@@ -481,9 +481,14 @@ class ConversationBase(BaseDB):
     def get_all_conversations(cls):
         data = {}
         for conv in session.query(cls).all():
-            del conv.__dict__['_sa_instance_state']
-            conversation_id = conv.__dict__.pop('conversation_id')
-            data.update({conversation_id: {**conv.__dict__}})
+            current_conv = conv.__dict__
+            del current_conv['_sa_instance_state']
+            conversation_id = current_conv.pop('conversation_id')
+            if current_conv['reactions'] is None:
+                del current_conv['reactions']
+            elif current_conv['thread'] is None:
+                del current_conv['thread']
+            data.update({conversation_id: {**current_conv}})
         return data
 
 

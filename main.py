@@ -33,7 +33,6 @@ def make_post():
         for post in SelfPostsDB.filter_posts(status='None'):
             try:
                 if ready_to_post(post['exact_time']):
-                    print('ready')
                     main_queue.put(QueuedTask(SelfPostsDB, 'update_post', {'status': 'do_post',
                                                                            'post_id': post['post_id']}))
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'activity': 'make_post', 'status': 'gardering',

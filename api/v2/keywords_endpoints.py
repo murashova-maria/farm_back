@@ -34,7 +34,10 @@ async def get_keywords():
                 if keyword['facebook_user'] and keyword['facebook_user'] != 'None':
                     fb_user = UserBase.filter_users(user_id=keyword['facebook_user'])[0]
                     fb_profile = FacebookProfileDB.filter_profiles(user_id=keyword['facebook_user'])[0]
-                    fb_user.update({'avatar': fb_profile['avatar']})
+                    if fb_profile['avatar'] is not None and fb_profile['avatar'] != 'None':
+                        fb_user.update({'avatar': True})
+                    else:
+                        fb_user.update({'avatar': False})
                     keyword.update({'facebook': fb_user})
             except Exception as ex:
                 traceback.print_exc()
@@ -42,7 +45,10 @@ async def get_keywords():
                 if keyword['instagram_user'] and keyword['instagram_user'] != 'None':
                     inst_user = UserBase.filter_users(user_id=keyword['instagram_user'])[0]
                     inst_profile = InstagramProfileDB.filter_profiles(user_id=keyword['instagram_user'])[0]
-                    inst_user.update({'avatar': inst_profile['avatar']})
+                    if inst_profile['avatar'] is not None and inst_profile['avatar'] != 'None':
+                        inst_user.update({'avatar': True})
+                    else:
+                        inst_user.update({'avatar': False})
                     keyword.update({'instagram': inst_user})
             except Exception as ex:
                 traceback.print_exc()
@@ -50,7 +56,10 @@ async def get_keywords():
                 if keyword['twitter_user'] and keyword['instagram_user'] != 'None':
                     tw_user = UserBase.filter_users(user_id=keyword['twitter_user'])[0]
                     tw_profile = TwitterProfileDB.filter_profiles(user_id=keyword['twitter_user'])[0]
-                    tw_user.update({'avatar': tw_profile['avatar']})
+                    if tw_profile['avatar'] is not None and tw_profile['avatar'] != 'None':
+                        tw_user.update({'avatar': True})
+                    else:
+                        tw_user.update({'avatar': False})
                     keyword.update({'twitter': tw_user})
             except Exception as ex:
                 traceback.print_exc()
