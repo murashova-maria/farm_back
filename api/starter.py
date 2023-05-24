@@ -271,7 +271,6 @@ class Starter:
                                                                       'activity': 'wait'}))
                 # res = read_json('conversations.json')
                 res = ConversationDB.get_all_conversations()
-                print(res)
                 for conv_id, conversation in res.items():
                     for post_name, post_tmp_values in conversation['tmp_data'].items():
                         index = int(post_tmp_values['index'])
@@ -299,9 +298,6 @@ class Starter:
                                                 masters_name.remove(name['user_id'])
                                         except Exception as ex:
                                             print(f'MASTERS ACCOUNTS: {ex}')
-                                    print("MASTERS NAMES", masters_name)
-                                    print('POST NAME: ', post_name)
-                                    print('ADD INFO: ', conversation['thread'][index]['text'])
                                     if masters_name:
                                         main_queue.put(QueuedTask(UserDB, 'update_user',
                                                                   {'user_id': user_info['user_id'],
@@ -327,7 +323,6 @@ class Starter:
                             dt += datetime.timedelta(minutes=randint(1, 5))
                             res[conv_id]['tmp_data'][post_name]['next_comment_date'] = dt.timestamp()
                             new_res = {'conversation_id': conv_id, **res[conv_id]}
-                            print('NEW RES: ', new_res)
                             main_queue.put(QueuedTask(ConversationDB, 'update_conversation',
                                                       {**new_res}))
                             # JSONWriter('conversations.json').write_json(res)
