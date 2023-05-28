@@ -3,7 +3,7 @@ try:
     from .base import *
     from ..analyse import return_data_flair
 except ImportError as ie:
-    print(ie)
+    print('TWITTER IMPORT ERROR: ', ie)
     from base import *
     from farm.analyse import return_data_flair
 

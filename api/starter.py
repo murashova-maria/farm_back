@@ -16,7 +16,8 @@ except ImportError:
 
 
 class Starter:
-    def __init__(self, username, password, phone_number, network, proxy=None, country='None', gologin_profile_id=None, auth_code=None):
+    def __init__(self, username, password, phone_number, network, proxy=None, country='None', gologin_profile_id=None,
+                 auth_code=None):
         self.username = username
         self.password = password
         self.phone_number = phone_number
@@ -137,14 +138,11 @@ class Starter:
 
     def start_facebook(self):
         fb = Facebook(self.username, self.password, self.phone_number, proxy=self.proxy,
-                      gologin_id=self.gologin_profile_id)
+                      gologin_id=self.gologin_profile_id, secondary_password=self.auth_code)
         login_status = fb.login()
         sleep(2)
         if not login_status:
-            if fb.auth_required:
-                self._add_user('Auth required')
-            else:
-                self._add_user('Banned')
+            self._add_user('Banned')
             try:
                 fb.driver.quit()
                 fb.gl.stop()
@@ -225,7 +223,7 @@ class Starter:
                             continue
                         if search_tag['status'] != 'wait':
                             continue
-                        fb.join_groups_by_interests(search_tag['keyword'], search_tag['amount'])
+                        fb.join_groups_by_interests(search_tag['keyword'])
                         if user_info['groups_used'] == 'None':
                             user_info['groups_used'] = []
                         user_info['groups_used'].append(search_tag['keyword'])
@@ -271,7 +269,72 @@ class Starter:
                     fb.scroll_feed(randint(1, 10))
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                                       'activity': 'wait'}))
-                res = read_json('conversations.json')
+                elif user_info['actiivty'] == 'add_friend':
+                    last_task = ScheduleDB.filter_schedules(status='done',
+                                                            action=user_info['activity'])
+                    if last_task is None or not last_task:
+                        main_queue.put(
+                            QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
+                                                               'activity': 'wait'}))
+                        sleep(3)
+                        continue
+                    last_task = last_task[-1]
+                    link = last_task['link']
+                    if link is not None:
+                        fb.add_friend(link)
+                    main_queue.put(
+                        QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
+                                                           'activity': 'wait'}))
+                elif user_info['actiivty'] == 'send_message':
+                    last_task = ScheduleDB.filter_schedules(status='done',
+                                                            action=user_info['activity'])
+                    if last_task is None or not last_task:
+                        main_queue.put(
+                            QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
+                                                               'activity': 'wait'}))
+                        sleep(3)
+                        continue
+                    last_task = last_task[-1]
+                    link = last_task['link']
+                    message = last_task['message']
+                    if link is not None and message is not None:
+                        fb.send_message(link, message)
+                    main_queue.put(
+                        QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
+                                                           'activity': 'wait'}))
+                elif user_info['actiivty'] == 'join_to_group':
+                    last_task = ScheduleDB.filter_schedules(status='done',
+                                                            action=user_info['activity'])
+                    if last_task is None or not last_task:
+                        main_queue.put(
+                            QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
+                                                               'activity': 'wait'}))
+                        sleep(3)
+                        continue
+                    last_task = last_task[-1]
+                    link = last_task['link']
+                    if link is not None:
+                        fb.join_to_group(link)
+                    main_queue.put(
+                        QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
+                                                           'activity': 'wait'}))
+                elif user_info['actiivty'] == 'like_user':
+                    last_task = ScheduleDB.filter_schedules(status='done',
+                                                            action=user_info['activity'])
+                    if last_task is None or not last_task:
+                        main_queue.put(
+                            QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
+                                                               'activity': 'wait'}))
+                        sleep(3)
+                        continue
+                    last_task = last_task[-1]
+                    link = last_task['link']
+                    if link is not None:
+                        fb.like_user(link)
+                    main_queue.put(
+                        QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
+                                                           'activity': 'wait'}))
+                res = ConversationDB.get_all_conversations()
                 for conv_id, conversation in res.items():
                     for post_name, post_tmp_values in conversation['tmp_data'].items():
                         index = int(post_tmp_values['index'])
@@ -299,9 +362,6 @@ class Starter:
                                                 masters_name.remove(name['user_id'])
                                         except Exception as ex:
                                             print(f'MASTERS ACCOUNTS: {ex}')
-                                    print("MASTERS NAMES", masters_name)
-                                    print('POST NAME: ', post_name)
-                                    print('ADD INFO: ', conversation['thread'][index]['text'])
                                     if masters_name:
                                         main_queue.put(QueuedTask(UserDB, 'update_user',
                                                                   {'user_id': user_info['user_id'],
@@ -327,8 +387,9 @@ class Starter:
                             dt = datetime.datetime.fromtimestamp(post_tmp_values['next_comment_date'])
                             dt += datetime.timedelta(minutes=randint(1, 5))
                             res[conv_id]['tmp_data'][post_name]['next_comment_date'] = dt.timestamp()
-                            pprint(res)
-                            JSONWriter('conversations.json').write_json(res)
+                            new_res = {'conversation_id': conv_id, **res[conv_id]}
+                            main_queue.put(QueuedTask(ConversationDB, 'update_conversation',
+                                                      {**new_res}))
                             main_queue.put(QueuedTask(UserDB, 'update_user',
                                                       {'user_id': user_info['user_id'], 'status': 'active',
                                                        'activity': 'wait'}))

@@ -394,6 +394,8 @@ class ScheduleBase(BaseDB):
     exact_time = Column(String)
     status = Column(String, default=None)
     scroll_minutes = Column(String, default='0')
+    link = Column(String, default=None)
+    message = Column(String, default=None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -443,6 +445,54 @@ class ScheduleBase(BaseDB):
         if get_keyword:
             session.delete(get_keyword)
             session.commit()
+
+
+class ConversationBase(BaseDB):
+    __tablename__ = 'conversations'
+    conversation_id = Column(String(32), primary_key=True, default=lambda: uuid.uuid4().hex)
+    conversation_name = Column(String(32))
+    master_accs = Column(JSON)
+    meek_accs = Column(JSON)
+    post_links = Column(JSON)
+    start_datetime = Column(FLOAT)
+    thread = Column(JSON, default=None)
+    reactions = Column(JSON, default=None)
+    tmp_data = Column(JSON)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    @classmethod
+    def create_conversation(cls, **kwargs):
+        conversation_node = cls(**kwargs)
+        session.add(conversation_node)
+        session.commit()
+        return conversation_node
+
+    @classmethod
+    def update_conversation(cls, conversation_id, **kwargs):
+        conv_node = session.query(cls).get(conversation_id)
+        if conv_node:
+            for key, value in kwargs.items():
+                if key == 'conversation_id':
+                    continue
+                setattr(conv_node, key, value)
+            session.commit()
+        return conv_node
+
+    @classmethod
+    def get_all_conversations(cls):
+        data = {}
+        for conv in session.query(cls).all():
+            current_conv = conv.__dict__
+            del current_conv['_sa_instance_state']
+            conversation_id = current_conv.pop('conversation_id')
+            if current_conv['reactions'] is None:
+                del current_conv['reactions']
+            elif current_conv['thread'] is None:
+                del current_conv['thread']
+            data.update({conversation_id: {**current_conv}})
+        return data
 
 
 # if 'bots_farm.db' not in os.listdir():

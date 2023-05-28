@@ -37,15 +37,12 @@ WIN32_BASE_PATH = 'drivers/win32'
 
 
 class Base:
-    def __init__(self, homepage, proxy, driver_type='base', gologin_id=None):
+    def __init__(self, homepage, proxy, gologin_id=None):
         # MAIN VARS
         self.status = None
         self.url = homepage
 
         # SELENIUM SETTINGS
-        cdriver_path = ''
-        if 'win' in sys.platform.lower():
-            cdriver_path = WIN32_BASE_PATH + 'chromedriver.exe'
         if not gologin_id:
             self.opt = uc.ChromeOptions()
             self.opt.add_argument('--mute-audio')

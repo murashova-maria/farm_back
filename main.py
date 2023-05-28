@@ -9,8 +9,8 @@ import threading
 
 # OTHER
 from time import sleep
-from pyvirtualdisplay import Display
 from decouple import config
+from pyvirtualdisplay import Display
 
 
 display = Display(visible=False, size=(1920, 1080))
@@ -98,5 +98,4 @@ if config('BOT_AUTO_START', default=False, cast=bool):
 
 
 if __name__ == '__main__':
-    # local_graph.delete_all()
     pass

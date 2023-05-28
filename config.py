@@ -1,11 +1,13 @@
 # BUILT-IN
 import os
 import datetime
-from decouple import config
 
 # LOCAL
-from databases.neo4j_users import *
 from databases.users_test import *
+from databases.neo4j_users import *
+
+# OTHER
+from decouple import config
 
 
 RANGES = {index: f'{num}:00-{num+2}:00' if len(str(num)) == 2 else f'0{num}:00-{num+2}:00'
@@ -28,6 +30,7 @@ UserDB = UserBase()
 KeywordDB = KeywordBase()
 ScheduleDB = ScheduleBase()
 SelfPostsDB = SelfPostsBase()
+ConversationDB = ConversationBase()
 TwitterProfileDB = TwitterProfileBase()
 FacebookProfileDB = FacebookProfileBase()
 InstagramProfileDB = InstagramProfileBase()

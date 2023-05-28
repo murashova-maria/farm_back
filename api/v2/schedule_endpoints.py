@@ -15,7 +15,6 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
         exact_time = datetime.now()
         if day is not None and time_range is not None:
             exact_time = get_randomized_date(int(day), RANGES[int(time_range)])
-        # data = [user_id, action, day, time_range, exact_time]
         data = {
             'user_id': user_id,
             'action': action,
@@ -51,10 +50,13 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
                 'exact_time': exact_time,
             }
             main_queue.put(QueuedTask(SelfPostsDB, 'create_post', post_data))
-        # data += ['None', params.get('scroll_minutes')]
         data.update({'status': 'None', 'scroll_minutes': params.get('scroll_minutes')})
         main_queue.put(QueuedTask(ScheduleDB, 'create_schedule', data))
-        final_data = {'day': day, 'time_range': time_range, 'action': action}
+        additional_link = params.get('link')
+        additional_message = params.get('message')
+        final_data = {'day': day, 'time_range': time_range, 'action': action,
+                      'link': additional_link,
+                      'message': additional_message}
         if post_data is not None:
             final_data.update({**post_data})
         return final_data

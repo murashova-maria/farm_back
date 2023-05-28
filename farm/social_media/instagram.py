@@ -1,15 +1,16 @@
 # LOCAL
-import datetime
-import logging
-
 try:
     from .base import *
     from ..analyse import return_data_flair
 except ImportError:
     from base import *
     from farm.analyse import return_data_flair
+
+# INSTAGRAM UNOFFICIAL API
 import instagrapi
 from instagrapi.exceptions import ChallengeRequired, TwoFactorRequired
+
+# PARSING
 from bs4 import BeautifulSoup
 
 

@@ -1,8 +1,3 @@
-# LOCAL
-import traceback
-import sys
-sys.path.append('/var/www/farm_back/')
-
 try:
     from .base import *
     from .fb_utils import *
@@ -13,11 +8,30 @@ except ImportError:
     from farm.analyse import return_data_flair
 
 # OTHER
+import hmac
+import time
+import base64
+import struct
+import hashlib
 from random import choice
 
 
+def get_hotp_token(secret, intervals_no):
+    key = base64.b32decode(secret, True)
+    msg = struct.pack(">Q", intervals_no)
+    h = hmac.new(key, msg, hashlib.sha1).digest()
+    o = h[19] & 15
+    h = (struct.unpack(">I", h[o:o + 4])[0] & 0x7fffffff) % 1000000
+    return h
+
+
+def get_totp_token(secondary):
+    return get_hotp_token(secondary, intervals_no=int(time.time()) // 30)
+
+
 class Facebook(Base):
-    def __init__(self, username, password, phone_number=None, proxy=None, gologin_id=None, country=None):
+    def __init__(self, username, password, phone_number=None, proxy=None, gologin_id=None, country=None,
+                 secondary_password=None):
         self.xpaths = {
             'composer': "//span[contains(text(), \"What's in your mind\")]",
             'text_field': './/div[@role="button"]',
@@ -43,6 +57,9 @@ class Facebook(Base):
         self.name = None
         self.user_link = None
         self.country = country
+        self.secondary_password = secondary_password
+        if secondary_password is not None:
+            self.secondary_password = secondary_password.replace(" ", "", 20)
 
     def get_profiles_name(self):
         self._get_self_profile()
@@ -180,9 +197,10 @@ class Facebook(Base):
             self.chain.reset_actions()
 
             if image_path is not None:
+                if IMG_DIR not in image_path:
+                    image_path = IMG_DIR + 'facebook/' + image_path
                 try:
                     comment_buttons_block = self.driver.find_element(By.ID, "focused-state-actions-list")
-                    print(comment_buttons_block)
                     upload_image = comment_buttons_block.find_element(By.CLASS_NAME, 'x1s85apg')
                     upload_image.send_keys(image_path)
                     sleep(3)
@@ -268,13 +286,14 @@ class Facebook(Base):
             for hobbie in hobbies:
                 input_field = self.wait(10).until(ec.presence_of_element_located((By.XPATH,
                                                                                  '//input[@placeholder="What '
-                                                                                 'do you do for fun?"]')))
+                                                                                  'do you do for fun?"]')))
                 self.move_and_click(input_field)
                 input_field.clear()
                 sleep(1)
                 self.move_and_click(input_field, text=hobbie)
-                options = self.wait(3).until(ec.presence_of_all_elements_located((By.XPATH, '//li[@role="option"'
-                                                                                            ' and @aria-selected="false"]')))
+                options = self.wait(3).until(ec.presence_of_all_elements_located((By.XPATH,
+                                                                                  '//li[@role="option" '
+                                                                                  'and @aria-selected="false"]')))
                 self.move_and_click(options[0])
             sleep(2)
             spans = self.wait(2).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'span')))
@@ -448,6 +467,15 @@ class Facebook(Base):
                             return False
                         if 'mobile number' in div.text.lower():
                             return False
+                        if 'two-factor' in div.text.lower() or 'двухфакторная аутентификация':
+                            if self.secondary_password is not None:
+                                self.two_factor_login(secondary=self.secondary_password)
+                                sleep(3)
+                                try:
+                                    submit_button = self.driver.find_element(By.XPATH, '//button[@type="submit"]')
+                                    submit_button.click()
+                                except Exception as ex:
+                                    pass
                 except WebDriverException:
                     pass
                 self._change_language()
@@ -456,12 +484,12 @@ class Facebook(Base):
                         if 'You must confirm your password to edit your account settings.' in btn.text:
                             return False
                 except Exception as ex:
-                    pass
+                    print(ex)
                 return True
             except WebDriverException as wde:
                 print(wde)
             except Exception as ex:
-                pass
+                print(ex)
         return False
 
     def get_exact_users_friends(self, profile_link: str = None, limit=100):
@@ -541,36 +569,10 @@ class Facebook(Base):
         except WebDriverException as wde:
             print('MAKE POST WDE: ', wde)
 
-
-    def make_group_post(self, link_to_group:str, text:str=None, file_path:str=None)->None:
-        self.driver.get(link_to_group)
-        sleep(2)
-        spans = self.driver.find_elements(By.TAG_NAME, 'span')
-        for span in spans:
-            if "Write something" in span.text:
-                self.move_and_click(span)
-                sleep(4)
-        self.rs()
-        textbox = self.driver.find_element(By.XPATH, self.xpaths['profile_text_box'])
-        self.move_and_click(textbox, text)
-        if file_path:
-            photo_video = self.driver.find_element(By.XPATH, '//div[@aria-label="Photo/video"]')
-            self.move_and_click(photo_video)
-            sleep(1)
-            get_form = self.wait(2).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'input')))
-            for form in get_form:
-                if str(form.get_attribute('accept')) == \
-                        'image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv':
-                    form.send_keys(file_path)
-        sleep(7)
-        post = self.driver.find_element(By.XPATH, '//div[@aria-label="Post"]')
-        post.click()
-
-
     def explore_platform(self):
         pass
 
-    def join_groups_by_interests(self, tag: str, *args):
+    def join_groups_by_interests(self, tag: str):
         max_amount_of_groups = randint(3, 7)
         self.driver.get('https://www.facebook.com/groups/feed/')
         sleep(3)
@@ -631,6 +633,8 @@ class Facebook(Base):
                         self.chain.reset_actions()
                         sleep(3)
                         if image_path is not None:
+                            if IMG_DIR not in image_path:
+                                image_path = IMG_DIR + 'facebook/' + image_path
                             try:
                                 comment_buttons_block = self.driver.find_element(By.ID, "focused-state-actions-list")
                                 print(comment_buttons_block)
@@ -656,16 +660,83 @@ class Facebook(Base):
                 return False
             last_page_height = int(self.driver.execute_script('return document.body.scrollHeight'))
 
+    def add_friend(self, link):
+        self.driver.get(link)
+
+        sleep(3)
+
+        try:
+            add_friend_button = self.driver.find_element(By.XPATH, '//div[@aria-label="Add Friend"]')
+            add_friend_button.click()
+        except Exception as ex:
+            print(ex)
+
+    def send_message(self, link, text):
+        if self.driver.current_url != link:
+            self.driver.get(link)
+
+        sleep(2)
+
+        try:
+            message_button = self.driver.find_element(By.XPATH, '//div[@aria-label="Message"]')
+            message_button.click()
+
+            sleep(3)
+
+            message_input = self.driver.find_element(By.XPATH, '//div[@role="textbox"]')
+
+            self.move_and_click(message_input, text)
+            sleep(1)
+            message_input.send_keys(Keys.ENTER)
+        except Exception as ex:
+            print(ex)
+
+    def join_to_group(self, link):
+        try:
+            self.driver.get(link)
+
+            sleep(3)
+
+            join_button = self.driver.find_element(By.XPATH, '//div[@aria-label="Join group"]')
+            join_button.click()
+        except Exception as ex:
+            print(ex)
+
+    def like_user(self, link):
+        self.driver.get(link)
+
+        sleep(3)
+
+        try:
+            like_button = self.driver.find_element(By.XPATH, '//div[@aria-label="Like"]')
+            like_button.click()
+        except Exception as ex:
+            print(ex)
+
+    def two_factor_login(self, secondary):
+        print(secondary)
+        try:
+            try:
+                WebDriverWait(self.driver, 20).until(
+                    ec.presence_of_element_located((By.XPATH, "//input[@class='inputtext']")))
+                input_secondary = self.driver.find_element(By.XPATH, "//input[@class='inputtext']")
+                submit_secondary = self.driver.find_element(By.XPATH, "//button[@id='checkpointSubmitButton']")
+                token = get_totp_token(secondary)
+                print(token)
+                input_secondary.send_keys(token)
+                submit_secondary.click()
+            except Exception as e:
+                print(e)
+            time.sleep(2)
+            self.wait(20).until(ec.presence_of_element_located((By.XPATH, "//button[@id='checkpointSubmitButton']")))
+            while len(self.driver.find_elements(By.XPATH, "//button[@id='checkpointSubmitButton']")) != 0:
+                submit_secondary = self.driver.find_element(By.XPATH, "//button[@id='checkpointSubmitButton']")
+                submit_secondary.click()
+                WebDriverWait(self.driver, 20).until(
+                    ec.presence_of_element_located((By.XPATH, "//button[@id='checkpointSubmitButton']")))
+        except TimeoutException as e:
+            print(traceback.format_exc())
+
 
 if __name__ == '__main__':
-    from pyvirtualdisplay import Display
-
-
-    display = Display(visible=False, size=(1920, 1080))
-    display.start()
-    f = Facebook('aleksandr.d@zapchasti-darom.ru', 'onepeace89')
-    f.login()
-    # f.make_comment("https://www.facebook.com/photo/?fbid=801408048011779&set=a.370165894469332", "teST", "C:/Users/admin/Desktop/farm_back-main/завантаження.jpg")
-    # f.comments_chain("Василий Паук", "teST", "https://www.facebook.com/photo/?fbid=801408048011779&set=a.370165894469332", "C:/Users/admin/Desktop/farm_back-main/завантаження.jpg")
-    f.make_group_post('https://www.facebook.com/groups/3164396367122354', "test")
-    # f.make_post("Just test text.", '/home/penguin_nube/Pictures/Screenshot_20230313_020220.png')
+    pass
