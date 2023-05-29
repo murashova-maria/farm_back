@@ -138,3 +138,15 @@ async def get_files(user_id: str, day: int, time_range: int):
     except Exception as ex:
         traceback.print_exc()
         return HTTPException(status_code=400, detail='Invalid data')
+
+
+@app.delete('/bots/delete/')
+async def delete_user(user_id: str):
+    try:
+        user = UserDB.filter_users(user_id=user_id)
+        if len(user) == 0:
+            return HTTPException(status_code=400, detail="User doesn't exist")
+        main_queue.put(QueuedTask(UserDB, 'delete_user', {'user_id': user_id}))
+        return {'Status': 'OK'}
+    except Exception as ex:
+        pass
