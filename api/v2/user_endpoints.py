@@ -149,4 +149,4 @@ async def delete_user(user_id: str):
         main_queue.put(QueuedTask(UserDB, 'delete_user', {'user_id': user_id}))
         return {'Status': 'OK'}
     except Exception as ex:
-        pass
+        return HTTPException(status_code=400, detail="Server's unknown error")

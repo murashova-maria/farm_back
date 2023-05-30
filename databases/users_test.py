@@ -7,7 +7,7 @@ import uuid
 from sqlalchemy.pool import QueuePool
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine, Column, Integer, String, JSON, FLOAT, MetaData
+from sqlalchemy import create_engine, Column, Integer, String, JSON, FLOAT, text
 
 # engine = create_engine('sqlite:///bots_farm.db', connect_args={'check_same_thread': False})
 engine = create_engine('postgresql://postgres:6nvj8nMm@65.109.34.120:5432', poolclass=QueuePool)
@@ -509,5 +509,17 @@ user_session = sessionmaker(bind=engine)
 session = user_session()
 
 
+def add_new_column(table_name: str, columns: dict) -> None:
+    with engine.connect() as connection:
+        try:
+            for column_name, column_type in columns.items():
+                connection.execute(text(f'ALTER TABLE {table_name} ADD {column_name} {column_type};'))
+                connection.commit()
+        except Exception as ex:
+            traceback.print_exc()
+    pass
+
+
 if __name__ == '__main__':
-    print(ScheduleBase().filter_schedules(status='None'))
+    for usr in ScheduleBase.get_all_schedules():
+        print(usr)
