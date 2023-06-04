@@ -7,6 +7,9 @@ from api.utils import save_base64_file
 @app.post('/conversation/create/')
 async def create_conversation(params: Dict[Any, Any]):
     temp_data = {'tmp_data': {}}
+    del params['start_date_time']
+    conv_name = params.pop('campaign_name')
+    params.update({'conversation_name': conv_name})
     params.update({'start_datetime': datetime.now().timestamp()})
     conversation_id = randint(0, 2147483647)
     try:
@@ -19,9 +22,6 @@ async def create_conversation(params: Dict[Any, Any]):
                     if r_usr not in chain:
                         chain.append(r_usr)
                         break
-                base_image = user.get('image')
-                if base_image:
-                    user['image'] = save_base64_file(base_image)
             temp_data['tmp_data'].update({
                 f'{post}': {
                     'index': 0,
@@ -31,14 +31,13 @@ async def create_conversation(params: Dict[Any, Any]):
             })
         else:
             chain = []
-            for reaction in params['reactions']:
+            for _ in params['reactions']:
                 for _ in range(3):
                     r_usr = choice([*params['meek_accs'], *params['master_accs']])
                     if r_usr not in chain:
                         chain.append(r_usr)
                         break
-                if reaction.get('image'):
-                    reaction['image'] = save_base64_file(reaction['image'])
+
             temp_data['tmp_data'].update({
                 f'{post}': {
                     'index': 0,
@@ -47,10 +46,8 @@ async def create_conversation(params: Dict[Any, Any]):
                 } for post in params['post_links']
             })
         params.update(temp_data)
-        params = {conversation_id: {**params, 'type': 'json'}, }
-        res = read_json('conversations.json')
-        res.update(params)
-        JSONWriter('conversations.json').write_json(res)
+        params.update({'conversation_id': conversation_id})
+        new_conv = ConversationDB.create_conversation(**params)
         return {'Status': 'OK'}
     except Exception as ex:
         print(ex)
