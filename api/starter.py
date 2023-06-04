@@ -269,7 +269,7 @@ class Starter:
                     fb.scroll_feed(randint(1, 10))
                     main_queue.put(QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                                       'activity': 'wait'}))
-                elif user_info['actiivty'] == 'add_friend':
+                elif user_info['activity'] == 'add_friend':
                     last_task = ScheduleDB.filter_schedules(status='done',
                                                             action=user_info['activity'])
                     if last_task is None or not last_task:
@@ -285,7 +285,7 @@ class Starter:
                     main_queue.put(
                         QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                            'activity': 'wait'}))
-                elif user_info['actiivty'] == 'send_message':
+                elif user_info['activity'] == 'send_message':
                     last_task = ScheduleDB.filter_schedules(status='done',
                                                             action=user_info['activity'])
                     if last_task is None or not last_task:
@@ -302,7 +302,7 @@ class Starter:
                     main_queue.put(
                         QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                            'activity': 'wait'}))
-                elif user_info['actiivty'] == 'join_to_group':
+                elif user_info['activity'] == 'join_to_group':
                     last_task = ScheduleDB.filter_schedules(status='done',
                                                             action=user_info['activity'])
                     if last_task is None or not last_task:
@@ -318,7 +318,7 @@ class Starter:
                     main_queue.put(
                         QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                            'activity': 'wait'}))
-                elif user_info['actiivty'] == 'like_user':
+                elif user_info['activity'] == 'like_user':
                     last_task = ScheduleDB.filter_schedules(status='done',
                                                             action=user_info['activity'])
                     if last_task is None or not last_task:

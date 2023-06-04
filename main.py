@@ -13,8 +13,8 @@ from decouple import config
 from pyvirtualdisplay import Display
 
 
-display = Display(visible=False, size=(1920, 1080))
-display.start()
+# display = Display(visible=False, size=(1920, 1080))
+# display.start()
 
 
 def check_neo4j_connection():

@@ -18,6 +18,7 @@ def add_old_bots():
         phone_number = usr.get('phone_number')
         network = usr.get('social_media')
         gologin_id = usr.get('gologin_id')
+        auth_code = usr.get('auth_code')
         if gologin_id in exist:
             print(gologin_id)
         exist.append(gologin_id)
@@ -26,7 +27,8 @@ def add_old_bots():
             "password": password,
             "phone_number": phone_number,
             "network": network,
-            "gologin_profile_id": gologin_id
+            "gologin_profile_id": gologin_id,
+            'auth_code': auth_code,
         }
 
         request = f'curl -X POST -H "Content-Type: application/json" -d \'{json.dumps(data)}\' ' \
