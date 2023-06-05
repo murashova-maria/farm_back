@@ -51,15 +51,16 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
             }
             main_queue.put(QueuedTask(SelfPostsDB, 'create_post', post_data))
         data.update({'status': 'None', 'scroll_minutes': params.get('scroll_minutes')})
-        main_queue.put(QueuedTask(ScheduleDB, 'create_schedule', data))
         additional_link = params.get('link')
         additional_message = params.get('message')
-        final_data = {'day': day, 'time_range': time_range, 'action': action,
-                      'link': additional_link,
-                      'message': additional_message}
+        data.update({'link': additional_link, 'message': additional_message})
+        # final_data = {'day': day, 'time_range': time_range, 'action': action,
+        #               'link': additional_link,
+        #               'message': additional_message}
+        main_queue.put(QueuedTask(ScheduleDB, 'create_schedule', data))
         if post_data is not None:
-            final_data.update({**post_data})
-        return final_data
+            data.update({**post_data})
+        return data
     except Exception as ex:
         traceback.print_exc()
         print(ex)

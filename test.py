@@ -2,11 +2,10 @@
 import os
 import json
 from time import sleep
-from pprint import pprint
 
 # LOCAL
 from loader import UserBase, FacebookProfileBase, InstagramProfileBase, \
-    KeywordBase, TwitterProfileBase, SelfPostsBase, session, ConversationDB
+    KeywordBase, TwitterProfileBase, SelfPostsBase, session, ConversationDB, ScheduleDB
 
 
 def add_old_bots():
@@ -38,8 +37,10 @@ def add_old_bots():
 
 
 if __name__ == '__main__':
-    for key, value in ConversationDB.get_all_conversations().items():
-        pprint({key: value})
+    for value in ScheduleDB.filter_schedules(status='done', action='add_friend'):
+        print(value)
+    # for key, value in ConversationDB.get_all_conversations().items():
+    #     pprint({key: value})
     a = int(input('Add old bots - 1, clean database - 0: '))
     if a:
         add_old_bots()

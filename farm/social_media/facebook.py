@@ -1,3 +1,5 @@
+import traceback
+
 try:
     from .base import *
     from .fb_utils import *
@@ -331,7 +333,7 @@ class Facebook(Base):
                 'error_number': 0
             })
             for res in result:
-                text = res.get('text')
+                txt = res.get('text')
                 user = res.get('account')
                 user_link = res.get('account_link')
                 posts_pubdate = res.get('date')
@@ -339,7 +341,7 @@ class Facebook(Base):
                 comments_amount = res.get('comments')
                 shares_amount = res.get('shares')
                 users_profile_pic = res.get('link')
-                self._save_new_post_to_db(user, text, None, user_link, posts_pubdate, likes_amount, [],
+                self._save_new_post_to_db(user, txt, None, user_link, posts_pubdate, likes_amount, [],
                                           comments_amount, [], shares_amount, *return_data_flair(text)[1:], tag,
                                           user_link, users_profile_pic)
         except Exception as ex:
@@ -662,21 +664,18 @@ class Facebook(Base):
 
     def add_friend(self, link):
         self.driver.get(link)
-
         sleep(3)
-
         try:
             add_friend_button = self.driver.find_element(By.XPATH, '//div[@aria-label="Add Friend"]')
             add_friend_button.click()
         except Exception as ex:
-            print(ex)
+            print('ADD_FRIEND_EXCEPTION: ')
+            traceback.print_exc()
 
-    def send_message(self, link, text):
+    def send_message(self, link, msg_text):
         if self.driver.current_url != link:
             self.driver.get(link)
-
         sleep(2)
-
         try:
             message_button = self.driver.find_element(By.XPATH, '//div[@aria-label="Message"]')
             message_button.click()
@@ -685,7 +684,7 @@ class Facebook(Base):
 
             message_input = self.driver.find_element(By.XPATH, '//div[@role="textbox"]')
 
-            self.move_and_click(message_input, text)
+            self.move_and_click(message_input, msg_text)
             sleep(1)
             message_input.send_keys(Keys.ENTER)
         except Exception as ex:
