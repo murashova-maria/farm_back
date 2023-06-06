@@ -38,7 +38,7 @@ def add_old_bots():
 
 if __name__ == '__main__':
     for value in ScheduleDB.filter_schedules(status='done', action='add_friend'):
-        print(value)
+        ScheduleDB.delete_schedule(value['schedule_id'])
     # for key, value in ConversationDB.get_all_conversations().items():
     #     pprint({key: value})
     a = int(input('Add old bots - 1, clean database - 0: '))

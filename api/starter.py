@@ -285,6 +285,8 @@ class Starter:
                     main_queue.put(
                         QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                            'activity': 'wait'}))
+                    main_queue.put(QueuedTask(ScheduleDB, 'delete_schedule',
+                                              {'schedule_id': last_task['schedule_id']}))
                 elif user_info['activity'] == 'send_message':
                     last_task = ScheduleDB.filter_schedules(status='done',
                                                             action=user_info['activity'])
@@ -302,6 +304,8 @@ class Starter:
                     main_queue.put(
                         QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                            'activity': 'wait'}))
+                    main_queue.put(QueuedTask(ScheduleDB, 'delete_schedule',
+                                              {'schedule_id': last_task['schedule_id']}))
                 elif user_info['activity'] == 'join_to_group':
                     last_task = ScheduleDB.filter_schedules(status='done',
                                                             action=user_info['activity'])
@@ -318,6 +322,8 @@ class Starter:
                     main_queue.put(
                         QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                            'activity': 'wait'}))
+                    main_queue.put(QueuedTask(ScheduleDB, 'delete_schedule',
+                                              {'schedule_id': last_task['schedule_id']}))
                 elif user_info['activity'] == 'like_user':
                     last_task = ScheduleDB.filter_schedules(status='done',
                                                             action=user_info['activity'])
@@ -334,6 +340,8 @@ class Starter:
                     main_queue.put(
                         QueuedTask(UserDB, 'update_user', {'user_id': user_info['user_id'], 'status': 'done',
                                                            'activity': 'wait'}))
+                    main_queue.put(QueuedTask(ScheduleDB, 'delete_schedule',
+                                              {'schedule_id': last_task['schedule_id']}))
                 res = ConversationDB.get_all_conversations()
                 for conv_id, conversation in res.items():
                     for post_name, post_tmp_values in conversation['tmp_data'].items():
