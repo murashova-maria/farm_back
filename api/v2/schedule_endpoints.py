@@ -55,8 +55,9 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
         additional_message = params.get('message')
         data.update({'link': additional_link, 'message': additional_message})
         main_queue.put(QueuedTask(ScheduleDB, 'create_schedule', data))
-        if post_data is not None:
-            data.update({**post_data})
+        print('DATA:', data)
+        # if post_data is not None:
+        #     data.update({**post_data})
         return data
     except Exception as ex:
         traceback.print_exc()
