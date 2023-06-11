@@ -29,6 +29,8 @@ class QueuedTask:
             except Exception as ex:
                 pass
             if type(self.args) is dict:
+                print('ARGS: ', self.args)
+                print("METHOD: ", self.method)
                 self.args = {key: (value if value is not None else 'None') for key, value in self.args.items()}
                 getattr(self.obj, self.method)(**self.args)
             else:
