@@ -8,7 +8,7 @@ import traceback
 @app.post('/bots/{user_id}/schedules/')
 async def bots_schedule(user_id: str, params: Dict[Any, Any]):
     try:
-        post_data = None
+        post_data = {}
         action = params.get('action')
         day = params.get('day')
         time_range = params.get('time_range')
@@ -50,19 +50,14 @@ async def bots_schedule(user_id: str, params: Dict[Any, Any]):
                 'exact_time': exact_time,
             }
             main_queue.put(QueuedTask(SelfPostsDB, 'create_post', post_data))
-        # data.update({'status': 'None', 'scroll_minutes': params.get('scroll_minutes')})
+        data.update({'status': 'None', 'scroll_minutes': params.get('scroll_minutes')})
         additional_link = params.get('link')
         additional_message = params.get('message')
-        # data.update({'link': additional_link, 'message': additional_message})
-        final_data = {'day': day, 'time_range': time_range, 'action': action,
-                      'link': additional_link,
-                      'message': additional_message,
-                      'user_id': user_id,
-                      'exact_time': exact_time}
-        main_queue.put(QueuedTask(ScheduleDB, 'create_schedule', final_data))
+        data.update({'link': additional_link, 'message': additional_message})
+        main_queue.put(QueuedTask(ScheduleDB, 'create_schedule', data))
         if post_data is not None:
-            final_data.update({**post_data})
-        return final_data
+            data.update({**post_data})
+        return data
     except Exception as ex:
         traceback.print_exc()
         print(ex)
