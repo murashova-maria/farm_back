@@ -7,7 +7,6 @@ from queue import Queue
 # LOCAL
 from config import *
 from databases.neo4j_users import *
-from tmp_solutions.conv_tmp import JSONWriter
 from farm.social_media.utils import QueuedTask
 from databases.utils import get_exact_date, get_randomized_date
 from databases.users import ConversationsPostgres, BaseDB, engine, sessionmaker
